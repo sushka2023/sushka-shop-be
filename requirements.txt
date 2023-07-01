@@ -1,13 +1,13 @@
 pydantic~=1.10.7
-fastapi~=0.95.1
-sqlalchemy~=2.0.12
+fastapi~=0.98.0
+sqlalchemy~=2.0.16
 starlette~=0.27.0
 passlib~=1.7.4
 qrcode~=7.4.2
 cloudinary~=1.33.0
 libgravatar~=1.0.4
 uvicorn~=0.22.0
-alembic~=1.10.4
+alembic~=1.11.1
 python-jose==3.3.0
 psycopg2-binary~=2.9.6
 python-dotenv~=1.0.0
