@@ -41,6 +41,8 @@ class User(Base):
     basket = relationship("Basket", uselist=False, back_populates="user")
     orders = relationship("Order", back_populates="user")
     posts = relationship("Post", uselist=False, back_populates="user")
+    favorite = relationship("Favorite", uselist=False, back_populates="user")
+    cooperation = relationship("Cooperation", uselist=False, back_populates="user")
 
 
 class BlacklistToken(Base):
@@ -171,7 +173,7 @@ class Favorite(Base):
     __tablename__ = 'favorits'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship("User", back_populates="basket")
+    user = relationship("User", back_populates="favorite")
     favorite_items_id = Column(Integer, ForeignKey('favorite_items.id'))
     favorite_items = relationship("FavoriteItem", uselist=False, back_populates="favorite")
 
@@ -183,3 +185,13 @@ class FavoriteItem(Base):
     favorite = relationship("FavoriteItem", back_populates="favorite_items")
     product_id = Column(Integer, ForeignKey('product.id'))
     product = relationship("Product")
+
+
+class Cooperation(Base):
+    __tablename__ = 'cooperations'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship("User", back_populates="cooperation")
+    description = Column(String(255), unique=False, nullable=False)
+    check = Column(Boolean, default=False)
+    created_at = Column('created_at', DateTime, default=func.now())
