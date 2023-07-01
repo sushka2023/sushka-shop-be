@@ -2,9 +2,9 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    sqlalchemy_database_url: str = 'postgresql+psycopg2://user:password@server:5432/database'
-    secret_key: str = '_'
-    algorithm: str = '_'
+    database_url: str = 'postgresql+psycopg2://user:password@server:5432/database'
+    secret_key: str = 'secret_key'
+    algorithm: str = 'HS256'
     cloudinary_name: str = '_'
     cloudinary_api_key: str = '_'
     cloudinary_api_secret: str = '_'
