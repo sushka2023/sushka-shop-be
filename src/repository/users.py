@@ -94,3 +94,9 @@ async def confirmed_email(email: str, db: Session) -> None:
     user = await get_user_by_email(email, db)
     user.is_active = True
     db.commit()
+
+
+async def reset_password_marker(email: str, db: Session) -> None:
+    user = await get_user_by_email(email, db)
+    user.reset_password = True
+    db.commit()

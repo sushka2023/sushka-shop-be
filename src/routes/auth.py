@@ -131,3 +131,15 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
     if user:
         background_tasks.add_task(send_email, user.email, user.username, request.base_url)
     return {"message": "Check your email for confirmation."}
+
+
+@router.get('/reset_password/{token}')
+async def confirmed_email(token: str, db: Session = Depends(get_db)):
+    email = await auth_service.get_email_from_token(token)
+    user = await repository_users.get_user_by_email(email, db)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error")
+    if not user.is_active:
+        return {"message": "Your email is not confirmed"}
+    await repository_users.reset_password_marker(email, db)
+    return {"message": "Email confirmed"}
