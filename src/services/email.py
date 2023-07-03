@@ -42,7 +42,7 @@ async def send_reset_email(email: EmailStr, host: str):
     try:
         token_reset_password = await auth_service.create_email_token({"sub": email})
         message = MessageSchema(
-            subject="Reset your password ",
+            subject="Password recovery",
             recipients=[email],
             template_body={"host": host, "token": token_reset_password},
             subtype=MessageType.html

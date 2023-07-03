@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.schemas.email import RequestEmail
-from src.schemas.users import UserModel, UserResponse, TokenModel
+from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
 from src.repository import users as repository_users
 from src.services.auth import auth_service
-from src.services.email import send_email
+from src.services.email import send_email, send_reset_email
 
 router = APIRouter(prefix="/auth", tags=['auth'])
 security = HTTPBearer()
@@ -133,13 +133,25 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
     return {"message": "Check your email for confirmation."}
 
 
-@router.get('/reset_password/{token}')
-async def confirmed_email(token: str, db: Session = Depends(get_db)):
+@router.get('/reset_password/{email}')
+async def send_email_reset_password(email: str, background_tasks: BackgroundTasks, request: Request, db: Session = Depends(get_db)):
+    user = await repository_users.get_user_by_email(email, db)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error")
+    if not user.is_active:
+        return {"message": "Your email is not confirmed"}
+    background_tasks.add_task(send_reset_email, user.email, request.base_url)
+    return {"message": "Letter sent successfully"}
+
+
+@router.get('/reset_password/confirmed/{token}')
+async def reset_password(token: str, body: PasswordModel, db: Session = Depends(get_db)):
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error")
     if not user.is_active:
         return {"message": "Your email is not confirmed"}
-    await repository_users.reset_password_marker(email, db)
-    return {"message": "Email confirmed"}
+    body.password_checksum = auth_service.pwd_context.hash(body.password_checksum)
+    await repository_users.reset_password(email, body.password_checksum, db)
+    return {"message": "Password changed"}
