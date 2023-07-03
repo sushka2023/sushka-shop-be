@@ -23,6 +23,7 @@ class UserResponse(BaseModel):
     updated_at: Optional[datetime]
     is_blocked: bool
     is_deleted: bool
+    is_active: bool
     refresh_token: Optional[str]
 
     class Config:

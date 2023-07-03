@@ -137,7 +137,7 @@ class Auth:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid scope for token')
 
     @classmethod
-    def create_email_token(cls, data: dict):
+    async def create_email_token(cls, data: dict):
         """
         The create_email_token function takes a dictionary of data and returns a token.
         The token is encoded with the SECRET_KEY, which is stored in the .env file.
@@ -156,7 +156,7 @@ class Auth:
         return token
 
     @classmethod
-    def get_email_from_token(cls, token: str):
+    async def get_email_from_token(cls, token: str):
         """
         The get_email_from_token function takes a token as an argument and
         returns the email associated with that token.

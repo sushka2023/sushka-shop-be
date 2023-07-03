@@ -88,3 +88,9 @@ async def add_to_blacklist(token: str, db: Session) -> None:
     db.commit()
     db.refresh(blacklist_token)
     return None
+
+
+async def confirmed_email(email: str, db: Session) -> None:
+    user = await get_user_by_email(email, db)
+    user.is_active = True
+    db.commit()

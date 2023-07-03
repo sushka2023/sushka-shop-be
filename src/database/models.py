@@ -38,6 +38,7 @@ class User(Base):
     refresh_token = Column(String(255), nullable=True)
     is_deleted = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=False)
     basket = relationship("Basket", uselist=False, back_populates="user")
     orders = relationship("Order", back_populates="user")
     posts = relationship("Post", uselist=False, back_populates="user")
