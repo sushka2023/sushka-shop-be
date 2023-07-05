@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from src.database.models import User, BlacklistToken
-from src.schemas.users import UserModel
+from src.schemas.users import UserModel, UserChangeRole
 from src.services.auth import auth_service
 
 
@@ -39,6 +39,27 @@ async def create_user(body: UserModel, db: Session) -> User:
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+async def change_role(body: UserChangeRole, user: User, db: Session) -> User | None:
+    """
+    Logged-in admin can change role of any profile by ID.
+
+    Arguments:
+        body (UserChangeRole): A set of user new role
+        user (User): the current user
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User | None: A user object or None
+    """
+    user_to_update = db.query(User).filter(User.id == body.id).first()
+    if user_to_update:
+        user_to_update.role = body.role
+        user_to_update.updated_at = datetime.now()
+        db.commit()
+        return user_to_update
+    return None
 
 
 async def update_token(user: User, refresh_token: str | None, db: Session) -> None:
