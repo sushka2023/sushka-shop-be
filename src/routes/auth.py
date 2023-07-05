@@ -144,7 +144,7 @@ async def send_email_reset_password(email: str, background_tasks: BackgroundTask
     return {"message": "Letter sent successfully"}
 
 
-@router.get('/reset_password/confirmed/{token}')
+@router.post('/reset_password/confirmed/{token}')
 async def reset_password(token: str, body: PasswordModel, db: Session = Depends(get_db)):
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
