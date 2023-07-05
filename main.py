@@ -49,7 +49,7 @@ def healthchecker(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Error connecting to the database")
 
 
-# app.include_router(users.router, prefix='/api')
+app.include_router(users.router, prefix='/api')
 app.include_router(auth.router, prefix='/api')
 # app.include_router(images.router, prefix='/api')
 

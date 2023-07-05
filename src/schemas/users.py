@@ -30,6 +30,15 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 
+class UserChangeRole(BaseModel):
+    id: int
+    role: Role
+    updated_at: Optional[datetime]
+
+    class Config:
+        orm_mode = True
+
+
 class TokenModel(BaseModel):
     access_token: str
     refresh_token: str

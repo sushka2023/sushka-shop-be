@@ -14,7 +14,7 @@ class RoleAccess:
         In this case, we're taking in a list of allowed roles.
 
         Arguments:
-            allowed_roles (List[Role]): Create a list of roles that are allowed to use the command
+            allowed_roles (List[UserRole]): Create a list of roles that are allowed to use the command
 
         Returns:
             None
