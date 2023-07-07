@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
-from src.database.models import User, Role, BlacklistToken
-from src.repository import users as repository_users
+from src.database.models import Role
 from src.repository import product_categories as repository_product_categories
-from src.services.auth import auth_service
 from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse
 from src.services.roles import RoleAccess
 
@@ -16,7 +14,10 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.post("/create_category", response_model=ProductCategoryResponse, dependencies=[Depends(allowed_operation_admin_moderator)])
+@router.post("/create_category",
+             response_model=ProductCategoryResponse,
+             dependencies=[Depends(allowed_operation_admin_moderator)],
+             status_code=status.HTTP_201_CREATED)
 async def create_category(body: ProductCategoryModel,
                           db: Session = Depends(get_db)):
     product_category = await repository_product_categories.product_category_by_name(body.name, db)
