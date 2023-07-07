@@ -19,3 +19,6 @@ class PriceResponse(BaseModel):
     weight: str
     price: float
     old_price: Optional[float]
+
+    class Config:
+        orm_mode = True

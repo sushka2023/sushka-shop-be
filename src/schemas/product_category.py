@@ -7,9 +7,12 @@ from src.database.models import Product
 
 
 class ProductCategoryModel(BaseModel):
-    name: str = Field(min_length=1, max_length=20)
+    name: str = Field(min_length=3, max_length=100)
 
 
 class ProductCategoryResponse(BaseModel):
     id: int
     name: str
+
+    class Config:
+        orm_mode = True

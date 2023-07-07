@@ -23,3 +23,6 @@ class ProductResponse(BaseModel):
     images: [Image]
     promotional: bool
     new_product: bool
+
+    class Config:
+        orm_mode = True
