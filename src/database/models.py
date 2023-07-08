@@ -57,7 +57,8 @@ class Product(Base):
     __tablename__ = 'products'
     id = Column(Integer, primary_key=True)
     name = Column(String(150), unique=False, nullable=False)
-    description = Column(String(150), unique=False, nullable=False)
+    description = Column(String(400), unique=False, nullable=False)
+    product_category_id = Column(Integer, ForeignKey('product_categories.id'))
     product_category = relationship("ProductCategory", uselist=False, back_populates="product")
     prices = relationship("Price", back_populates="product")
     images = relationship("Image", back_populates="product")
@@ -84,13 +85,12 @@ class Price(Base):
     product = relationship("Product", back_populates="prices")
     weight = Column(String(20), unique=False, nullable=False)
     price = Column(Float, unique=False, nullable=False)
-    old_price = Column(Float, unique=False, nullable=False)
+    old_price = Column(Float, unique=False, nullable=True)
 
 
 class ProductCategory(Base):
     __tablename__ = 'product_categories'
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product", back_populates="product_category")
     name = Column(String(100), unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False)
