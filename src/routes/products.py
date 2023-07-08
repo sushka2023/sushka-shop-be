@@ -34,7 +34,7 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     if product.is_deleted:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already deleted.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already archive.")
     archive_prod = await repository_products.archive_product(body.id, db)
     return archive_prod
 
@@ -50,14 +50,3 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
     return_archive_prod = await repository_products.return_archive_product(body.id, db)
     return return_archive_prod
-
-
-@router.delete("/delete_product",
-               response_model=ProductResponse,
-               dependencies=[Depends(allowed_operation_admin_moderator)])
-async def create_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
-    product = await repository_products.product_by_id(body.id, db)
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
-    await repository_products.delete_product(body.id, db)
-    raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="NO_CONTENT")

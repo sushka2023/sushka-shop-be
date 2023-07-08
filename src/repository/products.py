@@ -29,15 +29,6 @@ async def archive_product(body: int, db: Session):
     return None
 
 
-async def delete_product(body: int, db: Session):
-    product = db.query(Product).filter_by(id=body).first()
-    if product:
-        db.delete(product)
-        db.commit()
-        return None
-    return None
-
-
 async def return_archive_product(body: int, db: Session):
     product = db.query(Product).filter_by(id=body).first()
     if product:

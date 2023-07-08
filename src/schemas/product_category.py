@@ -16,3 +16,7 @@ class ProductCategoryResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ProductCategoryArchiveModel(BaseModel):
+    id: int

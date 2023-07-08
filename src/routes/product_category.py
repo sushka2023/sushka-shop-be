@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.database.models import Role
 from src.repository import product_categories as repository_product_categories
-from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse
+from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel
 from src.services.roles import RoleAccess
 
 router = APIRouter(prefix="/product_category", tags=["product_category"])
@@ -25,3 +25,29 @@ async def create_category(body: ProductCategoryModel,
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists.")
     new_product_category = await repository_product_categories.create_product_category(body, db)
     return new_product_category
+
+
+@router.put("/archive_product_category",
+            response_model=ProductCategoryResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product_category(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
+    product_category = await repository_product_categories.product_category_by_id(body.id, db)
+    if product_category is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if product_category.is_deleted:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product category already archive.")
+    archive_prod_cat = await repository_product_categories.archive_product_category(body.id, db)
+    return archive_prod_cat
+
+
+@router.put("/return_archive_product_category",
+            response_model=ProductCategoryResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
+    product_category = await repository_product_categories.product_category_by_id(body.id, db)
+    if product_category is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if product_category.is_deleted is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product category is not archived.")
+    return_archive_prod_cat = await repository_product_categories.return_archive_product_category(body.id, db)
+    return return_archive_prod_cat
