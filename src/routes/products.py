@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.database.models import Role
 from src.repository import products as repository_products
-from src.schemas.product import ProductModel, ProductResponse
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.roles import RoleAccess
 
 router = APIRouter(prefix="/product", tags=["product"])
@@ -24,3 +24,40 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already exists.")
     new_product = await repository_products.create_product(body, db)
     return new_product
+
+
+@router.put("/archive_product",
+            response_model=ProductResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+    product = await repository_products.product_by_id(body.id, db)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if product.is_deleted:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already deleted.")
+    archive_prod = await repository_products.archive_product(body.id, db)
+    return archive_prod
+
+
+@router.put("/return_archive_product",
+            response_model=ProductResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+    product = await repository_products.product_by_id(body.id, db)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if product.is_deleted is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
+    return_archive_prod = await repository_products.return_archive_product(body.id, db)
+    return return_archive_prod
+
+
+@router.delete("/delete_product",
+               response_model=ProductResponse,
+               dependencies=[Depends(allowed_operation_admin_moderator)])
+async def create_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+    product = await repository_products.product_by_id(body.id, db)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    await repository_products.delete_product(body.id, db)
+    raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="NO_CONTENT")

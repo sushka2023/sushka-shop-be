@@ -24,3 +24,7 @@ class ProductResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ProductArchiveModel(BaseModel):
+    id: int
