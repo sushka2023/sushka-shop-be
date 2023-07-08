@@ -1,4 +1,7 @@
+from typing import List
+
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, desc
 
 from src.database.models import ProductCategory
 from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel
@@ -10,6 +13,12 @@ async def product_category_by_name(body: str, db: Session) -> ProductCategory | 
 
 async def product_category_by_id(body: int, db: Session) -> ProductCategory | None:
     return db.query(ProductCategory).filter_by(id=body).first()
+
+
+async def product_categories(db: Session) -> List[ProductCategory] | None:
+    prod_categories = db.query(ProductCategory).filter((ProductCategory.is_deleted == False)).\
+        order_by(desc(ProductCategory.name)).all()
+    return prod_categories
 
 
 async def create_product_category(body: ProductCategoryModel, db: Session) -> ProductCategory:

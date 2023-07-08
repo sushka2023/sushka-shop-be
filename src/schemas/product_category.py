@@ -20,3 +20,7 @@ class ProductCategoryResponse(BaseModel):
 
 class ProductCategoryArchiveModel(BaseModel):
     id: int
+
+
+class ProductCategoryIdModel(BaseModel):
+    id: int
