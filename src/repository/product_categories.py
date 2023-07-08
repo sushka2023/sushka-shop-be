@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, asc
 
 from src.database.models import ProductCategory
 from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel
@@ -17,7 +17,7 @@ async def product_category_by_id(body: int, db: Session) -> ProductCategory | No
 
 async def product_categories(db: Session) -> List[ProductCategory] | None:
     prod_categories = db.query(ProductCategory).filter((ProductCategory.is_deleted == False)).\
-        order_by(desc(ProductCategory.name)).all()
+        order_by(asc(ProductCategory.name)).all()
     return prod_categories
 
 

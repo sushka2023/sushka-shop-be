@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
@@ -50,3 +52,11 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
     return_archive_prod = await repository_products.return_archive_product(body.id, db)
     return return_archive_prod
+
+
+@router.get("/products", response_model=List[ProductResponse])
+async def products(limit: int, offset: int, db: Session = Depends(get_db)):
+    products_ = await repository_products.products_users_order_id(limit, offset, db)
+    if products_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    return products_
