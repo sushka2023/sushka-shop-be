@@ -16,7 +16,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.post("/create_product",
+@router.post("/create",
              response_model=ProductResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
              status_code=status.HTTP_201_CREATED)
@@ -54,7 +54,7 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
     return return_archive_prod
 
 
-@router.get("/products", response_model=List[ProductResponse])
+@router.get("/products_id", response_model=List[ProductResponse])
 async def products(limit: int, offset: int, db: Session = Depends(get_db)):
     products_ = await repository_products.products_users_order_id(limit, offset, db)
     if products_ is None:

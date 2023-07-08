@@ -17,7 +17,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.post("/create_price",
+@router.post("/create",
              response_model=PriceResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
              status_code=status.HTTP_201_CREATED)

@@ -24,7 +24,7 @@ async def product_categories(db: Session = Depends(get_db)):
     return prod_categories
 
 
-@router.post("/create_category",
+@router.post("/create",
              response_model=ProductCategoryResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
              status_code=status.HTTP_201_CREATED)

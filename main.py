@@ -52,6 +52,5 @@ def healthchecker(db: Session = Depends(get_db)):
 app.include_router(users.router, prefix='/api')
 app.include_router(auth.router, prefix='/api')
 app.include_router(product_category.router, prefix='/api')
-app.include_router(prices.router, prefix='/api')
 app.include_router(products.router, prefix='/api')
-
+app.include_router(prices.router, prefix='/api')
