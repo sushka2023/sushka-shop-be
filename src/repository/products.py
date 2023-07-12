@@ -48,7 +48,7 @@ async def archive_product(body: int, db: Session):
     return None
 
 
-async def return_archive_product(body: int, db: Session):
+async def unarchive_product(body: int, db: Session):
     product = db.query(Product).filter_by(id=body).first()
     if product:
         product.is_deleted = False

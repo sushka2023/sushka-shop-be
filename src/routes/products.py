@@ -58,5 +58,5 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     if product.is_deleted is False:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
-    return_archive_prod = await repository_products.return_archive_product(body.id, db)
+    return_archive_prod = await repository_products.unarchive_product(body.id, db)
     return return_archive_prod
