@@ -16,7 +16,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/product_categories", response_model=List[ProductCategoryResponse])
+@router.get("/all", response_model=List[ProductCategoryResponse])
 async def product_categories(db: Session = Depends(get_db)):
     prod_categories = await repository_product_categories.product_categories(db)
     if prod_categories is None:
@@ -37,7 +37,7 @@ async def create_category(body: ProductCategoryModel,
     return new_product_category
 
 
-@router.put("/archive_product_category",
+@router.put("/archive",
             response_model=ProductCategoryResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product_category(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
@@ -50,7 +50,7 @@ async def archive_product_category(body: ProductCategoryArchiveModel, db: Sessio
     return archive_prod_cat
 
 
-@router.put("/return_archive_product_category",
+@router.put("/unarchive",
             response_model=ProductCategoryResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
@@ -59,5 +59,5 @@ async def archive_product(body: ProductCategoryArchiveModel, db: Session = Depen
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     if product_category.is_deleted is False:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product category is not archived.")
-    return_archive_prod_cat = await repository_product_categories.return_archive_product_category(body.id, db)
+    return_archive_prod_cat = await repository_product_categories.unarchive_product_category(body.id, db)
     return return_archive_prod_cat

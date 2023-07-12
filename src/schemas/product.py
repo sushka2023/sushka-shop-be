@@ -12,6 +12,7 @@ class ProductModel(BaseModel):
     product_category_id: int
     promotional: bool
     new_product: bool
+    is_popular: bool
 
 
 class ProductResponse(BaseModel):
@@ -21,6 +22,7 @@ class ProductResponse(BaseModel):
     product_category_id: int
     promotional: bool
     new_product: bool
+    is_popular: bool
 
     class Config:
         orm_mode = True

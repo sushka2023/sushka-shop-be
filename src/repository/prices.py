@@ -7,7 +7,12 @@ from src.schemas.price import PriceModel, PriceResponse
 
 
 async def price_by_product_id(id_product: int, db: Session) -> List[PriceResponse]:
-    price = db.query(Price).filter_by(product_id=id_product).all()
+    price = db.query(Price).filter_by(product_id=id_product, is_deleted=False).all()
+    return price
+
+
+async def price_by_id(id_price: int, db: Session) -> PriceResponse:
+    price = db.query(Price).filter_by(id=id_price).first()
     return price
 
 
@@ -17,3 +22,21 @@ async def create_price(body: PriceModel, db: Session) -> PriceResponse:
     db.commit()
     db.refresh(new_price)
     return new_price
+
+
+async def archive_price(body: int, db: Session):
+    price = db.query(Price).filter_by(id=body).first()
+    if price:
+        price.is_deleted = True
+        db.commit()
+        return price
+    return None
+
+
+async def unarchive_price(body: int, db: Session):
+    price = db.query(Price).filter_by(id=body).first()
+    if price:
+        price.is_deleted = False
+        db.commit()
+        return price
+    return None

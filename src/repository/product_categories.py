@@ -38,7 +38,7 @@ async def archive_product_category(body: int, db: Session) -> ProductCategory | 
     return None
 
 
-async def return_archive_product_category(body: int, db: Session) -> ProductCategory | None:
+async def unarchive_product_category(body: int, db: Session) -> ProductCategory | None:
     product_category = db.query(ProductCategory).filter_by(id=body).first()
     if product_category:
         product_category.is_deleted = False

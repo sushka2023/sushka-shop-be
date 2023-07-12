@@ -66,6 +66,9 @@ class Product(Base):
     promotional = Column(Boolean, default=False)
     new_product = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
+    is_popular = Column(Boolean, default=False)
+    created_at = Column('created_at', DateTime, default=func.now())
+    updated_at = Column('updated_at', DateTime, default=func.now())
 
 
 class Image(Base):
@@ -86,6 +89,8 @@ class Price(Base):
     weight = Column(String(20), unique=False, nullable=False)
     price = Column(Float, unique=False, nullable=False)
     old_price = Column(Float, unique=False, nullable=True)
+    quantity = Column(Integer, default=1)
+    is_deleted = Column(Boolean, default=False)
 
 
 class ProductCategory(Base):
