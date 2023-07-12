@@ -21,6 +21,11 @@ class PriceResponse(BaseModel):
     price: float
     old_price: Optional[float]
     quantity: int
+    is_deleted: bool
 
     class Config:
         orm_mode = True
+
+
+class PriceArchiveModel(BaseModel):
+    id: int

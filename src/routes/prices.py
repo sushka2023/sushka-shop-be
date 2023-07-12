@@ -7,7 +7,7 @@ from src.database.db import get_db
 from src.database.models import Role
 from src.repository import prices as repository_prices
 from src.repository import products as repository_products
-from src.schemas.price import PriceResponse, PriceModel
+from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel
 from src.services.roles import RoleAccess
 
 router = APIRouter(prefix="/price", tags=["price"])
@@ -35,3 +35,29 @@ async def create_price(body: PriceModel, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     new_price = await repository_prices.create_price(body, db)
     return new_price
+
+
+@router.put("/archive_price",
+            response_model=PriceResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)):
+    price = await repository_prices.price_by_id(body.id, db)
+    if price is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if price.is_deleted:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Price already archive.")
+    archive_price = await repository_prices.archive_price(body.id, db)
+    return archive_price
+
+
+@router.put("/unarchive_price",
+            response_model=PriceResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)):
+    price = await repository_prices.price_by_id(body.id, db)
+    if price is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if price.is_deleted is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The price is not archived.")
+    return_archive_price = await repository_prices.unarchive_price(body.id, db)
+    return return_archive_price

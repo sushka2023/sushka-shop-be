@@ -90,6 +90,7 @@ class Price(Base):
     price = Column(Float, unique=False, nullable=False)
     old_price = Column(Float, unique=False, nullable=True)
     quantity = Column(Integer, default=1)
+    is_deleted = Column(Boolean, default=False)
 
 
 class ProductCategory(Base):
