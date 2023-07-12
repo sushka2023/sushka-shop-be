@@ -16,7 +16,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/product_categories", response_model=List[ProductCategoryResponse])
+@router.get("/all", response_model=List[ProductCategoryResponse])
 async def product_categories(db: Session = Depends(get_db)):
     prod_categories = await repository_product_categories.product_categories(db)
     if prod_categories is None:
@@ -50,7 +50,7 @@ async def archive_product_category(body: ProductCategoryArchiveModel, db: Sessio
     return archive_prod_cat
 
 
-@router.put("/return_archive_product_category",
+@router.put("/unarchive_product_category",
             response_model=ProductCategoryResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):

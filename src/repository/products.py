@@ -21,9 +21,13 @@ async def get_products(limit: int, offset: int, sort: str, db: Session) -> List[
     elif "name" in sort:
         products_ = db.query(Product).filter(Product.is_deleted == False).order_by(asc(Product.name)).limit(limit).offset(offset).all()
     elif "low_price" in sort:
-        products_ = db.query(Product).join(Price).filter(Product.is_deleted == False).order_by(asc(Price.price)).limit(limit).offset(offset).all()
+        products_ = db.query(Product).outerjoin(Price).filter(Product.is_deleted == False).order_by(asc(Price.price)).limit(limit).offset(offset).all()
     elif "haigh_price" in sort:
-        products_ = db.query(Product).join(Price).filter(Product.is_deleted == False).order_by(desc(Price.price)).limit(limit).offset(offset).all()
+        products_ = db.query(Product).outerjoin(Price).filter(Product.is_deleted == False).order_by(desc(Price.price)).limit(limit).offset(offset).all()
+    elif "low_date" in sort:
+        products_ = db.query(Product).filter(Product.is_deleted == False).order_by(asc(Product.created_at)).limit(limit).offset(offset).all()
+    elif "haigh_date" in sort:
+        products_ = db.query(Product).filter(Product.is_deleted == False).order_by(desc(Product.created_at)).limit(limit).offset(offset).all()
     return products_
 
 

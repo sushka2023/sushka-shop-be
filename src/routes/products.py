@@ -17,7 +17,7 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
 @router.get("/all", response_model=List[ProductResponse])
-async def products(limit: int, offset: int, sort: str, db: Session = Depends(get_db)):
+async def products(limit: int, offset: int, sort: str = "name", db: Session = Depends(get_db)):
     products_ = await repository_products.get_products(limit, offset, sort, db)
     if products_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")

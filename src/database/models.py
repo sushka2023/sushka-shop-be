@@ -67,6 +67,8 @@ class Product(Base):
     new_product = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
     is_popular = Column(Boolean, default=False)
+    created_at = Column('created_at', DateTime, default=func.now())
+    updated_at = Column('updated_at', DateTime, default=func.now())
 
 
 class Image(Base):

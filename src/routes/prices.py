@@ -17,6 +17,14 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
+@router.get("/product_prices", response_model=List[PriceResponse])
+async def product_prices(id_product: int, db: Session = Depends(get_db)):
+    prod_prices = await repository_prices.price_by_product_id(id_product, db)
+    if prod_prices is None or len(prod_prices) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    return prod_prices
+
+
 @router.post("/create",
              response_model=PriceResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
@@ -27,11 +35,3 @@ async def create_price(body: PriceModel, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     new_price = await repository_prices.create_price(body, db)
     return new_price
-
-
-@router.get("/product_prices", response_model=List[PriceResponse])
-async def product_prices(id_product: int, db: Session = Depends(get_db)):
-    prod_prices = await repository_prices.price_by_product_id(id_product, db)
-    if prod_prices is None or len(prod_prices) == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
-    return prod_prices
