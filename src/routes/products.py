@@ -36,7 +36,7 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     return new_product
 
 
-@router.put("/archive_product",
+@router.put("/archive",
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
@@ -49,7 +49,7 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
     return archive_prod
 
 
-@router.put("/unarchive_product",
+@router.put("/unarchive",
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):

@@ -37,7 +37,7 @@ async def create_category(body: ProductCategoryModel,
     return new_product_category
 
 
-@router.put("/archive_product_category",
+@router.put("/archive",
             response_model=ProductCategoryResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product_category(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
@@ -50,7 +50,7 @@ async def archive_product_category(body: ProductCategoryArchiveModel, db: Sessio
     return archive_prod_cat
 
 
-@router.put("/unarchive_product_category",
+@router.put("/unarchive",
             response_model=ProductCategoryResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductCategoryArchiveModel, db: Session = Depends(get_db)):
