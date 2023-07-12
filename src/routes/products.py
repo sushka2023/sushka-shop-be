@@ -21,6 +21,8 @@ async def products(limit: int, offset: int, sort: str = "name", db: Session = De
     products_ = await repository_products.get_products(limit, offset, sort, db)
     if products_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    if sort not in ["id", "name", "low_price", "haigh_price", "low_date", "haigh_date"]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
     return products_
 
 
