@@ -7,7 +7,7 @@ from src.schemas.price import PriceModel, PriceResponse
 
 
 async def price_by_product_id(id_product: int, db: Session) -> List[PriceResponse]:
-    price = db.query(Price).filter_by(product_id=id_product).all()
+    price = db.query(Price).filter_by(product_id=id_product, is_deleted=False).all()
     return price
 
 
