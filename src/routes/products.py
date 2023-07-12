@@ -16,6 +16,14 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
+@router.get("/all", response_model=List[ProductResponse])
+async def products(limit: int, offset: int, sort: str, db: Session = Depends(get_db)):
+    products_ = await repository_products.get_products(limit, offset, sort, db)
+    if products_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    return products_
+
+
 @router.post("/create",
              response_model=ProductResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
@@ -41,7 +49,7 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
     return archive_prod
 
 
-@router.put("/return_archive_product",
+@router.put("/unarchive_product",
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
@@ -52,11 +60,3 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
     return_archive_prod = await repository_products.return_archive_product(body.id, db)
     return return_archive_prod
-
-
-@router.get("/products_id", response_model=List[ProductResponse])
-async def products(limit: int, offset: int, db: Session = Depends(get_db)):
-    products_ = await repository_products.products_users_order_id(limit, offset, db)
-    if products_ is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
-    return products_
