@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 
 SQLALCHEMY_DATABASE_URL = settings.database_url
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 DBSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
