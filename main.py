@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from src.database.db import get_db
-from src.routes import users, auth, product_category, prices, products
+from src.routes import users, auth, product_category, prices, products, favorites
 
 app = FastAPI()
 
@@ -54,4 +54,4 @@ app.include_router(auth.router, prefix='/api')
 app.include_router(product_category.router, prefix='/api')
 app.include_router(products.router, prefix='/api')
 app.include_router(prices.router, prefix='/api')
-app.include_router(favorits.router, prefix='/api')
+app.include_router(favorites.router, prefix='/api')
