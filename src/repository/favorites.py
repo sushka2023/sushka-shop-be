@@ -7,9 +7,8 @@ from src.database.models import Favorite, User
 from src.schemas.favorites import FavoriteModel
 
 
-async def create(body: FavoriteModel, current_user: User, db: Session):
-    new_favorite = Favorite(**body.dict())
-    new_favorite.user = current_user
+async def create(current_user: User, db: Session):
+    new_favorite = Favorite(user=current_user)
     db.add(new_favorite)
     db.commit()
     db.refresh(new_favorite)

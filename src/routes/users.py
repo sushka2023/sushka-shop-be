@@ -12,10 +12,6 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 # role authority
 allowed_operation_admin = RoleAccess([Role.admin])
-# allowed_operation_get = RoleAccess([Role.admin, Role.moderator, Role.user])
-# allowed_operation_post = RoleAccess([Role.admin, Role.moderator, Role.user])
-# allowed_operation_put = RoleAccess([Role.admin, Role.moderator])
-# allowed_operation_delete = RoleAccess([Role.admin])
 
 
 @router.get("/me/", response_model=UserResponse)

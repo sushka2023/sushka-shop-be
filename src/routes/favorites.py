@@ -22,11 +22,10 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
              response_model=FavoriteResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
              status_code=status.HTTP_201_CREATED)
-async def create(body: FavoriteModel,
-                 current_user: User = Depends(auth_service.get_current_user),
+async def create(current_user: User = Depends(auth_service.get_current_user),
                  db: Session = Depends(get_db)):
     favorite = await repository_favorites.favorites(current_user, db)
     if favorite:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Favorite already create.")
-    new_favorite = await repository_favorites.create(body, current_user, db)
+    new_favorite = await repository_favorites.create(current_user, db)
     return new_favorite
