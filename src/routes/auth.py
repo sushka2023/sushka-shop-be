@@ -30,7 +30,7 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Favorite already create.")
     new_favorite = await repository_favorites.create(new_user, db)  # New favorite in user
 
-    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)
+    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
     return new_user
 
 
