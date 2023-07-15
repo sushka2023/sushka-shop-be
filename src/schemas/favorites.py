@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 
-class ProductCategoryModel(BaseModel):
+class FavoriteModel(BaseModel):
     user_id: int
 
 
-class ProductCategoryResponse(BaseModel):
+class FavoriteResponse(BaseModel):
     id: int
     user_id: str
 
