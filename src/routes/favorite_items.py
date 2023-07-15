@@ -19,6 +19,16 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
+@router.get("/", response_model=List[FavoriteItemsResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def favorite_items(current_user: User = Depends(auth_service.get_current_user),
+                         db: Session = Depends(get_db)):
+    favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
+    if favorite_items_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+    return favorite_items_
+
+
 @router.post("/add",
              response_model=FavoriteItemsResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
@@ -36,12 +46,19 @@ async def add_to_favorites(body: FavoriteItemsModel,
     return add_product_to_favorites
 
 
-@router.get("/", response_model=List[FavoriteItemsResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def favorite_items(current_user: User = Depends(auth_service.get_current_user),
+@router.delete("/remove",
+               dependencies=[Depends(allowed_operation_admin_moderator_user)],
+               status_code=status.HTTP_204_NO_CONTENT)
+async def remove_product(body: FavoriteItemsModel,
+                         current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
-    favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
-    if favorite_items_ is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
-    return favorite_items_
+    favorite = await repository_favorites.favorites(current_user, db)
+    if not favorite:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
 
+    favorite_item = await repository_favorite_items.favorite_item(body, current_user, db)
+    if not favorite_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+    product_from_fav = await repository_favorite_items.get_f_item_from_product_id(body.product_id, db)  # get product from favorite
+    await repository_favorite_items.remove(product_from_fav, db)  # Remove product from favorite
+    return None

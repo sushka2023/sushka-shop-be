@@ -30,7 +30,18 @@ async def favorite_item(body: FavoriteItemsModel, current_user: User, db: Sessio
     favorite_item_ = db.query(FavoriteItem.id, FavoriteItem.favorite_id, FavoriteItem.product_id) \
         .join(Favorite, Favorite.id == FavoriteItem.favorite_id) \
         .join(Product, Product.id == FavoriteItem.product_id) \
-        .filter(FavoriteItem.product_id == body.product_id) \
+        .filter(FavoriteItem.product_id == body.product_id, Favorite.user_id == current_user.id) \
         .order_by(Product.name.asc()) \
         .first()
     return favorite_item_
+
+
+async def get_f_item_from_product_id(product_id: int, db: Session):
+    favorite_item_ = db.query(FavoriteItem).filter(product_id == product_id).first()
+    return favorite_item_
+
+
+async def remove(favorite_item_: FavoriteItem, db: Session):
+    db.delete(favorite_item_)
+    db.commit()
+    return None
