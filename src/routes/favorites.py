@@ -10,7 +10,7 @@ from src.repository import products as repository_products
 from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel
 from src.services.roles import RoleAccess
 
-router = APIRouter(prefix="/favorites", tags=["price"])
+router = APIRouter(prefix="/favorites", tags=["favorite"])
 
 # role authority
 allowed_operation_admin = RoleAccess([Role.admin])
