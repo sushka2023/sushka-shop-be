@@ -17,10 +17,6 @@ async def create(body: FavoriteItemsModel, favorite: Favorite, db: Session):
 
 
 async def favorite_items(current_user: User, db: Session) -> List[Favorite] | None:
-    # favorite_items_ = db.query(FavoriteItem).filter(Favorite.user_id == current_user.id).all()
-    # favorite_items_ = db.query(FavoriteItem).join(Favorite).filter(Favorite.user_id == current_user.id)\
-    #     .order_by(asc(Product.name)).all()
-
     favorite_items_ = db.query(FavoriteItem.id, FavoriteItem.favorite_id, FavoriteItem.product_id) \
         .join(Favorite, Favorite.id == FavoriteItem.favorite_id) \
         .join(Product, Product.id == FavoriteItem.product_id) \
@@ -28,3 +24,13 @@ async def favorite_items(current_user: User, db: Session) -> List[Favorite] | No
         .order_by(Product.name.asc()) \
         .all()
     return favorite_items_
+
+
+async def favorite_item(body: FavoriteItemsModel, current_user: User, db: Session) -> Product:
+    favorite_item_ = db.query(FavoriteItem.id, FavoriteItem.favorite_id, FavoriteItem.product_id) \
+        .join(Favorite, Favorite.id == FavoriteItem.favorite_id) \
+        .join(Product, Product.id == FavoriteItem.product_id) \
+        .filter(FavoriteItem.product_id == body.product_id) \
+        .order_by(Product.name.asc()) \
+        .first()
+    return favorite_item_

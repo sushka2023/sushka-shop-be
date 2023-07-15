@@ -13,5 +13,5 @@ async def create(current_user: User, db: Session):
 
 
 async def favorites(current_user: User, db: Session) -> Favorite | None:
-    favorites_ = db.query(Favorite).filter(Favorite.user_id == current_user.id).first()
-    return favorites_
+    favorite = db.query(Favorite).filter(Favorite.user_id == current_user.id).first()
+    return favorite
