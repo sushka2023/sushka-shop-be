@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import favorites as repository_favorites
-from src.schemas.favorites import FavoriteResponse, FavoriteModel
+from src.schemas.favorites import FavoriteResponse
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
 
