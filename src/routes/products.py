@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.database.models import Role
 from src.repository import products as repository_products
+from src.repository import product_categories as repository_product_categories
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -18,11 +19,45 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
 @router.get("/all", response_model=List[ProductResponse])
-async def products(limit: int, offset: int, sort: str = "name", db: Session = Depends(get_db)):
-    products_ = await repository_products.get_products(limit, offset, sort, db)
-    if products_ is None:
+async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+    products_ = None
+
+    if sort not in ["id", "name", "low_price", "high_price", "low_date", "high_date"]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    if sort not in ["id", "name", "low_price", "haigh_price", "low_date", "haigh_date"]:
+
+    if pr_category_id is None:
+        if sort in "id":
+            products_ = await repository_products.get_products_id(limit, offset, db)
+        elif sort in "name":
+            products_ = await repository_products.get_products_name(limit, offset, db)
+        elif sort in "low_price":
+            products_ = await repository_products.get_products_low_price(limit, offset, db)
+        elif sort in "high_price":
+            products_ = await repository_products.get_products_high_price(limit, offset, db)
+        elif sort in "low_date":
+            products_ = await repository_products.get_products_low_date(limit, offset, db)
+        elif sort in "high_date":
+            products_ = await repository_products.get_products_high_date(limit, offset, db)
+
+    if pr_category_id:
+        product_category = await repository_product_categories.product_category_by_id(pr_category_id, db)
+        if product_category is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+        if sort in "id":
+            products_ = await repository_products.get_products_id_by_category_id(limit, offset, pr_category_id, db)
+        elif sort in "name":
+            products_ = await repository_products.get_products_name_by_category_id(limit, offset, pr_category_id, db)
+        elif sort in "low_price":
+            products_ = await repository_products.get_products_low_price_by_category_id(limit, offset, pr_category_id, db)
+        elif sort in "high_price":
+            products_ = await repository_products.get_products_high_price_by_category_id(limit, offset, pr_category_id, db)
+        elif sort in "low_date":
+            products_ = await repository_products.get_products_low_date_by_category_id(limit, offset, pr_category_id, db)
+        elif sort in "high_date":
+            products_ = await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
+
+    if products_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return products_
 
