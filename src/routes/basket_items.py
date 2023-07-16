@@ -25,6 +25,19 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
             dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def basket_items(current_user: User = Depends(auth_service.get_current_user),
                        db: Session = Depends(get_db)):
+    """
+    The basket_items function returns a list of all the items in the basket.
+        The function takes an optional user_id parameter, which is used to filter
+        out only those items that belong to that particular user. If no user_id is
+        provided, then all basket items are returned.
+
+    Args:
+        current_user: User: Get the current user from the database
+        db: Session: Access the database
+
+    Returns:
+        A list of basket items
+    """
     basket_items_ = await repository_basket_items.basket_items(current_user, db)
     if basket_items_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -38,6 +51,17 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
 async def add_to_favorites(body: BasketItemsModel,
                            current_user: User = Depends(auth_service.get_current_user),
                            db: Session = Depends(get_db)):
+    """
+    The add_to_favorites function adds a product to the user's basket.
+
+    Args:
+        body: BasketItemsModel: Get the product_id from the request body
+        current_user: User: Get the current user
+        db: Session: Create a database session
+
+    Returns:
+        A basketitemsmodel object
+    """
     basket = await repository_baskets.baskets(current_user, db)
     if not basket:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -60,6 +84,20 @@ async def add_to_favorites(body: BasketItemsModel,
 async def remove_product(body: BasketItemsModel,
                          current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
+    """
+    The remove_product function removes a product from the basket.
+        The function takes in a body of type BasketItemsModel, which contains the id of the product to be removed.
+        It also takes in an optional current_user parameter, which is used to identify who's basket we are removing from.
+        Finally it takes in an optional db parameter, which is used for database access.
+
+    Args:
+        body: BasketItemsModel: Get the product_id from the request body
+        current_user: User: Get the current user
+        db: Session: Get a database session
+
+    Returns:
+        None
+    """
     basket = await repository_baskets.baskets(current_user, db)
     if not basket:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)

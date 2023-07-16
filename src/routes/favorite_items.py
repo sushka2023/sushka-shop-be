@@ -25,6 +25,18 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
             dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def favorite_items(current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
+    """
+    The favorite_items function returns a list of favorite items for the current user.
+        The function takes in a User object and Session object as parameters, which are used to query the database.
+        If no favorite items are found, an HTTP 404 error is raised.
+
+    Args:
+        current_user: User: Get the current user
+        db: Session: Get the database session
+
+    Returns:
+        A list of favorite items
+    """
     favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
     if favorite_items_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -38,6 +50,20 @@ async def favorite_items(current_user: User = Depends(auth_service.get_current_u
 async def add_to_favorites(body: FavoriteItemsModel,
                            current_user: User = Depends(auth_service.get_current_user),
                            db: Session = Depends(get_db)):
+    """
+    The add_to_favorites function adds a product to the user's favorites list.
+        The function takes in a body of type FavoriteItemsModel, which contains the product_id of the item to be added.
+        It also takes in an optional current_user parameter, which is used for authentication purposes and defaults to None.
+        Finally it takes in an optional db parameter that defaults to None as well.
+
+    Args:
+        body: FavoriteItemsModel: Get the product_id from the request body
+        current_user: User: Get the current user
+        db: Session: Get the database session
+
+    Returns:
+        A favorite item
+    """
     favorite = await repository_favorites.favorites(current_user, db)
     if not favorite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -60,6 +86,20 @@ async def add_to_favorites(body: FavoriteItemsModel,
 async def remove_product(body: FavoriteItemsModel,
                          current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
+    """
+    The remove_product function removes a product from the user's favorite list.
+        The function takes in a body of type FavoriteItemsModel, which contains the id of the product to be removed.
+        It also takes in an optional current_user parameter, which is used to identify who is making this request.
+        This parameter defaults to None if no user is logged in and will throw an error if no user can be found.
+
+    Args:
+        body: FavoriteItemsModel: Get the product_id from the body of the request
+        current_user: User: Get the current user
+        db: Session: Get the database session
+
+    Returns:
+        None
+    """
     favorite = await repository_favorites.favorites(current_user, db)
     if not favorite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
