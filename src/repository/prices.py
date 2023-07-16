@@ -1,10 +1,12 @@
 from typing import List
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from src.database.models import Price
 from src.schemas.price import PriceModel, PriceResponse
+from src.services.exception_detail import ExDetail as Ex
 
 
 async def price_by_product_id(id_product: int, db: Session) -> List[PriceResponse]:
@@ -47,7 +49,11 @@ async def calculate_total_price(price_ids: List[int], db: Session) -> str:
     total_price = (
         db.query(func.sum(Price.price))
         .filter(Price.id.in_(price_ids))
+        .filter(Price.is_deleted == False)
         .scalar()
     )
+    if total_price is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
     total_price = '{:.2f}'.format(total_price)
     return total_price or "0.00"
