@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
-from src.database.models import User, Role, BlacklistToken
+from src.database.models import User, Role
 from src.repository import users as repository_users
 from src.services.auth import auth_service
-from src.schemas.users import UserResponse, UserChangeRole  # UserUpdate, UserUpdateAdmin, UserShow
+from src.schemas.users import UserResponse, UserChangeRole
 from src.services.roles import RoleAccess
+from src.services.exception_detail import ExDetail as Ex
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -47,5 +48,5 @@ async def change_role(body: UserChangeRole,
     user = await repository_users.change_role(body, user, db)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+            status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return user

@@ -9,6 +9,7 @@ from src.repository import favorites as repository_favorites
 from src.schemas.favorites import FavoriteResponse
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
+from src.services.exception_detail import ExDetail as Ex
 
 router = APIRouter(prefix="/favorites", tags=["favorite"])
 
@@ -26,6 +27,6 @@ async def create(current_user: User = Depends(auth_service.get_current_user),
                  db: Session = Depends(get_db)):
     favorite = await repository_favorites.favorites(current_user, db)
     if favorite:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Favorite already create.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     new_favorite = await repository_favorites.create(current_user, db)
     return new_favorite
