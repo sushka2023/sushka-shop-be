@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 
-class FavoriteModel(BaseModel):
+class BasketModel(BaseModel):
     user_id: int
 
 
-class FavoriteResponse(BaseModel):
+class BasketResponse(BaseModel):
     id: int
     user_id: int
 

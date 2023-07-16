@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.schemas.email import RequestEmail
 from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
+from src.repository import baskets as repository_baskets
 from src.repository import favorites as repository_favorites
 from src.repository import users as repository_users
 from src.services.auth import auth_service
@@ -30,6 +31,11 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
     if favorite:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     await repository_favorites.create(new_user, db)  # New favorite in user
+
+    basket = await repository_baskets.baskets(new_user, db)
+    if basket:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_baskets.create(new_user, db)  # New basket in user
 
     background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
     return new_user
