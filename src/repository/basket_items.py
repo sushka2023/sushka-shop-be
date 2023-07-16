@@ -16,7 +16,7 @@ async def create(body: BasketItemsModel, basket: Basket, db: Session):
     return new_basket_item
 
 
-async def basket_items(current_user: User, db: Session) -> List[Basket] | None:  #TODO Basket or BasketItems
+async def basket_items(current_user: User, db: Session) -> List[BasketItem] | None:
     basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id) \
         .join(Basket, Basket.id == BasketItem.basket_id) \
         .join(Product, Product.id == BasketItem.product_id) \
