@@ -20,6 +20,23 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 @router.get("/all", response_model=List[ProductResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+    """
+    The products function returns a list of products.
+        The function accepts the following parameters:
+            limit - an integer representing the number of products to return, default is 10.
+            offset - an integer representing how many items to skip before returning results, default is 0.
+            pr_category_id - an optional parameter that filters by product category id if provided.  If not provided all categories are returned.
+
+    Args:
+        limit: int: Limit the number of products returned
+        offset: int: Get the next page of products
+        pr_category_id: int: Filter the products by category id
+        sort: str: Sort the products by name, price or date
+        db: Session: Get the database session from the dependency injection container
+
+    Returns:
+        A list of products
+    """
     products_ = None
 
     if sort not in ["id", "name", "low_price", "high_price", "low_date", "high_date"]:
@@ -67,6 +84,16 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
              dependencies=[Depends(allowed_operation_admin_moderator)],
              status_code=status.HTTP_201_CREATED)
 async def create_product(body: ProductModel, db: Session = Depends(get_db)):
+    """
+    The create_product function creates a new product in the database.
+
+    Args:
+        body: ProductModel: Validate the request body
+        db: Session: Pass the database session to the repository layer
+
+    Returns:
+        A productmodel object
+    """
     product = await repository_products.product_by_name(body.name, db)
     if product:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
@@ -78,6 +105,19 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+    """
+    The archive_product function is used to archive a product.
+        The function takes in the id of the product to be archived and returns an object containing information about that product.
+        If no such id exists, it raises a 404 error.
+
+
+    Args:
+        body: ProductArchiveModel: Get the id of the product to be archived
+        db: Session: Get the database session
+
+    Returns:
+        A product object
+    """
     product = await repository_products.product_by_id(body.id, db)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -91,6 +131,17 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+    """
+    The archive_product function is used to unarchive a product.
+        The function takes in the id of the product and returns an object containing information about that product.
+
+    Args:
+        body: ProductArchiveModel: Get the id of the product to be archived
+        db: Session: Get the database session
+
+    Returns:
+        A product object
+    """
     product = await repository_products.product_by_id(body.id, db)
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)

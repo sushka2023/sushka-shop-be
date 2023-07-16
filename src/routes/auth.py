@@ -20,6 +20,18 @@ security = HTTPBearer()
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Request, db: Session = Depends(get_db)):
     """
+    The signup function creates a new user in the database.
+        It takes a UserModel object as input, and returns the newly created user.
+        The function also sends an email to verify the account.
+
+    Args:
+        body: UserModel: Receive the data of the user to be created
+        background_tasks: BackgroundTasks: Add a task to the background tasks queue
+        request: Request: Get the base_url of the application
+        db: Session: Access the database
+
+    Returns:
+        The created user
     """
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
@@ -126,6 +138,19 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
 
 @router.get('/confirmed_email/{token}')
 async def confirmed_email(token: str, db: Session = Depends(get_db)):
+    """
+    The confirmed_email function is used to confirm a user's email address.
+        It takes in the token that was sent to the user's email and uses it to get their email address.
+        Then, it gets the user from our database using their email address and checks if they are already active.
+        If they are, we return an error message saying that their account is already confirmed. Otherwise, we set them as active in our database.
+
+    Args:
+        token: str: Get the token from the url
+        db: Session: Get the database session
+
+    Returns:
+        A message that the email has been confirmed
+    """
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
@@ -139,6 +164,22 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)):
 @router.post('/request_email')
 async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
                         db: Session = Depends(get_db)):
+    """
+    The request_email function is used to send an email to the user with a link that will allow them
+    to confirm their account. The function takes in a RequestEmail object, which contains the email of
+    the user who wants to confirm their account. It then checks if there is already an active user with
+    that email address, and if so returns a message saying that they are already confirmed. If not, it sends
+    an email containing a confirmation link.
+
+    Args:
+        body: RequestEmail: Get the email from the request body
+        background_tasks: BackgroundTasks: Add a task to the background tasks queue
+        request: Request: Get the base url of the application
+        db: Session: Get the database session
+
+    Returns:
+        A message that is displayed to the user
+    """
     user = await repository_users.get_user_by_email(body.email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST)
@@ -151,6 +192,21 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
 
 @router.get('/reset_password/{email}')
 async def send_email_reset_password(email: str, background_tasks: BackgroundTasks, request: Request, db: Session = Depends(get_db)):
+    """
+    The send_email_reset_password function sends an email to the user with a link to reset their password.
+    The function takes in the following parameters:
+        - email (str): The user's email address.
+        - background_tasks (BackgroundTasks): A BackgroundTasks object that allows us to add tasks for execution in a separate thread. This is necessary because we don't want our API call to hang while waiting for the send_reset_email function, which can take some time, depending on how long it takes for SendGrid's servers to respond and deliver our message. We'll learn more about this later when we discuss asynchronous programming and
+
+    Args:
+        email: str: Get the email of the user who wants to reset their password
+        background_tasks: BackgroundTasks: Run the send_reset_email function in a separate thread
+        request: Request: Get the base url of the application
+        db: Session: Get a database session
+
+    Returns:
+        The message &quot;letter sent successfully&quot;
+    """
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST)
@@ -162,6 +218,20 @@ async def send_email_reset_password(email: str, background_tasks: BackgroundTask
 
 @router.post('/reset_password/confirmed/{token}')
 async def reset_password(token: str, body: PasswordModel, db: Session = Depends(get_db)):
+    """
+    The reset_password function takes a token and a body as input.
+    The token is used to get the email of the user who requested password reset.
+    The body contains the new password for that user, which is hashed using pwd_context.hash() before being stored in
+    the database.
+
+    Args:
+        token: str: Get the email of the user who wants to reset his password
+        body: PasswordModel: Get the password from the request body
+        db: Session: Get the database session
+
+    Returns:
+        A message to the user
+    """
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:

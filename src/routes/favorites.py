@@ -25,6 +25,17 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
              status_code=status.HTTP_201_CREATED)
 async def create(current_user: User = Depends(auth_service.get_current_user),
                  db: Session = Depends(get_db)):
+    """
+    The create function creates a new favorite for the current user.
+        If the user already has a favorite, it will return an error.
+
+    Args:
+        current_user: User: Get the user id from the token
+        db: Session: Pass the database session to the repository
+
+    Returns:
+        A favorite object
+    """
     favorite = await repository_favorites.favorites(current_user, db)
     if favorite:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
