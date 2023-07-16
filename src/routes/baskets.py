@@ -25,6 +25,17 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
              status_code=status.HTTP_201_CREATED)
 async def create(current_user: User = Depends(auth_service.get_current_user),
                  db: Session = Depends(get_db)):
+    """
+    The create function creates a new basket for the current user.
+    If the user already has a basket, it will return an error.
+
+    Args:
+        current_user: User: Get the current user
+        db: Session: Access the database
+
+    Returns:
+        A basket object
+    """
     basket = await repository_baskets.baskets(current_user, db)
     if basket:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
