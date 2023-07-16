@@ -7,7 +7,7 @@ from src.database.db import get_db
 from src.database.models import Role
 from src.repository import prices as repository_prices
 from src.repository import products as repository_products
-from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel
+from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel, TotalPriceResponse, TotalPriceModel
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -62,3 +62,13 @@ async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_price = await repository_prices.unarchive_price(body.id, db)
     return return_archive_price
+
+
+@router.post("/total_price", response_model=TotalPriceResponse)
+async def total_price(body: TotalPriceModel, db: Session = Depends(get_db)):
+    total = await repository_prices.calculate_total_price(body.id, db)
+
+    if total is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+    total = TotalPriceResponse(total_price=total)
+    return total
