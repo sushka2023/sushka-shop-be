@@ -7,6 +7,7 @@ from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import favorite_items as repository_favorite_items
 from src.repository import favorites as repository_favorites
+from src.repository import products as repository_products
 from src.schemas.favorite_items import FavoriteItemsResponse, FavoriteItemsModel
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
@@ -39,9 +40,15 @@ async def add_to_favorites(body: FavoriteItemsModel,
     favorite = await repository_favorites.favorites(current_user, db)
     if not favorite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+
+    product = await repository_products.product_by_id(body.product_id, db)
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+
     favorite_item = await repository_favorite_items.favorite_item(body, current_user, db)
     if favorite_item:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already in favorite.")
+
     add_product_to_favorites = await repository_favorite_items.create(body, favorite, db)
     return add_product_to_favorites
 
