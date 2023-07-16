@@ -1,6 +1,7 @@
 from typing import List
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from src.database.models import Price
 from src.schemas.price import PriceModel, PriceResponse
@@ -40,3 +41,13 @@ async def unarchive_price(body: int, db: Session):
         db.commit()
         return price
     return None
+
+
+async def calculate_total_price(price_ids: List[int], db: Session) -> str:
+    total_price = (
+        db.query(func.sum(Price.price))
+        .filter(Price.id.in_(price_ids))
+        .scalar()
+    )
+    total_price = '{:.2f}'.format(total_price)
+    return total_price or "0.00"
