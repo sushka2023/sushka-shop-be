@@ -9,6 +9,7 @@ from src.repository import prices as repository_prices
 from src.repository import products as repository_products
 from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel
 from src.services.roles import RoleAccess
+from src.services.exception_detail import ExDetail as Ex
 
 router = APIRouter(prefix="/price", tags=["price"])
 
@@ -21,7 +22,7 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 async def product_prices(id_product: int, db: Session = Depends(get_db)):
     prod_prices = await repository_prices.price_by_product_id(id_product, db)
     if prod_prices is None or len(prod_prices) == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return prod_prices
 
 
@@ -32,7 +33,7 @@ async def product_prices(id_product: int, db: Session = Depends(get_db)):
 async def create_price(body: PriceModel, db: Session = Depends(get_db)):
     product = await repository_products.product_by_id(body.product_id, db)
     if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     new_price = await repository_prices.create_price(body, db)
     return new_price
 
@@ -43,9 +44,9 @@ async def create_price(body: PriceModel, db: Session = Depends(get_db)):
 async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)):
     price = await repository_prices.price_by_id(body.id, db)
     if price is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     if price.is_deleted:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Price already archive.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     archive_price = await repository_prices.archive_price(body.id, db)
     return archive_price
 
@@ -56,8 +57,8 @@ async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)
 async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)):
     price = await repository_prices.price_by_id(body.id, db)
     if price is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     if price.is_deleted is False:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The price is not archived.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_price = await repository_prices.unarchive_price(body.id, db)
     return return_archive_price

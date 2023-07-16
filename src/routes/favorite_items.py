@@ -11,6 +11,7 @@ from src.repository import products as repository_products
 from src.schemas.favorite_items import FavoriteItemsResponse, FavoriteItemsModel
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
+from src.services.exception_detail import ExDetail as Ex
 
 router = APIRouter(prefix="/favorite_items", tags=["favorite_items"])
 
@@ -26,7 +27,7 @@ async def favorite_items(current_user: User = Depends(auth_service.get_current_u
                          db: Session = Depends(get_db)):
     favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
     if favorite_items_ is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return favorite_items_
 
 
@@ -39,15 +40,15 @@ async def add_to_favorites(body: FavoriteItemsModel,
                            db: Session = Depends(get_db)):
     favorite = await repository_favorites.favorites(current_user, db)
     if not favorite:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     product = await repository_products.product_by_id(body.product_id, db)
     if not product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     favorite_item = await repository_favorite_items.favorite_item(body, current_user, db)
     if favorite_item:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already in favorite.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
     add_product_to_favorites = await repository_favorite_items.create(body, favorite, db)
     return add_product_to_favorites
@@ -61,11 +62,11 @@ async def remove_product(body: FavoriteItemsModel,
                          db: Session = Depends(get_db)):
     favorite = await repository_favorites.favorites(current_user, db)
     if not favorite:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     favorite_item = await repository_favorite_items.favorite_item(body, current_user, db)
     if not favorite_item:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     product_from_fav = await repository_favorite_items.get_f_item_from_product_id(body.product_id, db)  # get product from favorite
     await repository_favorite_items.remove(product_from_fav, db)  # Remove product from favorite
     return None

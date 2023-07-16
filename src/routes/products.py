@@ -8,6 +8,7 @@ from src.database.models import Role
 from src.repository import products as repository_products
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.roles import RoleAccess
+from src.services.exception_detail import ExDetail as Ex
 
 router = APIRouter(prefix="/product", tags=["product"])
 
@@ -20,9 +21,9 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 async def products(limit: int, offset: int, sort: str = "name", db: Session = Depends(get_db)):
     products_ = await repository_products.get_products(limit, offset, sort, db)
     if products_ is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     if sort not in ["id", "name", "low_price", "haigh_price", "low_date", "haigh_date"]:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return products_
 
 
@@ -33,7 +34,7 @@ async def products(limit: int, offset: int, sort: str = "name", db: Session = De
 async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     product = await repository_products.product_by_name(body.name, db)
     if product:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already exists.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     new_product = await repository_products.create_product(body, db)
     return new_product
 
@@ -44,9 +45,9 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
     product = await repository_products.product_by_id(body.id, db)
     if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     if product.is_deleted:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already archive.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     archive_prod = await repository_products.archive_product(body.id, db)
     return archive_prod
 
@@ -57,8 +58,8 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
     product = await repository_products.product_by_id(body.id, db)
     if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="NOT_FOUND")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     if product.is_deleted is False:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The product is not archived.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_prod = await repository_products.unarchive_product(body.id, db)
     return return_archive_prod
