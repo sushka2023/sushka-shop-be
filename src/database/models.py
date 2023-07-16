@@ -174,7 +174,7 @@ class UkrPoshta(Base):
 
 
 class Favorite(Base):
-    __tablename__ = 'favorits'
+    __tablename__ = 'favorites'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="favorite")
@@ -184,7 +184,7 @@ class Favorite(Base):
 class FavoriteItem(Base):
     __tablename__ = 'favorite_items'
     id = Column(Integer, primary_key=True)
-    favorite_id = Column(Integer, ForeignKey('favorits.id'))
+    favorite_id = Column(Integer, ForeignKey('favorites.id'))
     favorite = relationship("Favorite", back_populates="favorite_items")
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
