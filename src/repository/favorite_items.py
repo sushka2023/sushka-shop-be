@@ -16,7 +16,7 @@ async def create(body: FavoriteItemsModel, favorite: Favorite, db: Session):
     return new_favorite_item
 
 
-async def favorite_items(current_user: User, db: Session) -> List[Favorite] | None:
+async def favorite_items(current_user: User, db: Session) -> List[Favorite] | None:  #TODO
     favorite_items_ = db.query(FavoriteItem.id, FavoriteItem.favorite_id, FavoriteItem.product_id) \
         .join(Favorite, Favorite.id == FavoriteItem.favorite_id) \
         .join(Product, Product.id == FavoriteItem.product_id) \
