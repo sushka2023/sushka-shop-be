@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.schemas.email import RequestEmail
 from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
+from src.repository import favorites as repository_favorites
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
@@ -21,8 +22,14 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
     body.password_checksum = auth_service.pwd_context.hash(body.password_checksum)
-    new_user = await repository_users.create_user(body, db)
-    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)
+    new_user = await repository_users.create_user(body, db)  # New user
+
+    favorite = await repository_favorites.favorites(new_user, db)
+    if favorite:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Favorite already create.")
+    await repository_favorites.create(new_user, db)  # New favorite in user
+
+    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
     return new_user
 
 
