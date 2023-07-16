@@ -132,7 +132,8 @@ async def confirmed_email(token: str, db: Session = Depends(get_db)):
 async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, request: Request,
                         db: Session = Depends(get_db)):
     user = await repository_users.get_user_by_email(body.email, db)
-
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error")
     if user.is_active:
         return {"message": "Your email is already confirmed"}
     if user:
