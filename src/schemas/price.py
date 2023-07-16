@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field, validator
 
@@ -33,3 +33,11 @@ class PriceResponse(BaseModel):
 
 class PriceArchiveModel(BaseModel):
     id: int
+
+
+class TotalPriceModel(BaseModel):
+    id: List[int]
+
+
+class TotalPriceResponse(BaseModel):
+    total_price: str
