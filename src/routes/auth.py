@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status, APIRouter, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from src.database.caching import redis_cl
+from src.database.caching import get_redis
 from src.database.db import get_db
 from src.schemas.email import RequestEmail
 from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
@@ -57,31 +57,21 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
 
 
 @router.post("/login", response_model=TokenModel)
-async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """
-    The login function is used to authenticate a user.
-        It takes the username and password from the request body,
-        verifies them against the database, and returns an access token if successful.
-
-    Arguments:
-        body (OAuth2PasswordRequestForm): Get the token from the request header
-        db (Session): SQLAlchemy session object for accessing the database
-
-    Returns:
-        dict: JSON access_token / refresh_token / token_type
-    """
-    user = redis_cl.get(f"user:{body.username}")
+async def login(body: OAuth2PasswordRequestForm = Depends(),
+                db: Session = Depends(get_db)):
+    with get_redis() as redis_cl:
+        user = redis_cl.get(f"user:{body.username}")
 
     if user is None:
         print("User no cache")
         user = await repository_users.get_user_by_email(body.username, db)
-        redis_cl.set(f"user:{body.username}", pickle.dumps(user))
-        redis_cl.expire(f"user:{body.username}", 900)
+        with get_redis() as redis_cl:
+            redis_cl.set(f"user:{body.username}", pickle.dumps(user))
+            redis_cl.expire(f"user:{body.username}", 900)
     else:
         user = pickle.loads(user)
         print("User in cache")
 
-    # user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
     if not user.is_active:

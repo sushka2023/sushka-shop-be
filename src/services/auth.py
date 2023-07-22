@@ -11,7 +11,7 @@ from jose import JWTError, jwt
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
-from src.database.caching import redis_cl
+from src.database.caching import get_redis
 
 
 class Auth:
@@ -89,19 +89,8 @@ class Auth:
         return encoded_refresh_token
 
     @classmethod
-    async def get_current_user(cls, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-        """
-        The get_current_user function is a dependency that will be used in the
-            protected endpoints. It takes a token as an argument and returns the user
-            if it's valid, or raises an exception otherwise.
-
-        Arguments:
-            token (str): Get the token from the request header
-            db (Session): SQLAlchemy session object for accessing the database
-
-        Returns:
-            A user object if the token is valid
-        """
+    async def get_current_user(cls, token: str = Depends(oauth2_scheme),
+                               db: Session = Depends(get_db)):
 
         payload = cls.token_decode(token)
         if payload.get("scope") == "access_token":
@@ -111,26 +100,31 @@ class Auth:
         else:
             raise cls.credentials_exception
 
-        token_blacklisted = redis_cl.get(f"bl_token:{email}")
+        with get_redis() as redis_cl:
+            token_blacklisted = redis_cl.get(f"bl_token:{email}")
 
         if token_blacklisted is None:
             token_blacklisted = await repository_users.is_blacklisted_token(token, db)
             if token_blacklisted:
-                redis_cl.set(f"bl_token:{email}", pickle.dumps(token_blacklisted))
-                redis_cl.expire(f"bl_token:{email}", 900)
+                with get_redis() as redis_cl:
+                    redis_cl.set(f"bl_token:{email}", pickle.dumps(token_blacklisted))
+                    redis_cl.expire(f"bl_token:{email}", 900)
         else:
             token_blacklisted = pickle.loads(token_blacklisted)
 
         if token_blacklisted:
             raise cls.credentials_exception
 
-        user = redis_cl.get(f"user:{email}")
+        with get_redis() as redis_cl:
+            user = redis_cl.get(f"user:{email}")
 
         if user is None:
             print("User no cache")
             user = await repository_users.get_user_by_email(email, db)
-            redis_cl.set(f"user:{email}", pickle.dumps(user))
-            redis_cl.expire(f"user:{email}", 900)
+
+            with get_redis() as redis_cl:
+                redis_cl.set(f"user:{email}", pickle.dumps(user))
+                redis_cl.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
             print("User in cache")

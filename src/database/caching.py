@@ -1,28 +1,24 @@
+from contextlib import contextmanager
+
 import redis
 from redis.exceptions import AuthenticationError
 from src.conf.config import settings
 
 
+@contextmanager
 def get_redis():
+    redis_client = redis.Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        db=0,
+        password=settings.redis_password
+    )
     try:
-        redis_client = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=0,
-            password=settings.redis_password
-            )
-
-    except AuthenticationError as error:
-        redis_client = None
-        print(f'Authentication failed to connect to redis\n{error}')
-        # TODO loger
-
+        redis_client.ping()  # Перевірка підключення
+        yield redis_client
+    except redis.exceptions.AuthenticationError as error:
+        print(f'Authentication failed to connect to Redis: {error}')
     except Exception as error:
-        redis_client = None
-        print(f'Unable to connect to redis\n{error}')
-        # TODO loger
-
-    return redis_client if redis_client else None
-
-
-redis_cl = get_redis()
+        print(f'Unable to connect to Redis: {error}')
+    finally:
+        redis_client.connection_pool.disconnect()
