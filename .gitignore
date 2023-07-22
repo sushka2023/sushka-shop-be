@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 
+postgres-data/
 develop-eggs/
 dist/
 downloads/

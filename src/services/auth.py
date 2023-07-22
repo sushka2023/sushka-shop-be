@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import pickle
 
 from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
@@ -10,6 +11,7 @@ from jose import JWTError, jwt
 from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
+from src.database.caching import redis_cl
 
 
 class Auth:
@@ -108,10 +110,30 @@ class Auth:
                 raise cls.credentials_exception
         else:
             raise cls.credentials_exception
-        token_blacklisted = await repository_users.is_blacklisted_token(token, db)
+
+        token_blacklisted = redis_cl.get(f"bl_token:{email}")
+
+        if token_blacklisted is None:
+            token_blacklisted = await repository_users.is_blacklisted_token(token, db)
+            if token_blacklisted:
+                redis_cl.set(f"bl_token:{email}", pickle.dumps(token_blacklisted))
+                redis_cl.expire(f"bl_token:{email}", 900)
+        else:
+            token_blacklisted = pickle.loads(token_blacklisted)
+
         if token_blacklisted:
             raise cls.credentials_exception
-        user = await repository_users.get_user_by_email(email, db)
+
+        user = redis_cl.get(f"user:{email}")
+
+        if user is None:
+            print("User no cache")
+            user = await repository_users.get_user_by_email(email, db)
+            redis_cl.set(f"user:{email}", pickle.dumps(user))
+            redis_cl.expire(f"user:{email}", 900)
+        else:
+            user = pickle.loads(user)
+            print("User in cache")
         if user is None:
             raise cls.credentials_exception
         return user

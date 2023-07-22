@@ -16,3 +16,4 @@ pillow~=9.5.0
 pytest-mock~=3.10.0
 pytest-asyncio~=0.21.0
 python-multipart~=0.0.6
+redis~=4.6.0

@@ -1,7 +1,10 @@
+import pickle
+
 from fastapi import Depends, HTTPException, status, APIRouter, Security, Request, BackgroundTasks
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from src.database.caching import redis_cl
 from src.database.db import get_db
 from src.schemas.email import RequestEmail
 from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
@@ -67,7 +70,18 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
     Returns:
         dict: JSON access_token / refresh_token / token_type
     """
-    user = await repository_users.get_user_by_email(body.username, db)
+    user = redis_cl.get(f"user:{body.username}")
+
+    if user is None:
+        print("User no cache")
+        user = await repository_users.get_user_by_email(body.username, db)
+        redis_cl.set(f"user:{body.username}", pickle.dumps(user))
+        redis_cl.expire(f"user:{body.username}", 900)
+    else:
+        user = pickle.loads(user)
+        print("User in cache")
+
+    # user = await repository_users.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
     if not user.is_active:
