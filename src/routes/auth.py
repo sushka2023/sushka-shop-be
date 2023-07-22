@@ -63,14 +63,12 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
         user = redis_cl.get(f"user:{body.username}")
 
     if user is None:
-        print("User no cache")
         user = await repository_users.get_user_by_email(body.username, db)
         with get_redis() as redis_cl:
             redis_cl.set(f"user:{body.username}", pickle.dumps(user))
             redis_cl.expire(f"user:{body.username}", 900)
     else:
         user = pickle.loads(user)
-        print("User in cache")
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)

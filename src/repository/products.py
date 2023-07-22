@@ -15,23 +15,6 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     return db.query(Product).filter_by(id=body).first()
 
 
-# async def get_products(limit: int, offset: int, sort: str, db: Session) -> List[Product] | None:
-#     products_ = None
-#     if "id" in sort:
-#         products_ = db.query(Product).filter(Product.is_deleted == False).order_by(asc(Product.id)).limit(limit).offset(offset).all()
-#     elif "name" in sort:
-#         products_ = db.query(Product).filter(Product.is_deleted == False).order_by(asc(Product.name)).limit(limit).offset(offset).all()
-#     elif "low_price" in sort:
-#         products_ = db.query(Product).join(Price).filter(Product.is_deleted == False).order_by(asc(Price.price)).limit(limit).offset(offset).all()
-#     elif "haigh_price" in sort:
-#         products_ = db.query(Product).join(Price).filter(Product.is_deleted == False).order_by(desc(Price.price)).limit(limit).offset(offset).all()
-#     elif "low_date" in sort:
-#         products_ = db.query(Product).filter(Product.is_deleted == False).order_by(asc(Product.created_at)).limit(limit).offset(offset).all()
-#     elif "haigh_date" in sort:
-#         products_ = db.query(Product).filter(Product.is_deleted == False).order_by(desc(Product.created_at)).limit(limit).offset(offset).all()
-#     return products_
-
-
 async def get_products_id(limit: int, offset: int, db: Session) -> List[Product] | None:
     products_ = db.query(Product).\
         filter(Product.is_deleted == False).\

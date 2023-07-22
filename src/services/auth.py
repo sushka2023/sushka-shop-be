@@ -119,7 +119,6 @@ class Auth:
             user = redis_cl.get(f"user:{email}")
 
         if user is None:
-            print("User no cache")
             user = await repository_users.get_user_by_email(email, db)
 
             with get_redis() as redis_cl:
@@ -127,7 +126,6 @@ class Auth:
                 redis_cl.expire(f"user:{email}", 900)
         else:
             user = pickle.loads(user)
-            print("User in cache")
         if user is None:
             raise cls.credentials_exception
         return user
