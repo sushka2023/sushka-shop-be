@@ -1,10 +1,10 @@
 # Використовуємо офіційний образ Python
-FROM python:3.10.11
+FROM ubuntu:latest
 
 # Встановлюємо залежності Python
-COPY requirements.txt /app/
-WORKDIR /app
-RUN pip install --no-cache-dir -r requirements.txt
+#COPY requirements.txt /app_backend
+#WORKDIR /app_backend
+#RUN pip install --no-cache-dir -r requirements.txt
 
 # Встановлюємо Git
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/sushka2023/sushka-shop-be /app_backend
 WORKDIR /app_backend
 RUN git checkout feature/caching_in_redis
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Встановлюємо Redis
 RUN apt-get update && apt-get install -y redis-server && rm -rf /var/lib/apt/lists/*
