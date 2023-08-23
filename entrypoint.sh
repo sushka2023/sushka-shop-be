@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Activate virtual environment
-source /root/.cache/pypoetry/virtualenvs/store-2fuo_mI6-py3.10/bin/activate
+#source /root/.cache/pypoetry/virtualenvs/store-2fuo_mI6-py3.10/bin/activate
 
 # Start Redis with password
 redis-server /etc/redis/redis.conf &
