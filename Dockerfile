@@ -28,7 +28,7 @@ RUN echo "notify-keyspace-events Ex" >> /etc/redis/redis.conf
 #RUN pip install --no-cache-dir -r requirements.txt
 RUN poetry lock
 RUN poetry install
-RUN poetry shell -n
+#RUN poetry shell -n
 
 # Відкриваємо порт для FastAPI
 EXPOSE 8000
