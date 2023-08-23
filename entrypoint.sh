@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/sh
 
 # Запускаємо Redis з паролем
 redis-server /etc/redis/redis.conf &
