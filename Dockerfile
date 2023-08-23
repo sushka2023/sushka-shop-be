@@ -19,7 +19,7 @@ RUN git checkout feature/caching_in_redis
 #RUN pip install --no-cache-dir -r requirements.txt
 RUN poetry lock
 RUN poetry install
-RUN poetry shell
+RUN poetry shell --no-interaction
 
 # Встановлюємо Redis
 RUN apt-get update && apt-get install -y redis-server && rm -rf /var/lib/apt/lists/*
