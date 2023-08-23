@@ -8,7 +8,8 @@ FROM ubuntu:latest
 
 # Встановлюємо Git
 RUN apt-get update && apt-get install -y git  \
-    && apt-get install -y python3  \
+    && apt-get remove -y python3  \
+    && apt-get install -y python3=3.10.11  \
     && apt-get install -y python3-pip
 
 # Клонуємо репозиторій з GitHub
