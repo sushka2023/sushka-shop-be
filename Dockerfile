@@ -16,6 +16,7 @@ RUN pip install poetry
 RUN git clone https://github.com/sushka2023/sushka-shop-be /app_backend
 WORKDIR /app_backend
 RUN git checkout feature/caching_in_redis
+WORKDIR /app_backend/sushka-shop-be
 
 # Встановлюємо Redis
 RUN apt-get update && apt-get install -y redis-server && rm -rf /var/lib/apt/lists/*
