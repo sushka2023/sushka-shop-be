@@ -8,6 +8,7 @@ FROM ubuntu:latest
 
 # Встановлюємо Git
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt install -y python3-pip
 
 # Клонуємо репозиторій з GitHub
 RUN git clone https://github.com/sushka2023/sushka-shop-be /app_backend
