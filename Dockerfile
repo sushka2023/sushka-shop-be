@@ -20,6 +20,7 @@ RUN sed -i 's/bind 127.0.0.1/bind 0.0.0.0/' /etc/redis/redis.conf
 RUN echo "requirepass $REDIS_PASSWORD" >> /etc/redis/redis.conf
 RUN echo "notify-keyspace-events Ex" >> /etc/redis/redis.conf
 
+COPY requirements.txt /app_backend/
 RUN pip install --no-cache-dir -r requirements.txt
 #RUN poetry lock
 #RUN poetry install
