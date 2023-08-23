@@ -8,8 +8,8 @@ FROM ubuntu:latest
 
 # Встановлюємо Git
 RUN apt-get update && apt-get install -y git  \
+    && apt-get install -y python3-pip \
     && apt-get install -y poetry
-#    && apt-get install -y python3-pip \
 
 # Клонуємо репозиторій з GitHub
 RUN git clone https://github.com/sushka2023/sushka-shop-be /app_backend
