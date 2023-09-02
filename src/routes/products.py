@@ -1,15 +1,17 @@
+import pickle
 from typing import List
 
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
+from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
-from src.repository import product_categories as repository_product_categories
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
+from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
 
 router = APIRouter(prefix="/product", tags=["product"])
 
@@ -20,62 +22,45 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 @router.get("/all", response_model=List[ProductResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
-    """
-    The products function returns a list of products.
-        The function accepts the following parameters:
-            limit - an integer representing the number of products to return, default is 10.
-            offset - an integer representing how many items to skip before returning results, default is 0.
-            pr_category_id - an optional parameter that filters by product category id if provided.  If not provided all categories are returned.
+    # Redis client
+    redis_client = get_redis()
 
-    Args:
-        limit: int: Limit the number of products returned
-        offset: int: Get the next page of products
-        pr_category_id: int: Filter the products by category id
-        sort: str: Sort the products by name, price or date
-        db: Session: Get the database session from the dependency injection container
+    # List of allowed sorts
+    allowed_sorts = ["id", "name", "low_price", "high_price", "low_date", "high_date"]
+    if sort not in allowed_sorts:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
 
-    Returns:
-        A list of products
-    """
-    products_ = None
+    # We collect the key for caching
+    key = f"products_{sort}_limit:{limit}:offset:{offset}:pr_category_id:{pr_category_id}"
 
-    if sort not in ["id", "name", "low_price", "high_price", "low_date", "high_date"]:
+    cached_products = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products = redis_client.get(key)
+        print('data get in redis')
+
+    if not cached_products:
+        # The data is not found in the cache, we get it from the database
+        if pr_category_id is None:
+            products_ = await get_products_by_sort(sort, limit, offset, db)
+        else:
+            products_ = await get_products_by_sort_and_category_id(sort, limit, offset, pr_category_id, db)
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(products_))
+            redis_client.expire(key, 1800)
+            print('data set in redis')
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        products_ = pickle.loads(cached_products)
+
+    if not products_:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    if pr_category_id is None:
-        if sort in "id":
-            products_ = await repository_products.get_products_id(limit, offset, db)
-        elif sort in "name":
-            products_ = await repository_products.get_products_name(limit, offset, db)
-        elif sort in "low_price":
-            products_ = await repository_products.get_products_low_price(limit, offset, db)
-        elif sort in "high_price":
-            products_ = await repository_products.get_products_high_price(limit, offset, db)
-        elif sort in "low_date":
-            products_ = await repository_products.get_products_low_date(limit, offset, db)
-        elif sort in "high_date":
-            products_ = await repository_products.get_products_high_date(limit, offset, db)
-
-    if pr_category_id:
-        product_category = await repository_product_categories.product_category_by_id(pr_category_id, db)
-        if product_category is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-        if sort in "id":
-            products_ = await repository_products.get_products_id_by_category_id(limit, offset, pr_category_id, db)
-        elif sort in "name":
-            products_ = await repository_products.get_products_name_by_category_id(limit, offset, pr_category_id, db)
-        elif sort in "low_price":
-            products_ = await repository_products.get_products_low_price_by_category_id(limit, offset, pr_category_id, db)
-        elif sort in "high_price":
-            products_ = await repository_products.get_products_high_price_by_category_id(limit, offset, pr_category_id, db)
-        elif sort in "low_date":
-            products_ = await repository_products.get_products_low_date_by_category_id(limit, offset, pr_category_id, db)
-        elif sort in "high_date":
-            products_ = await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
-
-    if products_ is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return products_
 
 
