@@ -9,8 +9,7 @@ def get_redis():
     redis_client = redis.Redis(
         host=settings.redis_host,
         port=settings.redis_port,
-        db=0,
-        password=settings.redis_password
+        db=0
     )
     # try:
     #     redis_client.ping()  # Перевірка підключення
