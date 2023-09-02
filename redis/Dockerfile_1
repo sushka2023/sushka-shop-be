@@ -25,40 +25,16 @@
 
 
 # Використовуємо офіційний образ Redis з Docker Hub
-#FROM redis:latest
+FROM redis:latest
 
 # Створюємо папку для файлу конфігурації Redis
-#RUN mkdir -p /usr/local/etc/redis/
+RUN mkdir -p /usr/local/etc/redis/
 
 # Створюємо файл конфігурації Redis всередині контейнера
-#RUN echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf \
-#    && echo "port 6379" >> /usr/local/etc/redis/redis.conf \
-#    && echo "maxmemory 100mb" >> /usr/local/etc/redis/redis.conf \
-#    && echo "maxmemory-policy allkeys-lru" >> /usr/local/etc/redis/redis.conf
+RUN echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf \
+    && echo "port 6379" >> /usr/local/etc/redis/redis.conf \
+    && echo "maxmemory 100mb" >> /usr/local/etc/redis/redis.conf \
+    && echo "maxmemory-policy allkeys-lru" >> /usr/local/etc/redis/redis.conf
 
 # Запускаємо Redis з використанням нашого файлу конфігурації
-#CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
-
-# Використовуємо офіційний образ Python з Docker Hub
-FROM python:3.10.11
-
-# Встановлюємо додаткові пакети або бібліотеки (якщо потрібно)
-RUN apt-get update -y && apt-get upgrade -y && apt install nano iproute2 telnet git -y
-
-# Створюємо папку для проекту
-RUN mkdir -p /app
-
-# Клонуємо репозиторій з GitHub (замініть URL на URL вашого репозиторію)
-RUN git clone https://github.com/sushka2023/sushka-shop-be /app
-
-# Переходимо в каталог з клонованим репозиторієм
-WORKDIR /app
-
-# Переключаємося на певну гілку (замініть 'yourbranch' на назву гілки)
-RUN git checkout redis_dockerfile
-
-# Встановлюємо залежності з requirements.txt
-RUN pip install -r requirements.txt
-
-# Запускаємо ваш додаток або команду за бажанням
-CMD ["uvicorn main:app --port ${PORT:-8000} --host 0.0.0.0"]
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
