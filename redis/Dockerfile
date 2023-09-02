@@ -8,7 +8,7 @@ FROM redis:latest
 #RUN apk --no-cache add acl
 
 # Копіюємо конфігураційний файл Redis із локальної директорії в образ
-COPY redis.conf /usr/local/etc/redis/redis.conf
+COPY redis/redis.conf /usr/local/etc/redis/redis.conf
 
 # Змінюємо власника та групу файлу конфігурації на non-root користувача та групу
 #RUN chown redisuser:redisuser /usr/local/etc/redis/redis.conf
