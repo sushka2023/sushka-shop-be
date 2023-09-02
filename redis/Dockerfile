@@ -8,7 +8,7 @@ FROM redis:latest
 #RUN apk --no-cache add acl
 
 # Копіюємо конфігураційний файл Redis із локальної директорії в образ
-#COPY redis.conf /usr/local/etc/redis/redis.conf
+COPY redis.conf /usr/local/etc/redis/redis.conf
 
 # Змінюємо власника та групу файлу конфігурації на non-root користувача та групу
 #RUN chown redisuser:redisuser /usr/local/etc/redis/redis.conf
@@ -17,12 +17,8 @@ FROM redis:latest
 #RUN echo "requirepass \"\$REDIS_PASSWORD\"" >> /usr/local/etc/redis/redis.conf
 
 # Вказуємо Redis використовувати наш конфігураційний файл
-#CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
-CMD ["redis-server"]
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+#CMD ["redis-server"]
 
 # Вказуємо порт, на якому працюватиме Redis (за замовчуванням 6379)
 EXPOSE 6379
-
-# Встановлюємо maxmemory та maxmemory-policy
-#RUN echo "maxmemory 100mb" >> /usr/local/etc/redis/redis.conf && \
-#    echo "maxmemory-policy allkeys-lru" >> /usr/local/etc/redis/redis.conf
