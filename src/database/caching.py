@@ -5,7 +5,6 @@ from redis.exceptions import AuthenticationError
 from src.conf.config import settings
 
 
-@contextmanager
 def get_redis():
     redis_client = redis.Redis(
         host=settings.redis_host,
@@ -13,12 +12,20 @@ def get_redis():
         db=0,
         password=settings.redis_password
     )
+    # try:
+    #     redis_client.ping()  # Перевірка підключення
+    #     return redis_client
+    # except redis.exceptions.AuthenticationError as error:
+    #     print(f'Authentication failed to connect to Redis: {error}')
+    # except Exception as error:
+    #     print(f'Unable to connect to Redis: {error}')
+    # finally:
+    #     redis_client.connection_pool.disconnect()
     try:
-        redis_client.ping()  # Перевірка підключення
-        yield redis_client
+        redis_client.ping()  # Check connection
+        return redis_client  # Return the Redis client instance
     except redis.exceptions.AuthenticationError as error:
         print(f'Authentication failed to connect to Redis: {error}')
     except Exception as error:
         print(f'Unable to connect to Redis: {error}')
-    finally:
-        redis_client.connection_pool.disconnect()
+        return None  # Return None or handle the error as needed

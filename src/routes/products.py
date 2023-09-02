@@ -22,6 +22,8 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 @router.get("/all", response_model=List[ProductResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+    # Redis client
+    redis_client = get_redis()
 
     # List of allowed sorts
     allowed_sorts = ["id", "name", "low_price", "high_price", "low_date", "high_date"]
@@ -32,9 +34,12 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
     # We collect the key for caching
     key = f"products_{sort}_limit:{limit}:offset:{offset}:pr_category_id:{pr_category_id}"
 
-    # We check whether the data is present in the Redis cache
-    with get_redis() as redis_cl:
-        cached_products = redis_cl.get(key)
+    cached_products = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products = redis_client.get(key)
+        print('data get in redis')
 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
@@ -44,9 +49,11 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
             products_ = await get_products_by_sort_and_category_id(sort, limit, offset, pr_category_id, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
-        with get_redis() as redis_cl:
-            redis_cl.set(key, pickle.dumps(products_))
-            redis_cl.expire(key, 1800)
+        if redis_client:
+            redis_client.set(key, pickle.dumps(products_))
+            redis_client.expire(key, 1800)
+            print('data set in redis')
+
     else:
         # The data is found in the Redis cache, we extract it from there
         products_ = pickle.loads(cached_products)
