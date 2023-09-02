@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     mail_port: str = 'port'
     mail_server: str = 'server'
     mail_from_name: str = 'mail_name'
+    redis_host: str = 'host_name'
+    redis_port: str = 'port'
+    redis_password: str = 'password'
 
     class Config:
         env_file = ".env"
