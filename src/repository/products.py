@@ -36,7 +36,6 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
     return products_
 
 
-
 async def get_products_name(limit: int, offset: int, db: Session):
     subquery = (
         select(Price.product_id, func.min(Price.price).label("lowest_price"))
@@ -44,14 +43,13 @@ async def get_products_name(limit: int, offset: int, db: Session):
         .subquery()
     )
 
-    products_with_price = db.query(Product, subquery.c.lowest_price).\
-        outerjoin(subquery, Product.id == subquery.c.product_id).\
-        filter(Product.is_deleted == False).\
-        order_by(asc(Product.name)).\
-        limit(limit).\
-        offset(offset).\
-        all()
-
+    # products_with_price = db.query(Product, subquery.c.lowest_price).\
+    #     outerjoin(subquery, Product.id == subquery.c.product_id).\
+    #     filter(Product.is_deleted == False).\
+    #     order_by(asc(Product.name)).\
+    #     limit(limit).\
+    #     offset(offset).\
+    #     all()
 
 
 async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -64,8 +62,8 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
         all()
     return products_
 
-    print(products_with_price)
-    return products_with_price
+    # print(products_with_price)
+    # return products_with_price
 
 # async def get_products_name(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
 #     products_ = db.query(Product).\
@@ -75,6 +73,7 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
 #         offset(offset).\
 #         all()
 #     return products_
+
 
 async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
