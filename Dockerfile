@@ -53,6 +53,7 @@ EXPOSE 8000
 
 # Запускаємо Redis з використанням нашого файлу конфігурації
 #CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+ENTRYPOINT ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
 # Запускаємо FastAPI додаток за допомогою uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
