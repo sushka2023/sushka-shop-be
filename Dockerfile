@@ -53,10 +53,19 @@ EXPOSE 8000
 
 # Запускаємо Redis з використанням нашого файлу конфігурації
 #CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
-ENTRYPOINT ["redis-server", "/usr/local/etc/redis/redis.conf"]
+#ENTRYPOINT ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
 # Запускаємо FastAPI додаток за допомогою uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Запускаємо Redis і FastAPI додаток
 #CMD ["sh", "-c", "redis-server /usr/local/etc/redis/redis.conf && uvicorn main:app --host 0.0.0.0 --port 8000"]
+
+# Встановлюємо supervisord
+RUN apt install supervisor -y
+
+# Копіюємо конфігураційний файл supervisord.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Встановлюємо ENTRYPOINT для supervisord
+ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
