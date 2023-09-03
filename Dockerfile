@@ -45,9 +45,9 @@ RUN mkdir -p /usr/local/etc/redis/
 # Створюємо файл конфігурації Redis всередині контейнера
 RUN echo "bind 127.0.0.1" > /usr/local/etc/redis/redis.conf \
     && echo "port 6379" >> /usr/local/etc/redis/redis.conf \
-    && echo "requirepass \"$REDIS_PASSWORD\"" >> /usr/local/etc/redis/redis.conf \
     && echo "maxmemory 100mb" >> /usr/local/etc/redis/redis.conf \
     && echo "maxmemory-policy allkeys-lru" >> /usr/local/etc/redis/redis.conf
+# && echo "requirepass \"$REDIS_PASSWORD\"" >> /usr/local/etc/redis/redis.conf \
 
 EXPOSE 8000
 
