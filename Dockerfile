@@ -55,7 +55,7 @@ EXPOSE 8000
 #CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
 # Запускаємо FastAPI додаток за допомогою uvicorn
-#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Запускаємо Redis і FastAPI додаток
-CMD ["sh", "-c", "redis-server /usr/local/etc/redis/redis.conf && uvicorn main:app --host 0.0.0.0 --port 8000"]
+#CMD ["sh", "-c", "redis-server /usr/local/etc/redis/redis.conf && uvicorn main:app --host 0.0.0.0 --port 8000"]
