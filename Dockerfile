@@ -31,7 +31,7 @@ RUN git clone https://github.com/sushka2023/sushka-shop-be /app
 WORKDIR /app
 
 # Переключаємося на певну гілку (замініть 'yourbranch' на назву гілки)
-RUN git checkout redis_dockerfile
+RUN git checkout master
 
 # Встановлюємо залежності з requirements.txt
 RUN pip install -r requirements.txt
