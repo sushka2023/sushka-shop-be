@@ -4,6 +4,7 @@ from sqlalchemy import desc, asc, nullslast, select, func, text
 from sqlalchemy.orm import Session, aliased
 
 from src.database.models import Product, Price, ProductCategory
+from src.repository.prices import price_by_product_ids
 from src.schemas.product import ProductModel
 from src.services.products import product_with_price_response
 
@@ -40,8 +41,8 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
 async def get_products_name(limit: int, offset: int, db: Session):
     products_ = db.query(Product).order_by(asc(Product.name)).limit(limit).offset(offset).all()
     products_id = [prod.id for prod in products_]
-    prices_ = db.query(Price).filter(Price.product_id.in_(products_id)).all()
-    product_with_prices = product_with_price_response(products_, prices_)
+    prices_ = await price_by_product_ids(products_id, db)
+    product_with_prices = await product_with_price_response(products_, prices_)
 
     return product_with_prices
 

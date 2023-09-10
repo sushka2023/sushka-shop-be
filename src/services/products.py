@@ -45,7 +45,7 @@ async def get_products_by_sort_and_category_id(sort: str, limit: int, offset: in
         return await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
 
 
-def product_with_price_response(products: List[Type[Product]], prices: List[Type[Price]]):
+async def product_with_price_response(products: List[Type[Product]], prices: List[Type[Price]]):
     result = []
     for product in products:
         prices_ = []
