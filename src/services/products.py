@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.database.models import Product, Price
 from src.repository import products as repository_products
 from src.repository import product_categories as repository_product_categories
+from src.repository.prices import price_by_product_ids
 from src.schemas.price import PriceResponse
 from src.schemas.product import ProductResponse, ProductWithPricesResponse
 from src.services.exception_detail import ExDetail as Ex
@@ -45,7 +46,7 @@ async def get_products_by_sort_and_category_id(sort: str, limit: int, offset: in
         return await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
 
 
-async def product_with_price_response(products: List[Type[Product]], prices: List[Type[Price]]):
+async def product_with_price_response(products: List[Type[Product]], prices: List[Type[PriceResponse]]):
     result = []
     for product in products:
         prices_ = []
@@ -71,3 +72,10 @@ async def product_with_price_response(products: List[Type[Product]], prices: Lis
         result.append(product_with_prices_response)
 
     return result
+
+
+async def product_with_prices(products, db):
+    products_id = [prod.id for prod in products]
+    prices_ = await price_by_product_ids(products_id, db)
+    product_with_prices_ = await product_with_price_response(products, prices_)
+    return product_with_prices_

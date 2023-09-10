@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, aliased
 from src.database.models import Product, Price, ProductCategory
 from src.repository.prices import price_by_product_ids
 from src.schemas.product import ProductModel
-from src.services.products import product_with_price_response
+from src.services.products import product_with_price_response, product_with_prices
 
 
 async def product_by_name(body: str, db: Session) -> Product | None:
@@ -24,7 +24,13 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    # products_id = [prod.id for prod in products_]
+    # prices_ = await price_by_product_ids(products_id, db)
+    # product_with_prices = await product_with_price_response(products_, prices_)
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_id_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -35,7 +41,11 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+    products_id = [prod.id for prod in products_]
+    prices_ = await price_by_product_ids(products_id, db)
+    product_with_prices = await product_with_price_response(products_, prices_)
+
+    return product_with_prices
 
 
 async def get_products_name(limit: int, offset: int, db: Session):
@@ -55,19 +65,12 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
         limit(limit).\
         offset(offset).\
         all()
-    return products_
 
-    # print(products_with_price)
-    # return products_with_price
+    products_id = [prod.id for prod in products_]
+    prices_ = await price_by_product_ids(products_id, db)
+    product_with_prices = await product_with_price_response(products_, prices_)
 
-# async def get_products_name(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-#     products_ = db.query(Product).\
-#         filter(Product.is_deleted == False).\
-#         order_by(asc(Product.name)).\
-#         limit(limit).\
-#         offset(offset).\
-#         all()
-#     return products_
+    return product_with_prices
 
 
 async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
