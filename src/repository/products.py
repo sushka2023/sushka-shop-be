@@ -1,10 +1,11 @@
 from typing import List, Type
 
-from sqlalchemy import desc, asc, nullslast, select, func
-from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc, nullslast, select, func, text
+from sqlalchemy.orm import Session, aliased
 
 from src.database.models import Product, Price, ProductCategory
 from src.schemas.product import ProductModel
+from src.services.products import product_with_price_response
 
 
 async def product_by_name(body: str, db: Session) -> Product | None:
@@ -37,19 +38,12 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
 
 
 async def get_products_name(limit: int, offset: int, db: Session):
-    subquery = (
-        select(Price.product_id, func.min(Price.price).label("lowest_price"))
-        .group_by(Price.product_id)
-        .subquery()
-    )
+    products_ = db.query(Product).order_by(asc(Product.name)).limit(limit).offset(offset).all()
+    products_id = [prod.id for prod in products_]
+    prices_ = db.query(Price).filter(Price.product_id.in_(products_id)).all()
+    product_with_prices = product_with_price_response(products_, prices_)
 
-    # products_with_price = db.query(Product, subquery.c.lowest_price).\
-    #     outerjoin(subquery, Product.id == subquery.c.product_id).\
-    #     filter(Product.is_deleted == False).\
-    #     order_by(asc(Product.name)).\
-    #     limit(limit).\
-    #     offset(offset).\
-    #     all()
+    return product_with_prices
 
 
 async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:

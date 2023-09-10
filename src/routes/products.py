@@ -8,10 +8,11 @@ from src.database.db import get_db
 from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesResponse
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
-from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
+from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id, \
+    product_with_price_response
 
 router = APIRouter(prefix="/product", tags=["product"])
 
@@ -20,7 +21,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/all", response_model=List[ProductResponse])
+@router.get("/all", response_model=List[ProductWithPricesResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
     # Redis client
     redis_client = get_redis()

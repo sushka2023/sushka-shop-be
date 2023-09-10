@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Tuple
 
 from pydantic import BaseModel, Field
 
 from src.database.models import ProductCategory, Price, Image
+from src.schemas.price import PriceResponse
 
 
 class ProductModel(BaseModel):
@@ -26,6 +27,11 @@ class ProductResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ProductWithPricesResponse(BaseModel):
+    product: ProductResponse
+    prices: List[PriceResponse]
 
 
 class ProductArchiveModel(BaseModel):
