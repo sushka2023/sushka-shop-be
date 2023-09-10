@@ -1,12 +1,11 @@
 from typing import List, Type
 
-from sqlalchemy import desc, asc, nullslast, select, func, text
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy import desc, asc
+from sqlalchemy.orm import Session
 
 from src.database.models import Product, Price, ProductCategory
-from src.repository.prices import price_by_product_ids
 from src.schemas.product import ProductModel
-from src.services.products import product_with_price_response, product_with_prices
+from src.services.products import product_with_prices
 
 
 async def product_by_name(body: str, db: Session) -> Product | None:
