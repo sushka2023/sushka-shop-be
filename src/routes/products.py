@@ -22,6 +22,22 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 @router.get("/all", response_model=List[ProductWithPricesResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+    """
+    The products function returns a list of products.
+
+    Args:
+        limit: int: Limit the number of products returned
+        offset: int: Specify the offset of the first product to be returned
+        pr_category_id: int: Filter products by category
+        sort: str: Sort the products by "id", "name", "low_price", "high_price", "low_date", "high_date"
+        db: Session: Pass the database connection to the function
+
+    Returns:
+        A list of products
+
+    Doc Author:
+        Trelent
+    """
     # Redis client
     redis_client = get_redis()
 
