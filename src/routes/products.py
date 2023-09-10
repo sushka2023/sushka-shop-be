@@ -8,7 +8,7 @@ from src.database.db import get_db
 from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesResponse
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
@@ -20,8 +20,21 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/all", response_model=List[ProductResponse])
+@router.get("/all", response_model=List[ProductWithPricesResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+    """
+    The products function returns a list of products.
+
+    Args:
+        limit: int: Limit the number of products returned
+        offset: int: Specify the offset of the first product to be returned
+        pr_category_id: int: Filter products by category
+        sort: str: Sort the products by "id", "name", "low_price", "high_price", "low_date", "high_date"
+        db: Session: Pass the database connection to the function
+
+    Returns:
+        A list of products
+    """
     # Redis client
     redis_client = get_redis()
 
