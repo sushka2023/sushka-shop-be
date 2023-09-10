@@ -64,8 +64,7 @@ async def product_with_price_response(products: List[Type[Product]], prices: Lis
                                                weight=price.weight,
                                                price=price.price,
                                                old_price=price.old_price,
-                                               quantity=price.quantity,
-                                               is_deleted=price.is_deleted)
+                                               quantity=price.quantity)
                 prices_.append(price_response)
 
         product_with_prices_response = ProductWithPricesResponse(product=product_response, prices=prices_)

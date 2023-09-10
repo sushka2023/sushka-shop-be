@@ -25,9 +25,6 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
         offset(offset).\
         all()
 
-    # products_id = [prod.id for prod in products_]
-    # prices_ = await price_by_product_ids(products_id, db)
-    # product_with_prices = await product_with_price_response(products_, prices_)
     product_with_price = await product_with_prices(products_, db)
 
     return product_with_price
@@ -41,20 +38,22 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
         limit(limit).\
         offset(offset).\
         all()
-    products_id = [prod.id for prod in products_]
-    prices_ = await price_by_product_ids(products_id, db)
-    product_with_prices = await product_with_price_response(products_, prices_)
 
-    return product_with_prices
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_name(limit: int, offset: int, db: Session):
-    products_ = db.query(Product).order_by(asc(Product.name)).limit(limit).offset(offset).all()
-    products_id = [prod.id for prod in products_]
-    prices_ = await price_by_product_ids(products_id, db)
-    product_with_prices = await product_with_price_response(products_, prices_)
+    products_ = db.query(Product).\
+        order_by(asc(Product.name)).\
+        limit(limit).\
+        offset(offset).\
+        all()
 
-    return product_with_prices
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -66,11 +65,9 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
         offset(offset).\
         all()
 
-    products_id = [prod.id for prod in products_]
-    prices_ = await price_by_product_ids(products_id, db)
-    product_with_prices = await product_with_price_response(products_, prices_)
+    product_with_price = await product_with_prices(products_, db)
 
-    return product_with_prices
+    return product_with_price
 
 
 async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
@@ -81,7 +78,10 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_low_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -93,7 +93,10 @@ async def get_products_low_price_by_category_id(limit: int, offset: int, categor
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_high_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
@@ -104,7 +107,10 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_high_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -116,7 +122,10 @@ async def get_products_high_price_by_category_id(limit: int, offset: int, catego
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
@@ -126,7 +135,10 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Ty
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_low_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -137,7 +149,10 @@ async def get_products_low_date_by_category_id(limit: int, offset: int, category
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_high_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
@@ -147,7 +162,10 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> List[T
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def get_products_high_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
@@ -158,7 +176,10 @@ async def get_products_high_date_by_category_id(limit: int, offset: int, categor
         limit(limit).\
         offset(offset).\
         all()
-    return products_
+
+    product_with_price = await product_with_prices(products_, db)
+
+    return product_with_price
 
 
 async def create_product(body: ProductModel, db: Session) -> Product:

@@ -11,8 +11,7 @@ from src.repository import products as repository_products
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesResponse
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
-from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id, \
-    product_with_price_response
+from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
 
 router = APIRouter(prefix="/product", tags=["product"])
 
