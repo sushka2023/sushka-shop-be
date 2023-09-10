@@ -34,9 +34,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
 
     Returns:
         A list of products
-
-    Doc Author:
-        Trelent
     """
     # Redis client
     redis_client = get_redis()
