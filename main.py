@@ -5,10 +5,31 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+from src.conf.config import settings
 from src.database.db import get_db
 from src.routes import users, auth, product_category, prices, products, favorites, favorite_items, baskets, basket_items
 
+import sentry_sdk
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
+
+sentry_sdk.init(
+    dsn=settings.sentry_url,
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
+
 app = FastAPI()
+
+app.add_middleware(SentryAsgiMiddleware)
+
 
 origins = ["*"]
 
@@ -30,6 +51,11 @@ def root():
 
     """
     return {"message": "Welcome to the FastAPI Store!"}
+
+
+@app.get("/error")
+async def error_endpoint():
+    raise ValueError("This is a sample error that will be logged to Sentry.")
 
 
 @app.get("/api/healthchecker")

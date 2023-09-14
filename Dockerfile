@@ -18,6 +18,15 @@ ENV REDIS_HOST="${REDIS_HOST}"
 ENV REDIS_PORT="${REDIS_PORT}"
 ENV REDIS_PASSWORD="${REDIS_PASSWORD}"
 
+ENV SENTRY_URL="${SENTRY_URL}"
+ENV SENTRY_SECRET_KEY="${SENTRY_SECRET_KEY}"
+ENV SENTRY_POSTGRES_HOST="${SENTRY_POSTGRES_HOST}"
+ENV SENTRY_POSTGRES_PORT="${SENTRY_POSTGRES_PORT}"
+ENV SENTRY_DB_NAME="${SENTRY_DB_NAME}"
+ENV SENTRY_DB_USER="${SENTRY_DB_USER}"
+ENV SENTRY_DB_PASSWORD="${SENTRY_DB_PASSWORD}"
+ENV SENTRY_REDIS_HOST="${SENTRY_REDIS_HOST}"
+
 # Встановлюємо додаткові пакети або бібліотеки (якщо потрібно)
 RUN apt-get update -y && apt-get upgrade -y && apt install nano iproute2 telnet git -y
 
@@ -32,6 +41,13 @@ WORKDIR /app
 
 # Переключаємося на певну гілку (замініть 'yourbranch' на назву гілки)
 RUN git checkout master
+
+
+RUN apt-get update -y && apt-get install -y libpq-dev
+
+# RUN pip install psycopg2-binary
+
+
 
 # Встановлюємо залежності з requirements.txt
 RUN pip install -r requirements.txt
@@ -58,4 +74,15 @@ RUN apt install supervisor -y
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Встановлюємо ENTRYPOINT для supervisord в якому запускаємо Fastapi and Redis
-ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+#ENTRYPOINT ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Встановлюємо ENTRYPOINT для запуску лише FastAPI
+# ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000 & sleep 10 && alembic upgrade head && tail -f /dev/null"]
+
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+
+
+# CMD ["sh", "-c", "alembic upgrade head && tail -f /dev/null"]
