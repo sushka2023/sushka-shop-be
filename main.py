@@ -1,7 +1,5 @@
-import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -13,7 +11,7 @@ import logging
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from sentry_sdk.integrations.logging import LoggingIntegration
-from logging_config import setup_logging
+from src.conf.logging_config import setup_logging
 
 setup_logging()
 
