@@ -325,3 +325,4 @@ test.db
 tests/test.db
 
 /docs/docs/
+app.log

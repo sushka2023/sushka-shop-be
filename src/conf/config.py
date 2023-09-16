@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     redis_host: str = 'host_name'
     redis_port: str = 'port'
     redis_password: str = 'password'
+    sentry_url: str
 
     class Config:
         env_file = ".env"
