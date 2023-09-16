@@ -17,7 +17,7 @@ setup_logging()
 
 sentry_logging = LoggingIntegration(
     level=logging.INFO,
-    event_level=logging.ERROR
+    event_level=logging.ERROR,
 )
 
 

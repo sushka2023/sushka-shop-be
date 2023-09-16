@@ -8,7 +8,7 @@ def setup_logging():
         format="%(levelname)s - %(asctime)s - %(name)s - %(message)s",
         datefmt="%d-%m-%Y %H:%M:%S",
         handlers=[
-            logging.FileHandler("../../app.log"),
+            logging.FileHandler("logs/app.log"),
             logging.StreamHandler(sys.stdout)
         ]
     )
