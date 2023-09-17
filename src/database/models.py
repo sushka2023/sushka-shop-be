@@ -88,6 +88,7 @@ class Image(Base):
     created_at = Column('created_at', DateTime, default=func.now())
     description = Column(String(255), unique=False, nullable=False)
     image_type = Column('image_type', Enum(ImageType), default=None)
+    is_deleted = Column(Boolean, default=False)
 
 
 class Price(Base):
