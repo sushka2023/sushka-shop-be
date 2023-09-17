@@ -14,6 +14,7 @@ class ProductModel(BaseModel):
     promotional: bool
     new_product: bool
     is_popular: bool
+    images: List[ImageResponse]
 
 
 class ProductResponse(BaseModel):

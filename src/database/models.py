@@ -15,6 +15,14 @@ class Role(enum.Enum):
     user: str = 'user'
 
 
+class ImageType(enum.Enum):
+    """
+    Image type.
+    """
+    product: str = 'product'
+    review: str = 'review'
+
+
 class PaymentType(enum.Enum):
     """
     Payment type.
@@ -79,6 +87,7 @@ class Image(Base):
     image_url = Column(String(255), unique=True, nullable=False)
     created_at = Column('created_at', DateTime, default=func.now())
     description = Column(String(255), unique=False, nullable=False)
+    image_type = Column('image_type', Enum(ImageType), default=None)
 
 
 class Price(Base):
