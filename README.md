@@ -31,3 +31,5 @@ Clone repository from git.... Use branch master.
 7. Start app FastApi
 
    use command `uvicorn main:app --host localhost --port 8000 --reload`
+
+8. use command to write logs to a file `uvicorn main:app --log-level info --host localhost --port 8000 --reload --log-config src/conf/logging_config.ini`
