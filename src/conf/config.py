@@ -1,8 +1,19 @@
+import os
 from pydantic import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
+
+user = os.getenv("POSTGRES_USER")
+password = os.getenv("POSTGRES_PASSWORD")
+host = os.getenv("POSTGRES_DOMAIN")
+port = os.getenv("POSTGRES_PORT")
+database = os.getenv("POSTGRES_DB")
 
 
 class Settings(BaseSettings):
-    database_url: str = 'postgresql+psycopg2://user:password@server:5432/database'
+    database_url: str = f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}'
+    # database_url: str = 'postgresql+psycopg2://user:password@server:5432/database'
     secret_key: str = 'secret_key'
     algorithm: str = 'HS256'
     cloudinary_name: str = '_'
@@ -17,7 +28,6 @@ class Settings(BaseSettings):
     redis_host: str = 'host_name'
     redis_port: str = 'port'
     redis_password: str = 'password'
-    sentry_url: str
 
     class Config:
         env_file = ".env"

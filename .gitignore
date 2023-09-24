@@ -326,3 +326,5 @@ tests/test.db
 
 /docs/docs/
 app.log
+/src/seed/data_module.py
+/src/seed/data.json
