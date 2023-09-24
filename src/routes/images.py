@@ -31,4 +31,6 @@ async def create_image(description: str = Form(),
     CloudImage.upload(image_file.file, file_name, overwrite=False)
     image_url = CloudImage.get_url_for_image(file_name)
     image = await repository_images.create(body, image_url, db)
+    transformation_image = CloudImage.get_transformation_image(image_url, "product")
+    image.image_url = transformation_image
     return image

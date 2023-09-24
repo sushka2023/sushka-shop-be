@@ -78,7 +78,7 @@ class CloudImage:
 
 class ProductImg:
     name = "product"
-    transformation = {"width": 500, "height": 500, "gravity": "faces", "crop": "fill"}  # TODO
+    transformation = {"width": 360, "height": 228}
 
 
 class ReviewImg:
