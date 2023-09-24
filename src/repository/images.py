@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 
-from src.database.models import User, Image
+from src.database.models import User, Image, ImageType
 from src.schemas.images import ImageModel
 
 
@@ -19,8 +19,8 @@ async def get_image(image_id: int, user: User, db: Session) -> Image | None:
     return image
 
 
-async def create(body: ImageModel, image_url: str, user: User, db: Session) -> Image:
-    image = Image(description=body.description, user=user, image_url=image_url)
+async def create(body: ImageModel, image_url: str, db: Session) -> Image:
+    image = Image(description=body.description, image_url=image_url, image_type=ImageType.product)
     db.add(image)
     db.commit()
     db.refresh(image)

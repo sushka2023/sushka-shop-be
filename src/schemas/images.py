@@ -12,7 +12,7 @@ class ImageModel(BaseModel):
 
 class ImageResponse(BaseModel):
     id: int
-    product_id: int
+    product_id: Optional[int]
     image_url: str
     description: str = Field(min_length=10, max_length=255)
     image_type: ImageType

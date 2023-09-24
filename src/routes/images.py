@@ -21,7 +21,6 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
              status_code=status.HTTP_201_CREATED)
 async def create_image(description: str = Form(),
                        image_file: UploadFile = File(),
-                       current_user: User = Depends(auth_service.get_current_user),
                        db: Session = Depends(get_db)):
 
     try:
@@ -31,5 +30,5 @@ async def create_image(description: str = Form(),
     file_name = CloudImage.generate_name_image()
     CloudImage.upload(image_file.file, file_name, overwrite=False)
     image_url = CloudImage.get_url_for_image(file_name)
-    image = await repository_images.create(body, image_url, current_user, db)
+    image = await repository_images.create(body, image_url, db)
     return image
