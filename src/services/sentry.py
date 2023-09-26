@@ -1,13 +1,10 @@
-import os
 import sentry_sdk
 import logging
 
 from sentry_sdk.integrations.logging import LoggingIntegration
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.conf.config import settings
 
-sentry_url = os.getenv("SENTRY_URL")
 
 sentry_logging = LoggingIntegration(
     level=logging.INFO,
@@ -16,7 +13,7 @@ sentry_logging = LoggingIntegration(
 
 
 sentry_sdk.init(
-    dsn=sentry_url,
+    dsn=settings.sentry_url,
     integrations=[sentry_logging],
     traces_sample_rate=1.0,
     profiles_sample_rate=1.0,

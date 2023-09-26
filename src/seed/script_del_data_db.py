@@ -16,25 +16,17 @@ def get_table_names(models):
 def clear_tables(table_names):
     session = next(get_db())
 
-    try:
-        inspector = inspect(session.get_bind())
-        existing_tables = inspector.get_table_names()
+    inspector = inspect(session.get_bind())
+    existing_tables = inspector.get_table_names()
 
-        for table_name in table_names:
-            if table_name in existing_tables:
-                sql_query = text(f"DELETE FROM {table_name}")
-                session.execute(sql_query)
-                session.commit()
-                print(f"Table {table_name} successfully cleared.")
-            else:
-                raise NoSuchTableError(f"Table {table_name} does not exist.")
-
-    except Exception as e:
-        session.rollback()
-        print(f"Error while clearing tables: {str(e)}")
-        raise
-    finally:
-        session.close()
+    for table_name in table_names:
+        if table_name in existing_tables:
+            sql_query = text(f"DELETE FROM {table_name}")
+            session.execute(sql_query)
+            session.commit()
+            print(f"Table {table_name} successfully cleared.")
+        else:
+            raise NoSuchTableError(f"Table {table_name} does not exist.")
 
 
 if __name__ == "__main__":

@@ -37,26 +37,19 @@ def load_data_from_json(file_path):
 def insert_data_into_tables(data, tables):
     session = next(get_db())
 
-    try:
-        for table_name, items in data.items():
-            table = tables.get(table_name)
-            if table is None:
-                raise NoSuchTableError(f"Table {table_name} not found.")
+    for table_name, items in data.items():
+        table = tables.get(table_name)
+        if table is None:
+            raise NoSuchTableError(f"Table {table_name} not found.")
 
-            if table_name == "users":
-                for user in items:
-                    user["password_checksum"] = hash_password(user["password_checksum"])
+        if table_name == "users":
+            for user in items:
+                user["password_checksum"] = hash_password(user["password_checksum"])
 
-            session.execute(table.insert().values(items))
+        session.execute(table.insert().values(items))
 
-        session.commit()
-        print("Data inserted successfully.")
-    except Exception as e:
-        session.rollback()
-        print(f"Error inserting data: {str(e)}")
-        raise
-    finally:
-        session.close()
+    session.commit()
+    print("Data inserted successfully.")
 
 
 if __name__ == "__main__":
