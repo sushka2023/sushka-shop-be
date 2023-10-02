@@ -8,6 +8,7 @@ from src.database.models import ImageType
 class ImageModel(BaseModel):
     description: str = Field(min_length=10, max_length=255)
     image_type: ImageType
+    product_id: int
 
 
 class ImageResponse(BaseModel):

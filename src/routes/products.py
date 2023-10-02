@@ -52,7 +52,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
     if redis_client:
         # We check whether the data is present in the Redis cache
         cached_products = redis_client.get(key)
-        print('data get in redis')
 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
@@ -65,7 +64,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
         if redis_client:
             redis_client.set(key, pickle.dumps(products_))
             redis_client.expire(key, 1800)
-            print('data set in redis')
 
     else:
         # The data is found in the Redis cache, we extract it from there

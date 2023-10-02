@@ -21,16 +21,17 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
              status_code=status.HTTP_201_CREATED)
 async def create_image(description: str = Form(),
                        image_file: UploadFile = File(),
+                       product_id: int = Form(),
                        db: Session = Depends(get_db)):
 
     try:
-        body = ImageModel(description=description, image_type=ImageType.product)
+        body = ImageModel(description=description, image_type=ImageType.product, product_id=product_id)
     except ValidationError:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="UNPROCESSABLE_ENTITY")
     file_name = CloudImage.generate_name_image()
     CloudImage.upload(image_file.file, file_name, overwrite=False)
     image_url = CloudImage.get_url_for_image(file_name)
-    image = await repository_images.create(body, image_url, db)
+    image = await repository_images.create(body, image_url, product_id, db)
     transformation_image_product = CloudImage.get_transformation_image(image_url, "product")
     image.image_url = transformation_image_product
     return image

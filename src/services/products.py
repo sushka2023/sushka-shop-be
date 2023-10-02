@@ -10,7 +10,7 @@ from src.repository.images import images_by_product_ids
 from src.repository.prices import price_by_product_ids
 from src.schemas.images import ImageResponse
 from src.schemas.price import PriceResponse
-from src.schemas.product import ProductResponse, ProductWithPricesResponse
+from src.schemas.product import ProductResponse, ProductWithPricesAndImagesResponse
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -80,9 +80,9 @@ async def product_with_price_and_images_response(products: List[Type[Product]],
                                                image_type=image.image_type)
                 images_.append(image_response)
 
-        product_with_prices_and_img_response = ProductWithPricesResponse(product=product_response,
-                                                                         prices=prices_,
-                                                                         images=images_)
+        product_with_prices_and_img_response = ProductWithPricesAndImagesResponse(product=product_response,
+                                                                                  prices=prices_,
+                                                                                  images=images_)
         result.append(product_with_prices_and_img_response)
 
     return result
