@@ -5,6 +5,7 @@ from sqlalchemy import and_, desc
 
 from src.database.models import User, Image, ImageType
 from src.schemas.images import ImageModel, ImageResponse
+from src.services.cloud_image import CloudImage
 
 
 async def get_images(limit: int, offset: int, user: User, db: Session) -> List[Image] | List:
@@ -40,8 +41,11 @@ async def get_image_from_url(image_url: str, user: User, db: Session) -> Image |
 
 
 async def images_by_product_ids(id_products: List[int], db: Session) -> List[Type[ImageResponse]]:
-    price = db.query(Image).filter(Image.product_id.in_(id_products), Image.is_deleted == False).all()
-    return price
+    images = db.query(Image).filter(Image.product_id.in_(id_products), Image.is_deleted == False).all()
+    for image in images:
+        transformation_image_product = CloudImage.get_transformation_image(image.image_url, "product")
+        image.image_url = transformation_image_product
+    return images
 
 
 async def remove(image_id: int, user: User, db: Session) -> Image | None:

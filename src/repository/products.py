@@ -13,7 +13,13 @@ async def product_by_name(body: str, db: Session) -> Product | None:
 
 
 async def product_by_id(body: int, db: Session) -> Product | None:
-    return db.query(Product).filter_by(id=body).first()
+    product = db.query(Product).filter_by(id=body).first()
+    product_with_price = await product_with_prices_and_images([product], db)
+    try:
+        product_ = product_with_price[0]
+    except Exception as ex:
+        return None
+    return product_
 
 
 async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
