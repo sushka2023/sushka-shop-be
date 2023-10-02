@@ -15,7 +15,6 @@ class ProductModel(BaseModel):
     promotional: bool
     new_product: bool
     is_popular: bool
-    images: List[ImageResponse]
 
 
 class ProductResponse(BaseModel):
@@ -26,15 +25,15 @@ class ProductResponse(BaseModel):
     promotional: bool
     new_product: bool
     is_popular: bool
-    images: List[ImageResponse]
 
     class Config:
         orm_mode = True
 
 
-class ProductWithPricesResponse(BaseModel):
+class ProductWithPricesAndImagesResponse(BaseModel):
     product: ProductResponse
     prices: List[PriceResponse]
+    images: List[ImageResponse]
 
 
 class ProductArchiveModel(BaseModel):

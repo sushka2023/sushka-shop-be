@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import Product, Price, ProductCategory
 from src.schemas.product import ProductModel
-from src.services.products import product_with_prices
+from src.services.products import product_with_prices_and_images
 
 
 async def product_by_name(body: str, db: Session) -> Product | None:
@@ -24,7 +24,7 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -38,7 +38,7 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -50,7 +50,7 @@ async def get_products_name(limit: int, offset: int, db: Session):
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -64,7 +64,7 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -78,7 +78,7 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -93,7 +93,7 @@ async def get_products_low_price_by_category_id(limit: int, offset: int, categor
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -107,7 +107,7 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -122,7 +122,7 @@ async def get_products_high_price_by_category_id(limit: int, offset: int, catego
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -135,7 +135,7 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Ty
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -149,7 +149,7 @@ async def get_products_low_date_by_category_id(limit: int, offset: int, category
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -162,7 +162,7 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> List[T
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 
@@ -176,7 +176,7 @@ async def get_products_high_date_by_category_id(limit: int, offset: int, categor
         offset(offset).\
         all()
 
-    product_with_price = await product_with_prices(products_, db)
+    product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
 

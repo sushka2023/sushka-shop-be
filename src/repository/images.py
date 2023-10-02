@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Type
 
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 
 from src.database.models import User, Image, ImageType
-from src.schemas.images import ImageModel
+from src.schemas.images import ImageModel, ImageResponse
 
 
 async def get_images(limit: int, offset: int, user: User, db: Session) -> List[Image] | List:
@@ -37,6 +37,11 @@ async def get_image_from_url(image_url: str, user: User, db: Session) -> Image |
                                         Image.user_id == user.id,
                                         Image.is_deleted == False)).first()
     return image
+
+
+async def images_by_product_ids(id_products: List[int], db: Session) -> List[Type[ImageResponse]]:
+    price = db.query(Image).filter(Image.product_id.in_(id_products), Image.is_deleted == False).all()
+    return price
 
 
 async def remove(image_id: int, user: User, db: Session) -> Image | None:
