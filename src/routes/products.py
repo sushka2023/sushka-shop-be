@@ -8,7 +8,8 @@ from src.database.db import get_db
 from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesResponse
+from src.repository.products import product_by_id
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesAndImagesResponse
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
@@ -20,7 +21,7 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/all", response_model=List[ProductWithPricesResponse])
+@router.get("/all", response_model=List[ProductWithPricesAndImagesResponse])
 async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
     """
     The products function returns a list of products.
@@ -37,7 +38,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
     """
     # Redis client
     redis_client = get_redis()
-
     # List of allowed sorts
     allowed_sorts = ["id", "name", "low_price", "high_price", "low_date", "high_date"]
     if sort not in allowed_sorts:
@@ -52,7 +52,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
     if redis_client:
         # We check whether the data is present in the Redis cache
         cached_products = redis_client.get(key)
-        print('data get in redis')
 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
@@ -65,7 +64,6 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
         if redis_client:
             redis_client.set(key, pickle.dumps(products_))
             redis_client.expire(key, 1800)
-            print('data set in redis')
 
     else:
         # The data is found in the Redis cache, we extract it from there
@@ -128,7 +126,7 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
 @router.put("/unarchive",
             response_model=ProductResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
+async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
     """
     The archive_product function is used to unarchive a product.
         The function takes in the id of the product and returns an object containing information about that product.
@@ -147,3 +145,36 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_prod = await repository_products.unarchive_product(body.id, db)
     return return_archive_prod
+
+
+@router.get("/{product_id}", response_model=ProductWithPricesAndImagesResponse)
+async def get_one_product(product_id: int, db: Session = Depends(get_db)):
+    # Redis client
+    redis_client = get_redis()
+
+    # We collect the key for caching
+    key = f"products_:{product_id}"
+
+    cached_products = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products = redis_client.get(key)
+
+    if not cached_products:
+        # The data is not found in the cache, we get it from the database
+        product = await product_by_id(product_id, db)
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(product))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        product = pickle.loads(cached_products)
+
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return product

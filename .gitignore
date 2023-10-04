@@ -325,3 +325,7 @@ test.db
 tests/test.db
 
 /docs/docs/
+app.log
+/src/seed/data_module.py
+/src/seed/data.json
+/src/seed/test_users_data.py

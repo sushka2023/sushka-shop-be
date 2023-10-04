@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from src.database.models import User, BlacklistToken
 from src.schemas.users import UserModel, UserChangeRole
-from src.services.auth import auth_service
+from src.services.password_utils import hash_password
 
 
 async def get_user_by_email(email: str, db: Session) -> User | None:

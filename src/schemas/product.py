@@ -4,6 +4,7 @@ from typing import Optional, List, Tuple
 from pydantic import BaseModel, Field
 
 from src.database.models import ProductCategory, Price, Image
+from src.schemas.images import ImageResponse
 from src.schemas.price import PriceResponse
 
 
@@ -29,9 +30,10 @@ class ProductResponse(BaseModel):
         orm_mode = True
 
 
-class ProductWithPricesResponse(BaseModel):
+class ProductWithPricesAndImagesResponse(BaseModel):
     product: ProductResponse
     prices: List[PriceResponse]
+    images: List[ImageResponse]
 
 
 class ProductArchiveModel(BaseModel):
