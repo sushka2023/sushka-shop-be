@@ -27,6 +27,9 @@ RUN mkdir -p /app
 # Клонуємо репозиторій з GitHub (замініть URL на URL вашого репозиторію)
 RUN git clone https://github.com/sushka2023/sushka-shop-be /app
 
+# Створюємо папку для логів
+RUN mkdir -p /app/logs
+
 # Переходимо в каталог з клонованим репозиторієм
 WORKDIR /app
 
