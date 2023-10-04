@@ -7,6 +7,8 @@ from src.database.models import User, Basket, Favorite, ProductCategory, Product
 
 
 def get_table_names(models):
+    """Creating a list of table names"""
+
     table_names = []
     for model in models:
         table_names.append(model.__table__.name)
@@ -14,6 +16,8 @@ def get_table_names(models):
 
 
 def clear_tables(table_names):
+    """Deleting all data from tables of database"""
+
     session = next(get_db())
 
     inspector = inspect(session.get_bind())
