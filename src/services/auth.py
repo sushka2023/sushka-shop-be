@@ -12,10 +12,10 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 from src.conf.config import settings
 from src.database.caching import get_redis
+from src.services.password_utils import hash_password
 
 
 class Auth:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     SECRET_KEY = settings.secret_key
     ALGORITHM = settings.algorithm
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")

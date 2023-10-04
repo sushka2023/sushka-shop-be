@@ -1,4 +1,7 @@
 from pydantic import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -21,17 +24,12 @@ class Settings(BaseSettings):
     redis_host: str = 'host_name'
     redis_port: str = 'port'
     redis_password: str = 'password'
+    sentry_url: str = 'sentry_url'
 
-    sentry_url: str = 'url'
-
-    seed_email_adm: str = 'email'
-    seed_email_mod: str = 'email'
-    seed_email_use: str = 'email'
-    seed_password: str = 'password'
 
     class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+        env_file = '.env'
+        env_file_encoding = 'utf-8'
 
 
 settings = Settings()
