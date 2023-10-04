@@ -14,6 +14,7 @@ from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
 from src.services.exception_detail import ExDetail as Ex
+from src.services.password_utils import hash_password, verify_password
 
 
 router = APIRouter(prefix="/auth", tags=['auth'])
@@ -39,7 +40,7 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
     exist_user = await repository_users.get_user_by_email(body.email, db)
     if exist_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
-    body.password_checksum = auth_service.pwd_context.hash(body.password_checksum)
+    body.password_checksum = hash_password(body.password_checksum)
     new_user = await repository_users.create_user(body, db)  # New user
 
     favorite = await repository_favorites.favorites(new_user, db)
@@ -78,7 +79,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if user.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
-    if not auth_service.pwd_context.verify(body.password, user.password_checksum):
+    if not verify_password(body.password, user.password_checksum):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
     # Generate JWT
     access_token = await auth_service.create_access_token(data={"sub": user.email})
@@ -240,6 +241,6 @@ async def reset_password(token: str, body: PasswordModel, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST)
     if not user.is_active:
         return {"message": "Your email is not confirmed"}
-    body.password_checksum = auth_service.pwd_context.hash(body.password_checksum)
+    body.password_checksum = hash_password(body.password_checksum)
     await repository_users.reset_password(email, body.password_checksum, db)
     return {"message": "Password changed"}

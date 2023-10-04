@@ -31,3 +31,12 @@ Clone repository from git.... Use branch master.
 7. Start app FastApi
 
    use command `uvicorn main:app --host localhost --port 8000 --reload`
+
+8. use command to write logs to a file `uvicorn main:app --log-level info --host localhost --port 8000 --log-config src/conf/logging_config.ini`
+
+
+
+### Insert test data into database 
+
+""" At first, you need to create a file called `test_users_data.py` with users data(email, password, role) 
+using the schema in a file called `test_users_data.sample.py`. """

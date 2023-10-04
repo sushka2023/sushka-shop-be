@@ -12,3 +12,9 @@ def setup_logging():
             logging.StreamHandler(sys.stdout)
         ]
     )
+
+
+logger = logging.getLogger(__name__)
+
+
+logger.info("This is logged by the global logger")
