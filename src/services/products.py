@@ -61,7 +61,8 @@ async def product_with_price_and_images_response(products: List[Type[Product]],
                                            product_category_id=product.product_category_id,
                                            promotional=product.promotional,
                                            new_product=product.new_product,
-                                           is_popular=product.is_popular)
+                                           is_popular=product.is_popular,
+                                           is_favorite=product.is_favorite)
         for price in prices:
             if price.product_id == product.id:
                 price_response = PriceResponse(id=price.id,
