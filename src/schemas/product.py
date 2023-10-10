@@ -25,6 +25,7 @@ class ProductResponse(BaseModel):
     promotional: bool
     new_product: bool
     is_popular: bool
+    is_favorite: bool
 
     class Config:
         orm_mode = True
