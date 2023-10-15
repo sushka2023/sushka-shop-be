@@ -13,6 +13,7 @@ class ProductCategoryModel(BaseModel):
 class ProductCategoryResponse(BaseModel):
     id: int
     name: str
+    is_deleted: bool
 
     class Config:
         orm_mode = True
@@ -24,3 +25,8 @@ class ProductCategoryArchiveModel(BaseModel):
 
 class ProductCategoryIdModel(BaseModel):
     id: int
+
+
+class ProductCategoryEditModel(BaseModel):
+    id: int
+    name: str = Field(min_length=3, max_length=100)

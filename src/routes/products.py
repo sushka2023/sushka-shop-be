@@ -10,6 +10,7 @@ from src.database.models import Role
 from src.repository import products as repository_products
 from src.repository.products import product_by_id
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesAndImagesResponse
+from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
@@ -94,6 +95,9 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     if product:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     new_product = await repository_products.create_product(body, db)
+
+    await delete_cache_in_redis()
+
     return new_product
 
 
@@ -120,6 +124,9 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
     if product.is_deleted:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     archive_prod = await repository_products.archive_product(body.id, db)
+
+    await delete_cache_in_redis()
+
     return archive_prod
 
 
@@ -144,6 +151,9 @@ async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get
     if product.is_deleted is False:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_prod = await repository_products.unarchive_product(body.id, db)
+
+    await delete_cache_in_redis()
+
     return return_archive_prod
 
 
