@@ -13,6 +13,7 @@ class ProductCategoryModel(BaseModel):
 class ProductCategoryResponse(BaseModel):
     id: int
     name: str
+    is_deleted: bool
 
     class Config:
         orm_mode = True
