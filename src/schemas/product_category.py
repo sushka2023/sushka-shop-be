@@ -25,3 +25,8 @@ class ProductCategoryArchiveModel(BaseModel):
 
 class ProductCategoryIdModel(BaseModel):
     id: int
+
+
+class ProductCategoryEditModel(BaseModel):
+    id: int
+    name: str = Field(min_length=3, max_length=100)

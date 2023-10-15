@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc, asc
 
 from src.database.models import ProductCategory
-from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel
+from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel, \
+    ProductCategoryEditModel
 
 
 async def product_category_by_name(body: str, db: Session) -> ProductCategory | None:
@@ -32,6 +33,13 @@ async def create_product_category(body: ProductCategoryModel, db: Session) -> Pr
     db.commit()
     db.refresh(new_product_category)
     return new_product_category
+
+
+async def edit_product_category(body: ProductCategoryEditModel, product_category: ProductCategory, db: Session) -> ProductCategory:
+    product_category.name = body.name
+    db.commit()
+    db.refresh(product_category)
+    return product_category
 
 
 async def archive_product_category(body: int, db: Session) -> Type[ProductCategory] | None:

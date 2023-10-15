@@ -8,7 +8,8 @@ from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role
 from src.repository import product_categories as repository_product_categories
-from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel
+from src.schemas.product_category import ProductCategoryModel, ProductCategoryResponse, ProductCategoryArchiveModel, \
+    ProductCategoryIdModel, ProductCategoryEditModel
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -107,6 +108,23 @@ async def create_category(body: ProductCategoryModel,
     await delete_cache_in_redis()
 
     return new_product_category
+
+
+@router.patch("/edit",
+              response_model=ProductCategoryResponse,
+              dependencies=[Depends(allowed_operation_admin_moderator)])
+async def create_category(body: ProductCategoryEditModel,
+                          db: Session = Depends(get_db)):
+
+    product_category = await repository_product_categories.product_category_by_id(body.id, db)
+    if not product_category:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    edit_product_category = await repository_product_categories.edit_product_category(body, product_category, db)
+
+    await delete_cache_in_redis()
+
+    return edit_product_category
 
 
 @router.put("/archive",
