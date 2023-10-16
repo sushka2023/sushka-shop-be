@@ -3,7 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from src.database.models import User, BlacklistToken
-from src.schemas.users import UserModel, UserChangeRole
+from src.schemas.users import UserModel, UserChangeRole, UserUpdateData
+
 from src.services.password_utils import hash_password
 
 
@@ -121,3 +122,26 @@ async def reset_password(email: str, password: str, db: Session) -> None:
     user = await get_user_by_email(email, db)
     user.password_checksum = password
     db.commit()
+
+
+async def update_user_data(db: Session, user_data: UserUpdateData, user: User) -> User:
+    """
+    Function updates the user data.
+
+    Arguments:
+        user_data (UserUpdateData): object with updated user data
+        user (User): the current user
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User: current user with updated data
+    """
+    updated_data_user = db.query(User).filter(User.id == user.id).first()
+
+    updated_data_user.update_from_dict(user_data.dict())
+    updated_data_user.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(updated_data_user)
+
+    return updated_data_user

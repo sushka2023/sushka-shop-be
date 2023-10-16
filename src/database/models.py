@@ -53,6 +53,11 @@ class User(Base):
     favorite = relationship("Favorite", uselist=False, back_populates="user")
     cooperation = relationship("Cooperation", uselist=False, back_populates="user")
 
+    def update_from_dict(self, data_dict):
+        for key, value in data_dict.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
 
 class BlacklistToken(Base):
     __tablename__ = 'blacklisted_tokens'

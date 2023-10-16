@@ -5,7 +5,7 @@ from src.database.db import get_db
 from src.database.models import User, Role
 from src.repository import users as repository_users
 from src.services.auth import auth_service
-from src.schemas.users import UserResponse, UserChangeRole
+from src.schemas.users import UserResponse, UserChangeRole, UserUpdateData, UserResponseAfterUpdate
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -50,3 +50,23 @@ async def change_role(body: UserChangeRole,
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     return user
+
+
+@router.put("/me/", response_model=UserResponseAfterUpdate)
+async def update_current_user(
+    user_data: UserUpdateData,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Change the data of the current_user
+
+    Arguments:
+        user_data (UserUpdateData): object with updated user data
+        current_user (User): the current user
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User: object after the change operation
+    """
+    return await repository_users.update_user_data(db, user_data, current_user)

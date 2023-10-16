@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 import re
 
+
 from pydantic import BaseModel, Field, validator
 
 from src.database.models import Role
@@ -48,6 +49,21 @@ class UserChangeRole(BaseModel):
     id: int
     role: Role
     updated_at: Optional[datetime]
+
+    class Config:
+        orm_mode = True
+
+
+class UserUpdateData(BaseModel):
+    first_name: Optional[str]
+    last_name: Optional[str]
+    phone_number: Optional[str]
+
+
+class UserResponseAfterUpdate(UserUpdateData):
+    email: str
+    id: int
+    updated_at: datetime
 
     class Config:
         orm_mode = True
