@@ -526,7 +526,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "urllib3"
-version = "2.0.6"
+version = "2.0.7"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -595,7 +595,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "83bc4e829df755f763a1a8ad60217d51b685058d9860fea11abad5a8d6cdf66f"
+content-hash = "5830db3ffadf6c0c7c54ee68af390718588486a9e1b3b4c869a6c0b141409703"
 
 [metadata.files]
 aiosmtplib = []
