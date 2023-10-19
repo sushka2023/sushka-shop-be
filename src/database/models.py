@@ -6,6 +6,15 @@ from sqlalchemy.orm import relationship, declarative_base
 Base = declarative_base()
 
 
+# Таблиця для зв'язку "багато до багатьох" між Product і ProductSubCategory
+product_subcategory_association = Table(
+    'product_subcategory_association',
+    Base.metadata,
+    Column('product_id', Integer, ForeignKey('products.id')),
+    Column('subcategory_id', Integer, ForeignKey('product_sub_categories.id'))
+)
+
+
 class Role(enum.Enum):
     """
     Roles users.
@@ -68,6 +77,10 @@ class Product(Base):
     description = Column(String(400), unique=False, nullable=False)
     product_category_id = Column(Integer, ForeignKey('product_categories.id'))
     product_category = relationship("ProductCategory", uselist=False, back_populates="product")
+
+    # Зв'язок з ProductSubCategory через проміжну таблицю
+    subcategories = relationship("ProductSubCategory", secondary=product_subcategory_association, back_populates="products")
+
     prices = relationship("Price", back_populates="product")
     images = relationship("Image", back_populates="product")
     reviews = relationship("Review", back_populates="product")
@@ -110,6 +123,16 @@ class ProductCategory(Base):
     product = relationship("Product", back_populates="product_category")
     name = Column(String(100), unique=True, nullable=False)
     is_deleted = Column(Boolean, default=False)
+
+
+class ProductSubCategory(Base):
+    __tablename__ = 'product_sub_categories'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False)
+    is_deleted = Column(Boolean, default=False)
+
+    # Зв'язок з Product через проміжну таблицю
+    products = relationship("Product", secondary=product_subcategory_association, back_populates="subcategories")
 
 
 class Review(Base):
