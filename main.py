@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from src.database.db import get_db
 from src.routes import users, auth, product_category, prices, products, favorites, favorite_items, baskets, \
-    basket_items, images
+    basket_items, images, product_sub_category
 
 import logging
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
@@ -74,6 +74,7 @@ def healthchecker(db: Session = Depends(get_db)):
 app.include_router(users.router, prefix='/api')
 app.include_router(auth.router, prefix='/api')
 app.include_router(product_category.router, prefix='/api')
+app.include_router(product_sub_category.router, prefix='/api')
 app.include_router(products.router, prefix='/api')
 app.include_router(prices.router, prefix='/api')
 app.include_router(favorites.router, prefix='/api')
