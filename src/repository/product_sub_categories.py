@@ -3,7 +3,7 @@ from typing import List, Type
 from sqlalchemy.orm import Session
 from sqlalchemy import asc
 
-from src.database.models import ProductSubCategory
+from src.database.models import ProductSubCategory, Product
 from src.schemas.product_sub_category import ProductSubCategoryModel, ProductSubCategoryEditModel
 
 
