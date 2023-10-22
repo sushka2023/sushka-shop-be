@@ -8,8 +8,9 @@ from pydantic import BaseModel, Field, validator
 from src.database.models import Role
 
 
-password_pattern = re.compile(r'^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$')
-email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]{5,}@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+password_pattern = re.compile(r"^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$")
+email_pattern = re.compile(r"^[a-zA-Z0-9_.+-]{5,}@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+phone_pattern = re.compile(r'^(?:\+380|380|0)\d{9}$')
 
 
 class UserModel(BaseModel):
@@ -18,16 +19,21 @@ class UserModel(BaseModel):
     last_name: str = Field(min_length=3, max_length=150)
     password_checksum: str = Field(min_length=8, max_length=255)
 
-    @validator('password_checksum', pre=True)
+    @validator("password_checksum", pre=True)
     def validate_password(cls, password_checksum):
         if not password_pattern.match(password_checksum):
-            raise ValueError('Password is not valid! The password must consist of at least one lowercase, uppercase letter, number and symbols.')
+            raise ValueError(
+                "Password is not valid! The password must consist of at least one lowercase, "
+                "uppercase letter, number and symbols."
+            )
         return password_checksum
 
-    @validator('email', pre=True)
+    @validator("email", pre=True)
     def validate_email(cls, email):
         if not email_pattern.match(email):
-            raise ValueError('Email is not valid! The email can consist of 5simbols@, Latin letters, numbers, dots and _')
+            raise ValueError(
+                "Email is not valid! The email can consist of 5simbols@, Latin letters, numbers, dots and _"
+            )
         return email
 
 
@@ -55,9 +61,18 @@ class UserChangeRole(BaseModel):
 
 
 class UserUpdateData(BaseModel):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    phone_number: Optional[str]
+    first_name: str = Field(min_length=3, max_length=150)
+    last_name: str = Field(min_length=3, max_length=150)
+    phone_number: str = Field(min_length=10, max_length=13)
+
+    @validator("phone_number", pre=True)
+    def validate_phone_number(cls, phone_number):
+        if not phone_pattern.match(phone_number):
+            raise ValueError(
+                'Phone number is not valid! The phone number must first consist of the symbols "+380" '
+                'or "380" or "0" and than followed by nine digits.'
+            )
+        return phone_number
 
 
 class UserResponseAfterUpdate(UserUpdateData):
