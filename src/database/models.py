@@ -31,7 +31,14 @@ class PaymentType(enum.Enum):
     liqpay: str = 'liqpay'
 
 
-class User(Base):
+class UpdateFromDictMixin:
+    def update_from_dict(self, data_dict):
+        for key, value in data_dict.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+
+class User(Base, UpdateFromDictMixin):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     email = Column(String(150), unique=True, nullable=False)
@@ -52,11 +59,6 @@ class User(Base):
     posts = relationship("Post", uselist=False, back_populates="user")
     favorite = relationship("Favorite", uselist=False, back_populates="user")
     cooperation = relationship("Cooperation", uselist=False, back_populates="user")
-
-    def update_from_dict(self, data_dict):
-        for key, value in data_dict.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
 
 
 class BlacklistToken(Base):
