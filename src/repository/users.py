@@ -24,6 +24,22 @@ async def get_user_by_email(email: str, db: Session) -> User | None:
     return db.query(User).filter_by(email=email).first()
 
 
+async def get_user_by_id(user_id: int, db: Session) -> User | None:
+    """
+    Function takes a user_id and a database session,
+    and returns the user with that id if it exists. If no such user exists,
+    it returns None.
+
+    Arguments:
+        user_id (int): Pass in the id of the user we want to find
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User | None: A user object or None if the user is not found
+    """
+    return db.query(User).filter_by(id=user_id).first()
+
+
 async def create_user(body: UserModel, db: Session) -> User:
     """
     The create_user function creates a new user in the database.
@@ -136,7 +152,7 @@ async def update_user_data(db: Session, user_data: UserUpdateData, user: User) -
     Returns:
         User: current user with updated data
     """
-    updated_data_user = db.query(User).filter(User.id == user.id).first()
+    updated_data_user = await get_user_by_id(user_id=user.id, db=db)
 
     updated_data_user.update_from_dict(user_data.dict())
     updated_data_user.updated_at = datetime.now()
