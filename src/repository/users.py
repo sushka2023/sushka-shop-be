@@ -3,7 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from src.database.models import User, BlacklistToken
-from src.schemas.users import UserModel, UserChangeRole
+from src.schemas.users import UserModel, UserChangeRole, UserUpdateData
+
 from src.services.password_utils import hash_password
 
 
@@ -21,6 +22,22 @@ async def get_user_by_email(email: str, db: Session) -> User | None:
         User | None: A user object or None if the user is not found
     """
     return db.query(User).filter_by(email=email).first()
+
+
+async def get_user_by_id(user_id: int, db: Session) -> User | None:
+    """
+    Function takes a user_id and a database session,
+    and returns the user with that id if it exists. If no such user exists,
+    it returns None.
+
+    Arguments:
+        user_id (int): Pass in the id of the user we want to find
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User | None: A user object or None if the user is not found
+    """
+    return db.query(User).filter_by(id=user_id).first()
 
 
 async def create_user(body: UserModel, db: Session) -> User:
@@ -121,3 +138,26 @@ async def reset_password(email: str, password: str, db: Session) -> None:
     user = await get_user_by_email(email, db)
     user.password_checksum = password
     db.commit()
+
+
+async def update_user_data(db: Session, user_data: UserUpdateData, user: User) -> User:
+    """
+    Function updates the user data.
+
+    Arguments:
+        user_data (UserUpdateData): object with updated user data
+        user (User): the current user
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        User: current user with updated data
+    """
+    updated_data_user = await get_user_by_id(user_id=user.id, db=db)
+
+    updated_data_user.update_from_dict(user_data.dict())
+    updated_data_user.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(updated_data_user)
+
+    return updated_data_user
