@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, ForeignKey, String, Integer, DateTime, func, Boolean, Text, Table, Enum, Float
+from sqlalchemy import Column, ForeignKey, String, Integer, DateTime, func, Boolean, Table, Enum, Float
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
@@ -110,6 +110,7 @@ class Image(Base):
     description = Column(String(255), unique=False, nullable=False)
     image_type = Column('image_type', Enum(ImageType), default=None)
     is_deleted = Column(Boolean, default=False)
+    main_image = Column(Boolean, default=False)
 
 
 class Price(Base):
