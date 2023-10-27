@@ -1,4 +1,4 @@
-from typing import List, Tuple, Type
+from typing import List, Type
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -79,7 +79,8 @@ async def product_with_price_and_images_response(products: List[Type[Product]],
                                                product_id=image.product_id,
                                                image_url=image.image_url,
                                                description=image.description,
-                                               image_type=image.image_type)
+                                               image_type=image.image_type,
+                                               main_image=image.main_image)
                 images_.append(image_response)
 
         product_with_prices_and_img_response = ProductWithPricesAndImagesResponse(product=product_response,
