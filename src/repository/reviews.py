@@ -7,7 +7,7 @@ from src.schemas.reviews import ReviewModel
 
 async def get_reviews(limit: int, offset: int, db: Session) -> list[Review]:
     return (
-        db.query(Review).filter(Review.is_checked == True)
+        db.query(Review).filter(Review.is_checked == True, Review.is_deleted == False)
         .order_by(desc(Review.created_at)).limit(limit).offset(offset).all()
     )
 
@@ -35,6 +35,10 @@ async def get_review_for_product_by_user(db: Session, product_id: int, user_id: 
     return review
 
 
+async def get_review_by_id(review_id: int, db: Session) -> Review | None:
+    return db.query(Review).filter_by(id=review_id).first()
+
+
 async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
     """
        Function creates a new review.
@@ -60,3 +64,21 @@ async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
     db.commit()
     db.refresh(new_review)
     return new_review
+
+
+async def archive_review(review_id: int, db: Session) -> Review | None:
+    review = db.query(Review).filter_by(id=review_id).first()
+    if review:
+        review.is_deleted = True
+        db.commit()
+        return review
+    return None
+
+
+async def check_review(review_id: int, db: Session) -> Review | None:
+    review = db.query(Review).filter_by(id=review_id).first()
+    if review and review.is_checked is False:
+        review.is_checked = True
+        db.commit()
+        return review
+    return None

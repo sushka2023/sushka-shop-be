@@ -26,3 +26,11 @@ class ReviewResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ReviewArchiveModel(BaseModel):
+    id: int
+
+
+class ReviewCheckModel(BaseModel):
+    id: int
