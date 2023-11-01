@@ -8,12 +8,12 @@ from src.schemas.reviews import ReviewModel
 async def get_reviews(limit: int, offset: int, db: Session) -> list[Review]:
     return (
         db.query(Review).filter(Review.is_checked == True, Review.is_deleted == False)
-        .order_by(desc(Review.created_at)).limit(limit).offset(offset).all()
+        .order_by(desc(Review.rate), desc(Review.created_at)).limit(limit).offset(offset).all()
     )
 
 
 async def get_reviews_for_crm(limit: int, offset: int, db: Session) -> list[Review]:
-    return db.query(Review).order_by(desc(Review.created_at)).limit(limit).offset(offset).all()
+    return db.query(Review).order_by(Review.is_deleted, desc(Review.created_at)).limit(limit).offset(offset).all()
 
 
 async def get_review_for_product_by_user(db: Session, product_id: int, user_id: int) -> Review:
