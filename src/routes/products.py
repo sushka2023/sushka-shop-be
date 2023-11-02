@@ -9,7 +9,7 @@ from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
 from src.repository.products import product_by_id
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesAndImagesResponse
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -22,8 +22,8 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/all", response_model=List[ProductWithPricesAndImagesResponse])
-async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
+@router.get("/all", response_model=List[ProductResponse])
+async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
     """
     The products function returns a list of products.
 
@@ -157,7 +157,7 @@ async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get
     return return_archive_prod
 
 
-@router.get("/{product_id}", response_model=ProductWithPricesAndImagesResponse)
+@router.get("/{product_id}", response_model=ProductResponse)
 async def get_one_product(product_id: int, db: Session = Depends(get_db)):
     # Redis client
     redis_client = get_redis()

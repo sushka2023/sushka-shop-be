@@ -79,8 +79,8 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
 
 async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
-        join(Price).\
-        filter(Product.is_deleted == False).\
+        join(Price, Product.id == Price.product_id).\
+        filter(Product.is_deleted is False).\
         order_by(asc(Price.price)).\
         limit(limit).\
         offset(offset).\

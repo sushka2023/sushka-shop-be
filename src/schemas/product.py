@@ -28,15 +28,11 @@ class ProductResponse(BaseModel):
     is_popular: bool
     is_favorite: bool
     sub_categories: List[ProductSubCategoryResponse]
+    images: List[ImageResponse]
+    prices: List[PriceResponse]
 
     class Config:
         orm_mode = True
-
-
-class ProductWithPricesAndImagesResponse(BaseModel):
-    product: ProductResponse
-    prices: List[PriceResponse]
-    images: List[ImageResponse]
 
 
 class ProductArchiveModel(BaseModel):

@@ -1,9 +1,6 @@
-from datetime import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel, Field, validator
-
-from src.database.models import Product
 
 
 class PriceModel(BaseModel):
