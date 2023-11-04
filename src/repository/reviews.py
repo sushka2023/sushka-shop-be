@@ -57,7 +57,6 @@ async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
         user_id=user.id,
         rate=review.rate,
         description=review.description,
-        image_id=review.image_id if review.image_id else None,
     )
 
     db.add(new_review)

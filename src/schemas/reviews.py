@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +9,6 @@ class ReviewModel(BaseModel):
     product_id: int
     rate: Rate
     description: str = Field(min_length=10, max_length=255)
-    image_id: Optional[int] = None
 
 
 class ReviewResponse(BaseModel):
@@ -19,7 +17,6 @@ class ReviewResponse(BaseModel):
     product_id: int
     rate: Rate
     description: str
-    image_id: Optional[int] = None
     created_at: datetime
     is_deleted: bool
     is_checked: bool
