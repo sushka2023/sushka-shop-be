@@ -94,7 +94,7 @@ async def create_review(
 
     if existing_review:
         raise HTTPException(
-            status_code=400, detail="Your review to this product already exists"
+            status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT
         )
 
     new_review = await repository_reviews.create_review(review, db, current_user)
@@ -156,3 +156,30 @@ async def archive_review(review: ReviewArchiveModel, db: Session = Depends(get_d
     await delete_cache_in_redis()
 
     return archive_review_
+
+
+@router.put("/unarchive",
+            response_model=ReviewResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def unarchive_review(review: ReviewArchiveModel, db: Session = Depends(get_db)):
+    """
+    The unarchive_review function is used to unarchive a review.
+        The function takes in the id of the review and returns an object containing information about that review.
+
+    Args:
+        review: ReviewArchiveModel: Get the id of the review to be unarchived
+        db: Session: Access the database
+
+    Returns:
+        A review unarchive model object
+    """
+    review = await repository_reviews.get_review_by_id(review.id, db)
+    if review is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+    if review.is_deleted is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    return_archive_review = await repository_reviews.unarchive_review(review.id, db)
+
+    await delete_cache_in_redis()
+
+    return return_archive_review

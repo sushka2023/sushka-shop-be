@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
 
 from src.database.models import Review, User
 from src.schemas.reviews import ReviewModel
@@ -7,7 +7,7 @@ from src.schemas.reviews import ReviewModel
 
 async def get_reviews(limit: int, offset: int, db: Session) -> list[Review]:
     return (
-        db.query(Review).filter(Review.is_checked == True, Review.is_deleted == False)
+        db.query(Review).filter(and_(Review.is_checked == True, Review.is_deleted == False))
         .order_by(desc(Review.rate), desc(Review.created_at)).limit(limit).offset(offset).all()
     )
 
@@ -67,7 +67,7 @@ async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
 
 
 async def archive_review(review_id: int, db: Session) -> Review | None:
-    review = db.query(Review).filter_by(id=review_id).first()
+    review = await get_review_by_id(review_id=review_id, db=db)
     if review:
         review.is_deleted = True
         db.commit()
@@ -75,8 +75,17 @@ async def archive_review(review_id: int, db: Session) -> Review | None:
     return None
 
 
+async def unarchive_review(review_id: int, db: Session) -> Review | None:
+    review = await get_review_by_id(review_id=review_id, db=db)
+    if review:
+        review.is_deleted = False
+        db.commit()
+        return review
+    return None
+
+
 async def check_review(review_id: int, db: Session) -> Review | None:
-    review = db.query(Review).filter_by(id=review_id).first()
+    review = await get_review_by_id(review_id=review_id, db=db)
     if review and review.is_checked is False:
         review.is_checked = True
         db.commit()
