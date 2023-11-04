@@ -7,6 +7,7 @@ from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import User, Role
 from src.repository import reviews as repository_reviews
+from src.repository import products as repository_products
 from src.schemas.reviews import ReviewResponse, ReviewModel, ReviewArchiveModel, ReviewCheckModel
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -95,6 +96,13 @@ async def create_review(
     if existing_review:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT
+        )
+
+    product = await repository_products.product_by_id(review.product_id, db)
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
         )
 
     new_review = await repository_reviews.create_review(review, db, current_user)
