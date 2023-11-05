@@ -11,19 +11,19 @@ from src.schemas.product import ProductResponse
 from src.services.exception_detail import ExDetail as Ex
 
 
-async def get_products_by_sort(sort: str, limit: int, offset: int, db: Session):
+async def get_products_by_sort(sort: str, db: Session):
     if sort == "id":
-        return await repository_products.get_products_id(limit, offset, db)
+        return await repository_products.get_products_id(db)
     elif sort == "name":
-        return await repository_products.get_products_name(limit, offset, db)
+        return await repository_products.get_products_name(db)
     elif sort == "low_price":
-        return await repository_products.get_products_low_price(limit, offset, db)
+        return await repository_products.get_products_low_price(db)
     elif sort == "high_price":
-        return await repository_products.get_products_high_price(limit, offset, db)
+        return await repository_products.get_products_high_price(db)
     elif sort == "low_date":
-        return await repository_products.get_products_low_date(limit, offset, db)
+        return await repository_products.get_products_low_date(db)
     elif sort == "high_date":
-        return await repository_products.get_products_high_date(limit, offset, db)
+        return await repository_products.get_products_high_date(db)
 
 
 async def get_products_by_sort_and_category_id(sort: str, limit: int, offset: int, pr_category_id: int, db: Session):
