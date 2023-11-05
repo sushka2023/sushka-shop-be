@@ -2,9 +2,9 @@ from typing import List, Type
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, asc
 
-from src.database.models import Price
+from src.database.models import Price, Product
 from src.schemas.price import PriceModel, PriceResponse
 from src.services.exception_detail import ExDetail as Ex
 
@@ -14,9 +14,9 @@ async def price_by_product_id(id_product: int, db: Session) -> List[Type[PriceRe
     return price
 
 
-async def price_by_product_ids(id_products: List[int], db: Session) -> List[Type[PriceResponse]]:
-    price = db.query(Price).filter(Price.product_id.in_(id_products), Price.is_deleted == False).all()
-    return price
+async def price_by_product(product: Type[Product], db: Session) -> List[Type[PriceResponse]]:
+    prices_in_ascending_order = db.query(Price).filter(Price.product == product).order_by(asc(Price.price)).all()
+    return prices_in_ascending_order
 
 
 async def price_by_id(id_price: int, db: Session) -> PriceResponse:

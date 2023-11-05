@@ -9,7 +9,7 @@ from src.database.caching import get_redis
 from src.database.models import Role
 from src.repository import products as repository_products
 from src.repository.products import product_by_id
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithPricesAndImagesResponse
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -22,21 +22,9 @@ allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 
 
-@router.get("/all", response_model=List[ProductWithPricesAndImagesResponse])
-async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "name", db: Session = Depends(get_db)):
-    """
-    The products function returns a list of products.
+@router.get("/all", response_model=List[ProductResponse])
+async def products(pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
 
-    Args:
-        limit: int: Limit the number of products returned
-        offset: int: Specify the offset of the first product to be returned
-        pr_category_id: int: Filter products by category
-        sort: str: Sort the products by "id", "name", "low_price", "high_price", "low_date", "high_date"
-        db: Session: Pass the database connection to the function
-
-    Returns:
-        A list of products
-    """
     # Redis client
     redis_client = get_redis()
     # List of allowed sorts
@@ -46,7 +34,7 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
                             detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
 
     # We collect the key for caching
-    key = f"products_{sort}_limit:{limit}:offset:{offset}:pr_category_id:{pr_category_id}"
+    key = f"products_{sort}:pr_category_id:{pr_category_id}"
 
     cached_products = None
 
@@ -57,9 +45,9 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
     if not cached_products:
         # The data is not found in the cache, we get it from the database
         if pr_category_id is None:
-            products_ = await get_products_by_sort(sort, limit, offset, db)
+            products_ = await get_products_by_sort(sort, db)
         else:
-            products_ = await get_products_by_sort_and_category_id(sort, limit, offset, pr_category_id, db)
+            products_ = await get_products_by_sort_and_category_id(sort, pr_category_id, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
@@ -157,7 +145,7 @@ async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get
     return return_archive_prod
 
 
-@router.get("/{product_id}", response_model=ProductWithPricesAndImagesResponse)
+@router.get("/{product_id}", response_model=ProductResponse)
 async def get_one_product(product_id: int, db: Session = Depends(get_db)):
     # Redis client
     redis_client = get_redis()
