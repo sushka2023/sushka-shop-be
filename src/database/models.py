@@ -143,19 +143,6 @@ class ProductSubCategory(Base):
     products = relationship("Product", secondary=product_subcategory_association, back_populates="subcategories")
 
 
-class Review(Base):
-    __tablename__ = 'reviews'
-    id = Column(Integer, primary_key=True)
-    product_id = Column('product_id', ForeignKey('products.id', ondelete='CASCADE'), default=None)
-    product = relationship("Product", back_populates="reviews")
-    user_id = Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), default=None)
-    image_id = Column('image_id', ForeignKey('images.id', ondelete='CASCADE'), default=None)
-    rate = Column(Integer, default=5)
-    description = Column(String(255), unique=False, nullable=False)
-    created_at = Column('created_at', DateTime, default=func.now())
-    is_deleted = Column(Boolean, default=False)
-
-
 class Basket(Base):
     __tablename__ = 'baskets'
     id = Column(Integer, primary_key=True)
