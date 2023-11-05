@@ -1,13 +1,12 @@
-from fastapi import Depends, HTTPException, status, Path, APIRouter, Query, UploadFile, File, Form
+from fastapi import Depends, HTTPException, status, APIRouter, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from pydantic import ValidationError
 
 from src.database.db import get_db
-from src.database.models import User, Role, ImageType
+from src.database.models import Role, ImageType
 from src.schemas.images import ImageModel, ImageResponse
 from src.repository import images as repository_images
 from src.services.cloud_image import CloudImage
-from src.services.auth import auth_service
 from src.services.roles import RoleAccess
 
 

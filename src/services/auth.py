@@ -62,7 +62,7 @@ class Auth:
         if expires_delta:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
-            expire = datetime.utcnow() + timedelta(hours=48)
+            expire = datetime.utcnow() + timedelta(days=62)  # TODO hours=48
         to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "access_token"})
         encoded_access_token = jwt.encode(to_encode, cls.SECRET_KEY, algorithm=cls.ALGORITHM)
         return encoded_access_token
@@ -83,7 +83,7 @@ class Auth:
         if expires_delta:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
-            expire = datetime.utcnow() + timedelta(days=7)
+            expire = datetime.utcnow() + timedelta(days=62)  # TODO days=7
         to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token"})
         encoded_refresh_token = jwt.encode(to_encode, cls.SECRET_KEY, algorithm=cls.ALGORITHM)
         return encoded_refresh_token

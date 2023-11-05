@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +9,7 @@ class ImageModel(BaseModel):
     description: str = Field(min_length=10, max_length=255)
     image_type: ImageType
     product_id: int
+    main_image: Optional[bool]
 
 
 class ImageResponse(BaseModel):
@@ -17,6 +18,7 @@ class ImageResponse(BaseModel):
     image_url: str
     description: str = Field(min_length=10, max_length=255)
     image_type: ImageType
+    main_image: bool
 
     class Config:
         orm_mode = True

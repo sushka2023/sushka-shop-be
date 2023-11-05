@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
+from src.database.models import Role
 from src.schemas.email import RequestEmail
 from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
 from src.repository import baskets as repository_baskets
@@ -15,7 +16,10 @@ from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
 from src.services.exception_detail import ExDetail as Ex
 from src.services.password_utils import hash_password, verify_password
+from src.services.roles import RoleAccess
 
+
+allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 router = APIRouter(prefix="/auth", tags=['auth'])
 security = HTTPBearer()
@@ -72,15 +76,15 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
         user = pickle.loads(user)
 
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email not confirmed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not confirmed")
     if user.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if user.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if not verify_password(body.password, user.password_checksum):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     # Generate JWT
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token_ = await auth_service.create_refresh_token(data={"sub": user.email})
@@ -88,10 +92,9 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
     return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer"}
 
 
-@router.post("/logout")
+@router.post("/logout", dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def logout(credentials: HTTPAuthorizationCredentials = Security(security),
-                 db: Session = Depends(get_db),
-                 current_user: UserModel = Depends(auth_service.get_current_user)):
+                 db: Session = Depends(get_db)):
     """
     The logout function is used to logout a user.
     It takes the credentials,
@@ -111,7 +114,7 @@ async def logout(credentials: HTTPAuthorizationCredentials = Security(security),
     return {"message": "USER_IS_LOGOUT"}
 
 
-@router.get('/refresh_token', response_model=TokenModel)
+@router.get('/refresh_token', response_model=TokenModel, dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     """
     The refresh_token function is used to refresh the access token.
