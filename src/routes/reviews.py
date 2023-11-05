@@ -18,6 +18,7 @@ from src.services.exception_detail import ExDetail as Ex
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
+allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
 @router.get("/", response_model=list[ReviewResponse])
@@ -73,7 +74,8 @@ async def get_reviews_for_crm(limit: int, offset: int, db: Session = Depends(get
 
 @router.post("/create",
              response_model=ReviewResponse,
-             status_code=status.HTTP_201_CREATED)
+             status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def create_review(
         review: ReviewModel,
         db: Session = Depends(get_db),
