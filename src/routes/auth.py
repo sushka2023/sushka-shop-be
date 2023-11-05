@@ -72,15 +72,15 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
         user = pickle.loads(user)
 
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email not confirmed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not confirmed")
     if user.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if user.is_blocked:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if not verify_password(body.password, user.password_checksum):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=Ex.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     # Generate JWT
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token_ = await auth_service.create_refresh_token(data={"sub": user.email})
