@@ -24,6 +24,17 @@ class Role(enum.Enum):
     user: str = 'user'
 
 
+class Rating(enum.Enum):
+    """
+    Star rating.
+    """
+    five_stars: int = 5
+    four_stars: int = 4
+    three_stars: int = 3
+    two_stars: int = 2
+    one_star: int = 1
+
+
 class ImageType(enum.Enum):
     """
     Image type.
@@ -105,6 +116,8 @@ class Image(Base):
     id = Column(Integer, primary_key=True)
     product_id = Column('product_id', ForeignKey('products.id', ondelete='CASCADE'), default=None)
     product = relationship("Product", back_populates="images")
+    review_id = Column('review_id', ForeignKey('reviews.id', ondelete='CASCADE'), default=None)
+    review = relationship("Review", back_populates="images")
     image_url = Column(String(255), unique=True, nullable=False)
     created_at = Column('created_at', DateTime, default=func.now())
     description = Column(String(255), unique=False, nullable=False)
@@ -149,11 +162,12 @@ class Review(Base):
     product_id = Column('product_id', ForeignKey('products.id', ondelete='CASCADE'), default=None)
     product = relationship("Product", back_populates="reviews")
     user_id = Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), default=None)
-    image_id = Column('image_id', ForeignKey('images.id', ondelete='CASCADE'), default=None)
-    rate = Column(Integer, default=5)
+    images = relationship("Image", back_populates="review")
+    rating = Column('rating', Enum(Rating), default=Rating.five_stars)
     description = Column(String(255), unique=False, nullable=False)
     created_at = Column('created_at', DateTime, default=func.now())
     is_deleted = Column(Boolean, default=False)
+    is_checked = Column(Boolean, default=False)
 
 
 class Basket(Base):
