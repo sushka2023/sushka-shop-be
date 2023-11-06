@@ -36,7 +36,7 @@ async def get_reviews(limit: int, offset: int, db: Session = Depends(get_db)):
     """
     redis_client = get_redis()
 
-    key = "reviews"
+    key = f"reviews_limit:{limit}:offset:{offset}"
 
     cached_reviews = None
 
@@ -136,6 +136,8 @@ async def check_review(review: ReviewCheckModel, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
     check_review_ = await repository_reviews.check_review(review.id, db)
+
+    await delete_cache_in_redis()
 
     return check_review_
 
