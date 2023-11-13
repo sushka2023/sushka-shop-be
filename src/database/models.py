@@ -186,6 +186,7 @@ class BasketItem(Base):
     basket = relationship("Basket", back_populates="basket_items")
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
+    quantity = Column(Integer, default=1)
 
 
 class Order(Base):
@@ -201,7 +202,6 @@ class Order(Base):
     confirmation_manager = Column(Boolean, default=False)
     confirmation_pay = Column(Boolean, default=False)
     call_manager = Column(Boolean, default=False)
-    #TODO status = maybe ENum...
 
 
 class Post(Base):
