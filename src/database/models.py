@@ -189,21 +189,6 @@ class BasketItem(Base):
     quantity = Column(Integer, default=1)
 
 
-class Order(Base):
-    __tablename__ = 'orders'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("User", back_populates="orders")
-    basket_id = Column(Integer, ForeignKey('baskets.id'))
-    basket = relationship("Basket", back_populates="order")
-    price_order = Column(Float, unique=False, nullable=False)
-    payment_type = Column('payment_type', Enum(PaymentType), default=PaymentType.liqpay)
-    created_at = Column('created_at', DateTime, default=func.now())
-    confirmation_manager = Column(Boolean, default=False)
-    confirmation_pay = Column(Boolean, default=False)
-    call_manager = Column(Boolean, default=False)
-
-
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
