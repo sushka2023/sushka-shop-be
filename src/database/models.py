@@ -43,14 +43,6 @@ class ImageType(enum.Enum):
     review: str = 'review'
 
 
-class PaymentType(enum.Enum):
-    """
-    Payment type.
-    """
-    cash_on_delivery_np: str = 'cash_on_delivery_np'
-    liqpay: str = 'liqpay'
-
-
 class UpdateFromDictMixin:
     def update_from_dict(self, data_dict):
         for key, value in data_dict.items():
