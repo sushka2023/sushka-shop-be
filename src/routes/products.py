@@ -64,6 +64,50 @@ async def products(pr_category_id: int = None, sort: str = "low_price", db: Sess
     return products_
 
 
+@router.get("/all_for_crm",
+            response_model=List[ProductResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def products_for_crm(pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
+
+    # Redis client
+    redis_client = get_redis()
+    # List of allowed sorts
+    allowed_sorts = ["id", "name", "low_price", "high_price", "low_date", "high_date"]
+    if sort not in allowed_sorts:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
+
+    # We collect the key for caching
+    key = f"products_{sort}:pr_category_id:{pr_category_id}"
+
+    cached_products = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products = redis_client.get(key)
+
+    if not cached_products:
+        # The data is not found in the cache, we get it from the database
+        if pr_category_id is None:
+            products_ = await get_products_by_sort(sort, db)
+        else:
+            products_ = await get_products_by_sort_and_category_id(sort, pr_category_id, db)
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(products_))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        products_ = pickle.loads(cached_products)
+
+    if not products_:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return products_
+
+
 @router.post("/create",
              response_model=ProductResponse,
              dependencies=[Depends(allowed_operation_admin_moderator)],
