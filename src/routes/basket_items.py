@@ -71,11 +71,13 @@ async def add_to_favorites(body: BasketItemsModel,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
-    if basket_item:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    add_product_to_basket = await repository_basket_items.create(body, basket, db)
-    return add_product_to_basket
+    if basket_item:
+        updated_basket_item = await repository_basket_items.update(body, basket, db)
+        return updated_basket_item
+    else:
+        add_product_to_basket = await repository_basket_items.create(body, basket, db)
+        return add_product_to_basket
 
 
 @router.delete("/remove",
