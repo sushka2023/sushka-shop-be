@@ -43,6 +43,25 @@ class ImageType(enum.Enum):
     review: str = 'review'
 
 
+class PaymentTypes(enum.Enum):
+    """
+    Payment types.
+    """
+    cash_on_delivery_np: str = 'cash_on_delivery_np'
+    liqpay: str = 'liqpay'
+
+
+class OrderStatus(enum.Enum):
+    """
+    Status of the order
+    """
+    new: str = 'new'
+    in_processing: str = 'in processing'
+    shipped: str = 'shipped'
+    delivered: str = 'delivered'
+    cancelled: str = 'cancelled'
+
+
 class UpdateFromDictMixin:
     def update_from_dict(self, data_dict):
         for key, value in data_dict.items():
@@ -178,6 +197,22 @@ class BasketItem(Base):
     basket = relationship("Basket", back_populates="basket_items")
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
+
+
+class Order(Base):
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", back_populates="orders")
+    basket_id = Column(Integer, ForeignKey('baskets.id'))
+    basket = relationship("Basket", back_populates="order")
+    price_order = Column(Float, unique=False, nullable=False)
+    payment_type = Column('payment_type', Enum(PaymentTypes), default=PaymentTypes.liqpay)
+    created_at = Column('created_at', DateTime, default=func.now())
+    confirmation_manager = Column(Boolean, default=False)
+    confirmation_pay = Column(Boolean, default=False)
+    call_manager = Column(Boolean, default=False)
+    status_order = Column('status_order', Enum(OrderStatus), default=OrderStatus.new)
 
 
 class Post(Base):
