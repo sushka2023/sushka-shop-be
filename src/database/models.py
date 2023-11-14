@@ -56,7 +56,7 @@ class OrderStatus(enum.Enum):
     Status of the order
     """
     new: str = 'new'
-    in_processing: str = 'in_processing'
+    in_processing: str = 'in processing'
     shipped: str = 'shipped'
     delivered: str = 'delivered'
     cancelled: str = 'cancelled'
