@@ -186,7 +186,7 @@ class Basket(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="basket")
-    basket_items = relationship("BasketItem", uselist=False, back_populates="basket")
+    basket_items = relationship("BasketItem", uselist=True, back_populates="basket")
     order = relationship("Order", uselist=False, back_populates="basket")
 
 
