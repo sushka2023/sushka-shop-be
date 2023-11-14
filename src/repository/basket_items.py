@@ -9,7 +9,7 @@ from src.schemas.basket_items import BasketItemsModel
 
 
 async def create(body: BasketItemsModel, basket: Basket, db: Session):
-    new_basket_item = BasketItem(basket_id=basket.id, product_id=body.product_id)
+    new_basket_item = BasketItem(basket_id=basket.id, product_id=body.product_id, quantity=body.quantity)
     db.add(new_basket_item)
     db.commit()
     db.refresh(new_basket_item)
@@ -17,12 +17,13 @@ async def create(body: BasketItemsModel, basket: Basket, db: Session):
 
 
 async def basket_items(current_user: User, db: Session) -> List[BasketItem] | None:
-    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id) \
+    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id, BasketItem.quantity) \
         .join(Basket, Basket.id == BasketItem.basket_id) \
         .join(Product, Product.id == BasketItem.product_id) \
         .filter(Basket.user_id == current_user.id) \
         .order_by(Product.name.asc()) \
         .all()
+
     return basket_items_
 
 
