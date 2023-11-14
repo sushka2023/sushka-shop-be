@@ -48,9 +48,9 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
              response_model=BasketItemsResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
              status_code=status.HTTP_201_CREATED)
-async def add_to_favorites(body: BasketItemsModel,
-                           current_user: User = Depends(auth_service.get_current_user),
-                           db: Session = Depends(get_db)):
+async def add_items_to_basket(body: BasketItemsModel,
+                              current_user: User = Depends(auth_service.get_current_user),
+                              db: Session = Depends(get_db)):
     """
     The add_to_favorites function adds a product to the user's basket.
 
@@ -71,11 +71,13 @@ async def add_to_favorites(body: BasketItemsModel,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
-    if basket_item:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    add_product_to_basket = await repository_basket_items.create(body, basket, db)
-    return add_product_to_basket
+    if basket_item:
+        updated_basket_item = await repository_basket_items.update(body, basket, db)
+        return updated_basket_item
+    else:
+        add_product_to_basket = await repository_basket_items.create(body, basket, db)
+        return add_product_to_basket
 
 
 @router.delete("/remove",
@@ -105,6 +107,7 @@ async def remove_product(body: BasketItemsModel,
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    product_from_basket = await repository_basket_items.get_b_item_from_product_id(body.product_id, db)  # get product from favorite
+    product_from_basket = await repository_basket_items.get_b_item_from_product_id(body.product_id,
+                                                                                   db)  # get product from favorite
     await repository_basket_items.remove(product_from_basket, db)  # Remove product from favorite
     return None
