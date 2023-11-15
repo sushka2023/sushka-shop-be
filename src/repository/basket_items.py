@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
@@ -16,11 +16,15 @@ async def create(body: BasketItemsModel, basket: Basket, db: Session):
     return new_basket_item
 
 
-async def update(body: BasketItemsModel, basket: Basket, db: Session):
-    existing_basket_item = db.query(BasketItem).filter(
+async def get_existing_basket_item(basket: Basket, product_id: int, db: Session) -> Optional[BasketItem]:
+    return db.query(BasketItem).filter(
         BasketItem.basket_id == basket.id,
-        BasketItem.product_id == body.product_id
+        BasketItem.product_id == product_id
     ).first()
+
+
+async def update(body: BasketItemsModel, basket: Basket, db: Session):
+    existing_basket_item = await get_existing_basket_item(basket, body.product_id, db)
 
     if existing_basket_item:
         existing_basket_item.quantity += body.quantity
