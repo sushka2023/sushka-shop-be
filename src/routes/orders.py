@@ -22,7 +22,9 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/", response_model=list[OrderResponse])
+@router.get(
+    "/", response_model=list[OrderResponse],
+    dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_orders(
         limit: int,
         offset: int,
@@ -108,7 +110,7 @@ async def create_order(
 
 @router.put("/confirm_order",
             response_model=OrderResponse,
-            dependencies=[Depends(allowed_operation_admin)])
+            dependencies=[Depends(allowed_operation_admin_moderator)])
 async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
     """
     The confirm_order function confirms an order.
