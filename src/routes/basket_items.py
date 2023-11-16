@@ -48,9 +48,9 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
              response_model=BasketItemsResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
              status_code=status.HTTP_201_CREATED)
-async def add_to_favorites(body: BasketItemsModel,
-                           current_user: User = Depends(auth_service.get_current_user),
-                           db: Session = Depends(get_db)):
+async def add_items_to_basket(body: BasketItemsModel,
+                              current_user: User = Depends(auth_service.get_current_user),
+                              db: Session = Depends(get_db)):
     """
     The add_to_favorites function adds a product to the user's basket.
 
