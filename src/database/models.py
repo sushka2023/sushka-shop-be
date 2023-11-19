@@ -43,12 +43,33 @@ class ImageType(enum.Enum):
     review: str = 'review'
 
 
-class PaymentType(enum.Enum):
+class PaymentTypes(enum.Enum):
     """
-    Payment type.
+    Payment types.
     """
     cash_on_delivery_np: str = 'cash_on_delivery_np'
     liqpay: str = 'liqpay'
+
+
+class ProductStatus(enum.Enum):
+    """
+    Product status.
+    """
+    new: str = 'new'
+    activated: str = 'activated'
+    archived: str = 'archived'
+
+      
+class OrderStatus(enum.Enum):
+    """
+    Status of the order
+    """
+    new: str = 'new'
+    in_processing: str = 'in processing'
+    shipped: str = 'shipped'
+    delivered: str = 'delivered'
+    cancelled: str = 'cancelled'
+
 
 
 class UpdateFromDictMixin:
@@ -107,6 +128,7 @@ class Product(Base):
     is_deleted = Column(Boolean, default=False)
     is_popular = Column(Boolean, default=False)
     is_favorite = Column(Boolean, default=False)
+    product_status = Column('product_status', Enum(ProductStatus), default=ProductStatus.new)
     created_at = Column('created_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now())
 
@@ -175,7 +197,7 @@ class Basket(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="basket")
-    basket_items = relationship("BasketItem", uselist=False, back_populates="basket")
+    basket_items = relationship("BasketItem", uselist=True, back_populates="basket")
     order = relationship("Order", uselist=False, back_populates="basket")
 
 
@@ -186,6 +208,7 @@ class BasketItem(Base):
     basket = relationship("Basket", back_populates="basket_items")
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
+    quantity = Column(Integer, default=1)
 
 
 class Order(Base):
@@ -196,12 +219,12 @@ class Order(Base):
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
     price_order = Column(Float, unique=False, nullable=False)
-    payment_type = Column('payment_type', Enum(PaymentType), default=PaymentType.liqpay)
+    payment_type = Column('payment_type', Enum(PaymentTypes), default=PaymentTypes.liqpay)
     created_at = Column('created_at', DateTime, default=func.now())
     confirmation_manager = Column(Boolean, default=False)
     confirmation_pay = Column(Boolean, default=False)
     call_manager = Column(Boolean, default=False)
-    #TODO status = maybe ENum...
+    status_order = Column('status_order', Enum(OrderStatus), default=OrderStatus.new)
 
 
 class Post(Base):
