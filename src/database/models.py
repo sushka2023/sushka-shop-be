@@ -51,6 +51,15 @@ class PaymentTypes(enum.Enum):
     liqpay: str = 'liqpay'
 
 
+class ProductStatus(enum.Enum):
+    """
+    Product status.
+    """
+    new: str = 'new'
+    activated: str = 'activated'
+    archived: str = 'archived'
+
+      
 class OrderStatus(enum.Enum):
     """
     Status of the order
@@ -60,6 +69,7 @@ class OrderStatus(enum.Enum):
     shipped: str = 'shipped'
     delivered: str = 'delivered'
     cancelled: str = 'cancelled'
+
 
 
 class UpdateFromDictMixin:
@@ -118,6 +128,7 @@ class Product(Base):
     is_deleted = Column(Boolean, default=False)
     is_popular = Column(Boolean, default=False)
     is_favorite = Column(Boolean, default=False)
+    product_status = Column('product_status', Enum(ProductStatus), default=ProductStatus.new)
     created_at = Column('created_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now())
 

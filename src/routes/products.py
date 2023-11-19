@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.database.caching import get_redis
-from src.database.models import Role
+from src.database.models import Role, ProductStatus
 from src.repository import products as repository_products
-from src.repository.products import product_by_id
+from src.repository.products import product_by_id, get_products_all_for_crm
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -48,6 +48,50 @@ async def products(pr_category_id: int = None, sort: str = "low_price", db: Sess
             products_ = await get_products_by_sort(sort, db)
         else:
             products_ = await get_products_by_sort_and_category_id(sort, pr_category_id, db)
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(products_))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        products_ = pickle.loads(cached_products)
+
+    if not products_:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return products_
+
+
+@router.get("/all_for_crm",
+            response_model=List[ProductResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
+
+    # Redis client
+    redis_client = get_redis()
+    # List of allowed sorts
+    # allowed_sorts = ["all", "status", "category", "status_and_category"]
+    # if sort not in allowed_sorts:
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+    #                         detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
+
+    # We collect the key for caching
+    key = f"pr_category_id_{pr_category_id}:pr_status_{pr_status}"
+
+    cached_products = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products = redis_client.get(key)
+
+    if not cached_products:
+        # The data is not found in the cache, we get it from the database
+        if not pr_category_id and not pr_status:
+            products_ = await get_products_all_for_crm(db)
+        else:
+            products_ = await get_products_by_sort_and_category_id(pr_category_id, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:

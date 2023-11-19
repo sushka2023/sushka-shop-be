@@ -3,7 +3,7 @@ from typing import Optional, List, Tuple, Type
 
 from pydantic import BaseModel, Field
 
-from src.database.models import ProductCategory, Price, Image, ProductSubCategory
+from src.database.models import ProductCategory, Price, Image, ProductSubCategory, ProductStatus
 from src.schemas.images import ImageResponse
 from src.schemas.price import PriceResponse
 from src.schemas.product_sub_category import ProductSubCategoryResponse
@@ -16,6 +16,7 @@ class ProductModel(BaseModel):
     promotional: bool
     new_product: bool
     is_popular: bool
+    product_status: ProductStatus
 
 
 class ProductResponse(BaseModel):
@@ -27,6 +28,7 @@ class ProductResponse(BaseModel):
     new_product: bool
     is_popular: bool
     is_favorite: bool
+    product_status: ProductStatus
     sub_categories: List[ProductSubCategoryResponse]
     images: List[ImageResponse]
     prices: List[PriceResponse]
