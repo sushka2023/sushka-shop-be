@@ -8,6 +8,8 @@ from src.database.db import get_db
 from src.database.caching import get_redis
 from src.database.models import Role, ProductStatus
 from src.repository import products as repository_products
+from src.repository.prices import price_by_product
+from src.repository.product_sub_categories import insert_sub_category_for_product
 from src.repository.products import product_by_id, get_products_all_for_crm
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -71,13 +73,7 @@ async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int 
 
     # Redis client
     redis_client = get_redis()
-    # List of allowed sorts
-    # allowed_sorts = ["all", "status", "category", "status_and_category"]
-    # if sort not in allowed_sorts:
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-    #                         detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
 
-    # We collect the key for caching
     key = f"pr_category_id_{pr_category_id}:pr_status_{pr_status}"
 
     cached_products = None
@@ -126,7 +122,28 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     product = await repository_products.product_by_name(body.name, db)
     if product:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+
+    body = body.dict()
+
+    sub_categories_ids = body.pop("sub_categories_id", [])
+
     new_product = await repository_products.create_product(body, db)
+
+    # add sub_categories for product
+    await insert_sub_category_for_product(new_product.id, sub_categories_ids, db)
+    db.refresh(new_product)
+    new_product = ProductResponse(id=new_product.id,
+                                  name=new_product.name,
+                                  description=new_product.description,
+                                  product_category_id=new_product.product_category_id,
+                                  promotional=new_product.promotional,
+                                  new_product=new_product.new_product,
+                                  is_popular=new_product.is_popular,
+                                  is_favorite=new_product.is_favorite,
+                                  product_status=new_product.product_status,
+                                  sub_categories=new_product.subcategories,
+                                  images=new_product.images,
+                                  prices=await price_by_product(new_product, db))
 
     await delete_cache_in_redis()
 
