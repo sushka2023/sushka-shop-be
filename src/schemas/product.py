@@ -13,6 +13,7 @@ class ProductModel(BaseModel):
     name: str = Field(min_length=6, max_length=150)
     description: str = Field(min_length=20, max_length=400)
     product_category_id: int
+    sub_categories_id: List[int]
     promotional: bool
     new_product: bool
     is_popular: bool

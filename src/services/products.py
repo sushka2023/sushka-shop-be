@@ -56,7 +56,7 @@ async def product_with_price_and_images_response(products: List[Type[Product]], 
                                            new_product=product.new_product,
                                            is_popular=product.is_popular,
                                            is_favorite=product.is_favorite,
-                                           product_status = product.product_status,
+                                           product_status=product.product_status,
                                            sub_categories=product.subcategories,
                                            images=product.images,
                                            prices=await price_by_product(product, db))

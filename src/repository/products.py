@@ -177,8 +177,8 @@ async def get_products_high_date_by_category_id(category_id: int, db: Session) -
     return product_with_price
 
 
-async def create_product(body: ProductModel, db: Session) -> Product:
-    new_product = Product(**body.dict())
+async def create_product(body: dict, db: Session) -> Type[Product]:
+    new_product = Product(**body)
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
