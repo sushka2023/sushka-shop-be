@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
@@ -43,11 +43,15 @@ async def basket_items(current_user: User, db: Session) -> List[BasketItem] | No
     return basket_items_
 
 
-async def basket_item(body: BasketItemsModel, current_user: User, db: Session) -> BasketItem:
+async def basket_item(body: BasketItemsModel, current_user: User, db: Session) -> Type[BasketItem] | None:
     return db.query(BasketItem).join(Basket).filter(
         BasketItem.product_id == body.product_id,
         Basket.user_id == current_user.id
     ).first()
+
+
+async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketItem] | None:
+    return db.query(BasketItem).filter(BasketItem.id == basket_item_id).first()
 
 
 async def get_b_item_from_product_id(product_id: int, db: Session):
@@ -58,4 +62,13 @@ async def get_b_item_from_product_id(product_id: int, db: Session):
 async def remove(basket_item_: BasketItem, db: Session):
     db.delete(basket_item_)
     db.commit()
+    return None
+
+
+async def update_quantity(basket_item_: Type[BasketItem], quantity: int, db) -> Type[BasketItem] | None:
+    if basket_item_:
+        basket_item_.quantity = quantity
+        db.commit()
+        db.refresh(basket_item_)
+        return basket_item_
     return None

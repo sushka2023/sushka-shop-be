@@ -16,3 +16,8 @@ class BasketItemsResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ChangeQuantityBasketItemsModel(BaseModel):
+    id: int
+    quantity: int
