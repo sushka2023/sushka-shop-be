@@ -8,6 +8,7 @@ from src.database.models import Role, User
 from src.repository import basket_items as repository_basket_items
 from src.repository import baskets as repository_baskets
 from src.repository import products as repository_products
+from src.repository.products import product_by_id
 from src.schemas.basket_items import BasketItemsModel, BasketItemsResponse
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
@@ -41,7 +42,17 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
     basket_items_ = await repository_basket_items.basket_items(current_user, db)
     if basket_items_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    return basket_items_
+
+    basket_items_with_product = list()
+
+    for item in basket_items_:
+        product = await product_by_id(item.product_id, db)
+        basket_items_with_product.append(BasketItemsResponse(id=item.id,
+                                                             basket_id=item.basket_id,
+                                                             product=product,
+                                                             quantity=item.quantity))
+
+    return basket_items_with_product
 
 
 @router.post("/add",
