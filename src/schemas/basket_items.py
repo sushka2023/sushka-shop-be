@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from src.schemas.product import ProductResponse
+
 
 class BasketItemsModel(BaseModel):
     product_id: int
@@ -9,8 +11,13 @@ class BasketItemsModel(BaseModel):
 class BasketItemsResponse(BaseModel):
     id: int
     basket_id: int
-    product_id: int
+    product: ProductResponse
     quantity: int
 
     class Config:
         orm_mode = True
+
+
+class ChangeQuantityBasketItemsModel(BaseModel):
+    id: int
+    quantity: int
