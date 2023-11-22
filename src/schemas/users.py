@@ -84,6 +84,23 @@ class UserResponseAfterUpdate(UserUpdateData):
         orm_mode = True
 
 
+class UserResponseForCRM(BaseModel):
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    role: Role
+    phone_number: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
+    is_blocked: bool
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
 class TokenModel(BaseModel):
     access_token: str
     refresh_token: str
@@ -92,3 +109,7 @@ class TokenModel(BaseModel):
 
 class PasswordModel(BaseModel):
     password_checksum: str = Field(min_length=8, max_length=255)
+
+
+class UserBlockOrRemoveModel(BaseModel):
+    id: int
