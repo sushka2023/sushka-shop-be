@@ -157,6 +157,7 @@ class Price(Base):
     old_price = Column(Float, unique=False, nullable=True)
     quantity = Column(Integer, default=1)
     is_deleted = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=False)
 
 
 class ProductCategory(Base):
@@ -208,6 +209,7 @@ class BasketItem(Base):
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
     quantity = Column(Integer, default=1)
+    price_id_by_the_user = Column(Integer)
 
 
 class Order(Base):
