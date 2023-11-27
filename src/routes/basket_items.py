@@ -50,7 +50,8 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
         basket_items_with_product.append(BasketItemsResponse(id=item.id,
                                                              basket_id=item.basket_id,
                                                              product=product,
-                                                             quantity=item.quantity))
+                                                             quantity=item.quantity,
+                                                             price_id_by_the_user=item.price_id_by_the_user))
 
     return basket_items_with_product
 

@@ -34,7 +34,7 @@ async def update(body: BasketItemsModel, basket: Basket, db: Session):
 
 
 async def basket_items(current_user: User, db: Session) -> List[BasketItem] | None:
-    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id, BasketItem.quantity) \
+    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id, BasketItem.quantity, BasketItem.price_id_by_the_user) \
         .join(Basket, Basket.id == BasketItem.basket_id) \
         .join(Product, Product.id == BasketItem.product_id) \
         .filter(Basket.user_id == current_user.id) \
