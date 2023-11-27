@@ -85,9 +85,13 @@ async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
         if not pr_category_id and not pr_status:
-            products_ = await get_products_all_for_crm(db)
-        else:
-            products_ = await get_products_by_sort_and_category_id(pr_category_id, db)
+            products_ = await repository_products.get_products_all_for_crm(db)
+        elif pr_category_id and not pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_category_id(pr_category_id, db)
+        elif not pr_category_id and pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_status(pr_status, db)
+        elif pr_category_id and pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id, pr_status, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:

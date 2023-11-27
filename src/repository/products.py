@@ -35,6 +35,39 @@ async def get_products_all_for_crm(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
+async def get_products_all_for_crm_pr_category_id(pr_category_id: int, db: Session) -> List[Type[Product]] | None:
+    products_ = db.query(Product).\
+        filter(Product.product_category_id == pr_category_id).\
+        order_by(desc(Product.created_at)).\
+        all()
+
+    product_with_price = await product_with_prices_and_images(products_, db)
+
+    return product_with_price
+
+
+async def get_products_all_for_crm_pr_status(pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
+    products_ = db.query(Product).\
+        filter(Product.product_status == pr_status).\
+        order_by(desc(Product.created_at)).\
+        all()
+
+    product_with_price = await product_with_prices_and_images(products_, db)
+
+    return product_with_price
+
+
+async def get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
+    products_ = db.query(Product).\
+        filter(Product.product_category_id == pr_category_id, Product.product_status == pr_status).\
+        order_by(desc(Product.created_at)).\
+        all()
+
+    product_with_price = await product_with_prices_and_images(products_, db)
+
+    return product_with_price
+
+
 async def get_products_id(db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
