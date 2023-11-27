@@ -8,6 +8,7 @@ from src.database.models import Role
 from src.repository import prices as repository_prices
 from src.repository import products as repository_products
 from src.schemas.price import PriceResponse, PriceModel, PriceArchiveModel, TotalPriceResponse, TotalPriceModel
+from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -57,6 +58,9 @@ async def create_price(body: PriceModel, db: Session = Depends(get_db)):
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     new_price = await repository_prices.create_price(body, db)
+
+    await delete_cache_in_redis()
+
     return new_price
 
 
@@ -83,6 +87,9 @@ async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)
     if price.is_deleted:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     archive_price = await repository_prices.archive_price(body.id, db)
+
+    await delete_cache_in_redis()
+
     return archive_price
 
 
@@ -109,6 +116,9 @@ async def archive_product(body: PriceArchiveModel, db: Session = Depends(get_db)
     if price.is_deleted is False:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_price = await repository_prices.unarchive_price(body.id, db)
+
+    await delete_cache_in_redis()
+
     return return_archive_price
 
 

@@ -19,7 +19,7 @@ async def price_by_product(product: Type[Product], db: Session) -> List[Type[Pri
     return prices_in_ascending_order
 
 
-async def price_by_id(id_price: int, db: Session) -> PriceResponse:
+async def price_by_id(id_price: int, db: Session) -> Type[Price]:
     price = db.query(Price).filter_by(id=id_price).first()
     return price
 
