@@ -21,7 +21,11 @@ async def get_image(image_id: int, user: User, db: Session) -> Image | None:
 
 
 async def create(body: ImageModel, image_url: str, product_id: int, db: Session) -> Image:
-    image = Image(description=body.description, image_url=image_url, image_type=ImageType.product, product_id=product_id)
+    image = Image(description=body.description,
+                  image_url=image_url,
+                  image_type=ImageType.product,
+                  product_id=product_id,
+                  main_image=body.main_image)
     db.add(image)
     db.commit()
     db.refresh(image)

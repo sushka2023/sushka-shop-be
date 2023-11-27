@@ -7,7 +7,9 @@ from src.database.models import Product, Price
 from src.repository import products as repository_products
 from src.repository import product_categories as repository_product_categories
 from src.repository.prices import price_by_product
+from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
+from src.services.cloud_image import CloudImage
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -58,7 +60,13 @@ async def product_with_price_and_images_response(products: List[Type[Product]], 
                                            is_favorite=product.is_favorite,
                                            product_status=product.product_status,
                                            sub_categories=product.subcategories,
-                                           images=product.images,
+                                           # images=product.images,
+                                           images=[ImageResponse(id=item.id,
+                                                                 product_id=item.product_id,
+                                                                 image_url=CloudImage.get_transformation_image(item.image_url, "product"),
+                                                                 description=item.description,
+                                                                 image_type=item.image_type,
+                                                                 main_image=item.main_image) for item in product.images],
                                            prices=await price_by_product(product, db))
 
         result.append(product_response)
