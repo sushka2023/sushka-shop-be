@@ -20,7 +20,7 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/all_for_crm/", response_model=list[UserResponseForCRM],
+@router.get("/all_for_crm", response_model=list[UserResponseForCRM],
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def get_all_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
     """
@@ -115,7 +115,7 @@ async def block_user(user: UserBlockOrRemoveModel, db: Session = Depends(get_db)
     if user.is_blocked:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    block_user_ = await repository_users.block_or_unblock_user(user.id, db)
+    block_user_ = await repository_users.block_user(user.id, db)
 
     await delete_cache_in_redis()
 
@@ -143,7 +143,7 @@ async def unblock_user(user: UserBlockOrRemoveModel, db: Session = Depends(get_d
     if not user.is_blocked:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    unblock_user_ = await repository_users.block_or_unblock_user(user.id, db)
+    unblock_user_ = await repository_users.unblock_user(user.id, db)
 
     await delete_cache_in_redis()
 
@@ -173,7 +173,7 @@ async def remove_user(user: UserBlockOrRemoveModel, db: Session = Depends(get_db
     if user.is_deleted:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    delete_user = await repository_users.remove_or_return_user(user.id, db)
+    delete_user = await repository_users.remove_user(user.id, db)
 
     await delete_cache_in_redis()
 
@@ -202,7 +202,7 @@ async def return_user(user: UserBlockOrRemoveModel, db: Session = Depends(get_db
     if not user.is_deleted:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
-    return_user_ = await repository_users.remove_or_return_user(user.id, db)
+    return_user_ = await repository_users.return_user(user.id, db)
 
     await delete_cache_in_redis()
 

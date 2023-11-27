@@ -183,26 +183,38 @@ async def get_all_users(limit: int, offset: int, db: Session) -> list[User]:
     return users
 
 
-async def block_or_unblock_user(user_id: int, db: Session) -> User | None:
+async def block_user(user_id: int, db: Session) -> User | None:
     user = await get_user_by_id(user_id=user_id, db=db)
-    if user:
-        if not user.is_blocked:
-            user.is_blocked = True
-        else:
-            user.is_blocked = False
+    if user and not user.is_blocked:
+        user.is_blocked = True
         db.commit()
         return user
     return None
 
 
-async def remove_or_return_user(user_id: int, db: Session) -> User | None:
+async def unblock_user(user_id: int, db: Session) -> User | None:
     user = await get_user_by_id(user_id=user_id, db=db)
     if user and user.is_blocked:
-        if not user.is_deleted:
-            user.is_deleted = True
-        else:
-            user.is_deleted = False
-            user.is_blocked = False
+        user.is_blocked = True
+        db.commit()
+        return user
+    return None
+
+
+async def remove_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and user.is_blocked and not user.is_deleted:
+        user.is_deleted = True
+        db.commit()
+        return user
+    return None
+
+
+async def return_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and user.is_blocked and user.is_deleted:
+        user.is_deleted = False
+        user.is_blocked = False
         db.commit()
         return user
     return None
