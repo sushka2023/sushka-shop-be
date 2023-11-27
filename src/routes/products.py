@@ -11,8 +11,10 @@ from src.repository import products as repository_products
 from src.repository.prices import price_by_product
 from src.repository.product_sub_categories import insert_sub_category_for_product
 from src.repository.products import product_by_id, get_products_all_for_crm
+from src.schemas.images import ImageResponse
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
 from src.services.cache_in_redis import delete_cache_in_redis
+from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
@@ -82,12 +84,18 @@ async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int 
         # We check whether the data is present in the Redis cache
         cached_products = redis_client.get(key)
 
+    products_ = None
+
     if not cached_products:
         # The data is not found in the cache, we get it from the database
         if not pr_category_id and not pr_status:
-            products_ = await get_products_all_for_crm(db)
-        else:
-            products_ = await get_products_by_sort_and_category_id(pr_category_id, db)
+            products_ = await repository_products.get_products_all_for_crm(db)
+        elif pr_category_id and not pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_category_id(pr_category_id, db)
+        elif not pr_category_id and pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_status(pr_status, db)
+        elif pr_category_id and pr_status:
+            products_ = await repository_products.get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id, pr_status, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
@@ -142,7 +150,13 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
                                   is_favorite=new_product.is_favorite,
                                   product_status=new_product.product_status,
                                   sub_categories=new_product.subcategories,
-                                  images=new_product.images,
+                                  images=[ImageResponse(id=item.id,
+                                                        product_id=item.product_id,
+                                                        image_url=CloudImage.get_transformation_image(item.image_url,
+                                                                                                      "product"),
+                                                        description=item.description,
+                                                        image_type=item.image_type,
+                                                        main_image=item.main_image) for item in product.images],
                                   prices=await price_by_product(new_product, db))
 
     await delete_cache_in_redis()

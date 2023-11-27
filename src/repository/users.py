@@ -161,3 +161,60 @@ async def update_user_data(db: Session, user_data: UserUpdateData, user: User) -
     db.refresh(updated_data_user)
 
     return updated_data_user
+
+
+async def get_all_users(limit: int, offset: int, db: Session) -> list[User]:
+    """
+    Function takes a database session, and returns the user data if it exists.
+    If no such users exists, it returns an empty list.
+
+    Arguments:
+        limit: int: Limit the number of users returned
+        offset: int: Specify the offset of the first user to be returned
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        list[User] : a list of users or an empty list if the users is not found
+    """
+    users = (
+        db.query(User).order_by(User.is_blocked, User.is_deleted)
+        .order_by(User.id).limit(limit).offset(offset).all()
+    )
+    return users
+
+
+async def block_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and not user.is_blocked:
+        user.is_blocked = True
+        db.commit()
+        return user
+    return None
+
+
+async def unblock_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and user.is_blocked:
+        user.is_blocked = True
+        db.commit()
+        return user
+    return None
+
+
+async def remove_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and user.is_blocked and not user.is_deleted:
+        user.is_deleted = True
+        db.commit()
+        return user
+    return None
+
+
+async def return_user(user_id: int, db: Session) -> User | None:
+    user = await get_user_by_id(user_id=user_id, db=db)
+    if user and user.is_blocked and user.is_deleted:
+        user.is_deleted = False
+        user.is_blocked = False
+        db.commit()
+        return user
+    return None

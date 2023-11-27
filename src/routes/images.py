@@ -6,6 +6,7 @@ from src.database.db import get_db
 from src.database.models import Role, ImageType
 from src.schemas.images import ImageModel, ImageResponse
 from src.repository import images as repository_images
+from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
 
@@ -21,10 +22,11 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 async def create_image(description: str = Form(),
                        image_file: UploadFile = File(),
                        product_id: int = Form(),
+                       main_image: bool = Form(),
                        db: Session = Depends(get_db)):
 
     try:
-        body = ImageModel(description=description, image_type=ImageType.product, product_id=product_id)
+        body = ImageModel(description=description, image_type=ImageType.product, product_id=product_id, main_image=main_image)
     except ValidationError:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="UNPROCESSABLE_ENTITY")
     file_name = CloudImage.generate_name_image()
@@ -33,4 +35,7 @@ async def create_image(description: str = Form(),
     image = await repository_images.create(body, image_url, product_id, db)
     transformation_image_product = CloudImage.get_transformation_image(image_url, "product")
     image.image_url = transformation_image_product
+
+    await delete_cache_in_redis()
+
     return image

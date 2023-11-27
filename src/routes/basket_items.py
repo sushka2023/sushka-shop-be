@@ -50,7 +50,8 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
         basket_items_with_product.append(BasketItemsResponse(id=item.id,
                                                              basket_id=item.basket_id,
                                                              product=product,
-                                                             quantity=item.quantity))
+                                                             quantity=item.quantity,
+                                                             price_id_by_the_user=item.price_id_by_the_user))
 
     return basket_items_with_product
 
@@ -83,12 +84,26 @@ async def add_items_to_basket(body: BasketItemsModel,
 
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
 
+    add_product_to_basket = None
+
     if basket_item:
-        updated_basket_item = await repository_basket_items.update(body, basket, db)
-        return updated_basket_item
-    else:
+        add_product_to_basket = await repository_basket_items.update(body, basket, db)
+    elif not basket_item:
         add_product_to_basket = await repository_basket_items.create(body, basket, db)
+
+    basket_items_with_product = list()
+
+    if add_product_to_basket:
+        product = await product_by_id(add_product_to_basket.product_id, db)
+        add_product_to_basket = BasketItemsResponse(id=add_product_to_basket.id,
+                                                    basket_id=add_product_to_basket.basket_id,
+                                                    product=product,
+                                                    quantity=add_product_to_basket.quantity,
+                                                    price_id_by_the_user=add_product_to_basket.price_id_by_the_user)
         return add_product_to_basket
+
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
 
 @router.delete("/remove",

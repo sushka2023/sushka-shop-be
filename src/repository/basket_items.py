@@ -8,8 +8,11 @@ from src.database.models import BasketItem, User, Basket, Product
 from src.schemas.basket_items import BasketItemsModel
 
 
-async def create(body: BasketItemsModel, basket: Basket, db: Session):
-    new_basket_item = BasketItem(basket_id=basket.id, product_id=body.product_id, quantity=body.quantity)
+async def create(body: BasketItemsModel, basket: Basket, db: Session) -> BasketItem:
+    new_basket_item = BasketItem(basket_id=basket.id,
+                                 product_id=body.product_id,
+                                 quantity=body.quantity,
+                                 price_id_by_the_user=body.price_id_by_the_user)
     db.add(new_basket_item)
     db.commit()
     db.refresh(new_basket_item)
@@ -28,13 +31,14 @@ async def update(body: BasketItemsModel, basket: Basket, db: Session):
 
     if existing_basket_item:
         existing_basket_item.quantity += body.quantity
+        existing_basket_item.price_id_by_the_user = body.price_id_by_the_user
         db.commit()
         db.refresh(existing_basket_item)
         return existing_basket_item
 
 
 async def basket_items(current_user: User, db: Session) -> List[BasketItem] | None:
-    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id, BasketItem.quantity) \
+    basket_items_ = db.query(BasketItem.id, BasketItem.basket_id, BasketItem.product_id, BasketItem.quantity, BasketItem.price_id_by_the_user) \
         .join(Basket, Basket.id == BasketItem.basket_id) \
         .join(Product, Product.id == BasketItem.product_id) \
         .filter(Basket.user_id == current_user.id) \
@@ -55,7 +59,7 @@ async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketIte
 
 
 async def get_b_item_from_product_id(product_id: int, db: Session):
-    basket_item_ = db.query(BasketItem).filter(product_id == product_id).first()
+    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id).first()
     return basket_item_
 
 
