@@ -195,7 +195,7 @@ async def block_user(user_id: int, db: Session) -> User | None:
 async def unblock_user(user_id: int, db: Session) -> User | None:
     user = await get_user_by_id(user_id=user_id, db=db)
     if user and user.is_blocked:
-        user.is_blocked = True
+        user.is_blocked = False
         db.commit()
         return user
     return None
