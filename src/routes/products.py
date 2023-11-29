@@ -156,7 +156,7 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
                                                                                                       "product"),
                                                         description=item.description,
                                                         image_type=item.image_type,
-                                                        main_image=item.main_image) for item in product.images],
+                                                        main_image=item.main_image) for item in new_product.images],
                                   prices=await price_by_product(new_product, db))
 
     await delete_cache_in_redis()
