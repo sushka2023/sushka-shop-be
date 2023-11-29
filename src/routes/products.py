@@ -131,6 +131,8 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     if product:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
+    # TODO bugfix create product when the category does not exist...
+    
     body = body.dict()
 
     sub_categories_ids = body.pop("sub_categories_id", [])
