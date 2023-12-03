@@ -1,18 +1,21 @@
-from sqlalchemy.orm import Session
+from typing import Type
+
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
 
 from src.database.models import Review, User
 from src.schemas.reviews import ReviewModel
 
 
-async def get_reviews(limit: int, offset: int, db: Session) -> list[Review]:
+async def get_reviews(limit: int, offset: int, db: Session) -> list[Type[Review]]:
     return (
-        db.query(Review).filter(and_(Review.is_checked == True, Review.is_deleted == False))
+        db.query(Review).options(joinedload(Review.images))  # Завантажує всі картинки разом із відгуками
+        .filter(and_(Review.is_checked == True, Review.is_deleted == False))
         .order_by(desc(Review.rating), desc(Review.created_at)).limit(limit).offset(offset).all()
     )
 
 
-async def get_reviews_for_crm(limit: int, offset: int, db: Session) -> list[Review]:
+async def get_reviews_for_crm(limit: int, offset: int, db: Session) -> list[Type[Review]]:
     return db.query(Review).order_by(Review.is_deleted, desc(Review.created_at)).limit(limit).offset(offset).all()
 
 

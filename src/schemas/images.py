@@ -22,3 +22,22 @@ class ImageResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ImageModelReview(BaseModel):
+    description: str = Field(min_length=1, max_length=255)
+    image_type: ImageType
+    product_id: int
+    review_id: int
+
+
+class ImageResponseReview(BaseModel):
+    id: int
+    product_id: Optional[int]
+    review_id: Optional[int]
+    image_url: str
+    description: str = Field(min_length=1, max_length=255)
+    image_type: ImageType
+
+    class Config:
+        orm_mode = True
