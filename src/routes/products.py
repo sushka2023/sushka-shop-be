@@ -24,6 +24,7 @@ router = APIRouter(prefix="/product", tags=["product"])
 # role authority
 allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
+allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
 @router.get("/all", response_model=List[ProductResponse])

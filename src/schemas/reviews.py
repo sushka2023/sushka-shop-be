@@ -1,8 +1,11 @@
 from datetime import datetime
+from typing import Type
 
 from pydantic import BaseModel, Field
 
-from src.database.models import Rating
+from src.database.models import Rating, Image
+from src.schemas.images import ImageResponseReview
+from src.services.cloud_image import CloudImage
 
 
 class ReviewModel(BaseModel):
@@ -20,6 +23,7 @@ class ReviewResponse(BaseModel):
     created_at: datetime
     is_deleted: bool
     is_checked: bool
+    images: list[ImageResponseReview]
 
     class Config:
         orm_mode = True
