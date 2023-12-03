@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 
 from src.database.models import User, Image, ImageType
-from src.schemas.images import ImageModel, ImageResponse
+from src.schemas.images import ImageModel, ImageResponse, ImageModelReview
 from src.services.cloud_image import CloudImage
 
 
@@ -26,6 +26,18 @@ async def create(body: ImageModel, image_url: str, product_id: int, db: Session)
                   image_type=ImageType.product,
                   product_id=product_id,
                   main_image=body.main_image)
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+    return image
+
+
+async def create_image_review(body: ImageModelReview, image_url: str, product_id: int, db: Session) -> Image:
+    image = Image(description=body.description,
+                  image_url=image_url,
+                  image_type=ImageType.review,
+                  product_id=product_id,
+                  review_id=body.review_id)
     db.add(image)
     db.commit()
     db.refresh(image)
