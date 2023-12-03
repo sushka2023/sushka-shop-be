@@ -47,14 +47,42 @@ async def get_reviews(limit: int, offset: int, db: Session = Depends(get_db)):
 
     if not cached_reviews:
         reviews = await repository_reviews.get_reviews(limit, offset, db)
+        reviews_result = list()
+
+        for review in reviews:
+            reviews_result.append(ReviewResponse(
+                id=review.id,
+                user_id=review.user_id,
+                product_id=review.product_id,
+                rating=review.rating,
+                description=review.description,
+                created_at=review.created_at,
+                is_deleted=review.is_deleted,
+                is_checked=review.is_checked,
+                images=list()
+            ))
+
+            image_response = list()
+
+            if len(review.images) > 0:
+                review.images[0].image_url = CloudImage.get_transformation_image(review.images[0].image_url, "review")
+                for img in review.images:
+                    image_response.append((ImageResponseReview(id=img.id,
+                                                               product_id=img.product_id,
+                                                               review_id=img.review_id,
+                                                               image_url=img.image_url,
+                                                               description=img.description,
+                                                               image_type=img.image_type)))
+
+            reviews_result[-1].images = image_response
 
         if redis_client:
-            redis_client.set(key, pickle.dumps(reviews))
+            redis_client.set(key, pickle.dumps(reviews_result))
             redis_client.expire(key, 1800)
     else:
-        reviews = pickle.loads(cached_reviews)
+        reviews_result = pickle.loads(cached_reviews)
 
-    return reviews
+    return reviews_result
 
 
 @router.get("/all_for_crm", response_model=list[ReviewResponse],
