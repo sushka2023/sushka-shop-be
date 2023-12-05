@@ -1,4 +1,6 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from pathlib import Path
+
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
 from typing import Optional
 
@@ -16,6 +18,7 @@ conf = ConnectionConfig(
     MAIL_SSL_TLS=True,
     USE_CREDENTIALS=True,
     VALIDATE_CERTS=True,
+    TEMPLATE_FOLDER=Path(__file__).parent / 'templates',
 )
 
 email_owner = settings.email_recipients
@@ -33,18 +36,19 @@ class EmailService:
         message: Optional[str],
     ):
         try:
-            message_body = (
-                f"Dear Madam,\n\nMy name is {name}\nMy email: {email}\n"
-                f"My phone number: {phone_number}\nMessage: {message}\n\n\n\n\n"
-                f"Best regards,\n\n{name}"
-            )
+            template_data = {
+                "name": name,
+                "email": email,
+                "phone_number": phone_number,
+                "message": message,
+            }
             message_schema = MessageSchema(
                 subject=f"New Message from {name}",
                 recipients=[email_owner],
-                body=message_body,
-                subtype="plain",
+                template_body=template_data,
+                subtype=MessageType.html
             )
-            await self.mail.send_message(message=message_schema)
+            await self.mail.send_message(message_schema, template_name="email_cooperation.html")
         except Exception as e:
             raise e
 
