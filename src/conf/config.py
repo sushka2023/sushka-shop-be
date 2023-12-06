@@ -21,11 +21,12 @@ class Settings(BaseSettings):
     mail_server: str = 'server'
     mail_from_name: str = 'mail_name'
 
+    email_recipients: str = 'email_name'
+
     redis_host: str = 'host_name'
     redis_port: str = 'port'
     redis_password: str = 'password'
     sentry_url: str = 'sentry_url'
-
 
     class Config:
         env_file = '.env'
