@@ -11,6 +11,10 @@ class BasketItemsModel(BaseModel):
     price_id_by_the_user: Optional[int]
 
 
+class BasketItemsRemoveModel(BaseModel):
+    product_id: int
+
+
 class BasketItemsResponse(BaseModel):
     id: int
     basket_id: int

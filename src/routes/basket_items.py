@@ -9,7 +9,8 @@ from src.repository import basket_items as repository_basket_items
 from src.repository import baskets as repository_baskets
 from src.repository import products as repository_products
 from src.repository.products import product_by_id
-from src.schemas.basket_items import BasketItemsModel, BasketItemsResponse, ChangeQuantityBasketItemsModel
+from src.schemas.basket_items import BasketItemsModel, BasketItemsResponse, ChangeQuantityBasketItemsModel, \
+    BasketItemsRemoveModel
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -109,17 +110,17 @@ async def add_items_to_basket(body: BasketItemsModel,
 @router.delete("/remove",
                dependencies=[Depends(allowed_operation_admin_moderator_user)],
                status_code=status.HTTP_204_NO_CONTENT)
-async def remove_product(body: BasketItemsModel,
+async def remove_product(body: BasketItemsRemoveModel,
                          current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
     """
     The remove_product function removes a product from the basket.
-        The function takes in a body of type BasketItemsModel, which contains the id of the product to be removed.
+        The function takes in a body of type BasketItemsRemoveModel, which contains the id of the product to be removed.
         It also takes in an optional current_user parameter, which is used to identify who's basket we are removing from.
         Finally it takes in an optional db parameter, which is used for database access.
 
     Args:
-        body: BasketItemsModel: Get the product_id from the request body
+        body: BasketItemsRemoveModel: Get the product_id from the request body
         current_user: User: Get the current user
         db: Session: Get a database session
 
