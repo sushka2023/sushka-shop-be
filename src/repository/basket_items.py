@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 
 from src.database.models import BasketItem, User, Basket, Product
-from src.schemas.basket_items import BasketItemsModel
+from src.schemas.basket_items import BasketItemsModel, BasketItemsRemoveModel
 
 
 async def create(body: BasketItemsModel, basket: Basket, db: Session) -> BasketItem:
@@ -47,7 +47,7 @@ async def basket_items(current_user: User, db: Session) -> List[BasketItem] | No
     return basket_items_
 
 
-async def basket_item(body: BasketItemsModel, current_user: User, db: Session) -> Type[BasketItem] | None:
+async def basket_item(body: BasketItemsRemoveModel, current_user: User, db: Session) -> Type[BasketItem] | None:
     return db.query(BasketItem).join(Basket).filter(
         BasketItem.product_id == body.product_id,
         Basket.user_id == current_user.id
@@ -58,8 +58,8 @@ async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketIte
     return db.query(BasketItem).filter(BasketItem.id == basket_item_id).first()
 
 
-async def get_b_item_from_product_id(product_id: int, db: Session):
-    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id).first()
+async def get_b_item_from_product_id(product_id: int, basket_id: int, db: Session):
+    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id, BasketItem.basket_id == basket_id).first()
     return basket_item_
 
 
