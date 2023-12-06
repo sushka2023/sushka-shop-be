@@ -58,8 +58,8 @@ async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketIte
     return db.query(BasketItem).filter(BasketItem.id == basket_item_id).first()
 
 
-async def get_b_item_from_product_id(product_id: int, db: Session):
-    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id).first()
+async def get_b_item_from_product_id(product_id: int, basket_id: int, db: Session):
+    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id, BasketItem.basket_id == basket_id).first()
     return basket_item_
 
 

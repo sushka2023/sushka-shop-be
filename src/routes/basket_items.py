@@ -133,7 +133,7 @@ async def remove_product(body: BasketItemsModel,
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    product_from_basket = await repository_basket_items.get_b_item_from_product_id(body.product_id, db)  # get product from favorite
+    product_from_basket = await repository_basket_items.get_b_item_from_product_id(body.product_id, basket.id, db)  # get product from favorite
     await repository_basket_items.remove(product_from_basket, db)  # Remove product from favorite
     return None
 
