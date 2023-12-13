@@ -157,6 +157,7 @@ async def change_quantity_items_to_basket(body: ChangeQuantityBasketItemsModel,
     update_quantity_basket_item = BasketItemsResponse(id=update_quantity_basket_item.id,
                                                       basket_id=update_quantity_basket_item.basket_id,
                                                       product=product,
-                                                      quantity=update_quantity_basket_item.quantity)
+                                                      quantity=update_quantity_basket_item.quantity,
+                                                      price_id_by_the_user=update_quantity_basket_item.price_id_by_the_user)
 
     return update_quantity_basket_item
