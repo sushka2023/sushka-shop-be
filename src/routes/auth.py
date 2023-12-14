@@ -89,7 +89,10 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token_ = await auth_service.create_refresh_token(data={"sub": user.email})
     await repository_users.update_token(user, refresh_token_, db)
-    return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer"}
+
+    user = await repository_users.get_user_by_email(body.username, db)
+
+    return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer", "user": user}
 
 
 @router.post("/logout", dependencies=[Depends(allowed_operation_admin_moderator_user)])
