@@ -10,6 +10,7 @@ class PriceModel(BaseModel):
     old_price: Optional[float]
     quantity: int
     is_active: bool
+    promotional: bool
 
     @validator('price', 'old_price', pre=True)
     def format_float(cls, price):
@@ -24,6 +25,7 @@ class PriceResponse(BaseModel):
     old_price: Optional[float]
     quantity: int
     is_active: bool
+    promotional: bool
 
     class Config:
         orm_mode = True

@@ -147,7 +147,6 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
                                   name=new_product.name,
                                   description=new_product.description,
                                   product_category_id=new_product.product_category_id,
-                                  promotional=new_product.promotional,
                                   new_product=new_product.new_product,
                                   is_popular=new_product.is_popular,
                                   is_favorite=new_product.is_favorite,
