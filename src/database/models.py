@@ -122,7 +122,6 @@ class Product(Base):
     prices = relationship("Price", back_populates="product")
     images = relationship("Image", back_populates="product")
     reviews = relationship("Review", back_populates="product")
-    promotional = Column(Boolean, default=False)
     new_product = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
     is_popular = Column(Boolean, default=False)
@@ -158,6 +157,7 @@ class Price(Base):
     quantity = Column(Integer, default=1)
     is_deleted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
+    promotional = Column(Boolean, default=False)
 
 
 class ProductCategory(Base):
