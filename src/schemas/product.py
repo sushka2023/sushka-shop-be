@@ -14,7 +14,6 @@ class ProductModel(BaseModel):
     description: str = Field(min_length=20, max_length=400)
     product_category_id: int
     sub_categories_id: List[int]
-    promotional: bool
     new_product: bool
     is_popular: bool
     product_status: ProductStatus
@@ -25,7 +24,6 @@ class ProductResponse(BaseModel):
     name: str
     description: str
     product_category_id: int
-    promotional: bool
     new_product: bool
     is_popular: bool
     is_favorite: bool
