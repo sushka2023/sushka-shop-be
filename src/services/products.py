@@ -13,38 +13,38 @@ from src.services.cloud_image import CloudImage
 from src.services.exception_detail import ExDetail as Ex
 
 
-async def get_products_by_sort(sort: str, db: Session):
+async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session):
     if sort == "id":
-        return await repository_products.get_products_id(db)
+        return await repository_products.get_products_id(limit, offset, db)
     elif sort == "name":
-        return await repository_products.get_products_name(db)
+        return await repository_products.get_products_name(limit, offset, db)
     elif sort == "low_price":
-        return await repository_products.get_products_low_price(db)
+        return await repository_products.get_products_low_price(limit, offset, db)
     elif sort == "high_price":
-        return await repository_products.get_products_high_price(db)
+        return await repository_products.get_products_high_price(limit, offset, db)
     elif sort == "low_date":
-        return await repository_products.get_products_low_date(db)
+        return await repository_products.get_products_low_date(limit, offset, db)
     elif sort == "high_date":
-        return await repository_products.get_products_high_date(db)
+        return await repository_products.get_products_high_date(limit, offset, db)
 
 
-async def get_products_by_sort_and_category_id(sort: str, pr_category_id: int, db: Session):
+async def get_products_by_sort_and_category_id(limit: int, offset: int, sort: str, pr_category_id: int, db: Session):
     product_category = await repository_product_categories.product_category_by_id(pr_category_id, db)
     if product_category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     if sort == "id":
-        return await repository_products.get_products_id_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_id_by_category_id(limit, offset, pr_category_id, db)
     elif sort == "name":
-        return await repository_products.get_products_name_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_name_by_category_id(limit, offset, pr_category_id, db)
     elif sort == "low_price":
-        return await repository_products.get_products_low_price_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_low_price_by_category_id(limit, offset, pr_category_id, db)
     elif sort == "high_price":
-        return await repository_products.get_products_high_price_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_high_price_by_category_id(limit, offset, pr_category_id, db)
     elif sort == "low_date":
-        return await repository_products.get_products_low_date_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_low_date_by_category_id(limit, offset, pr_category_id, db)
     elif sort == "high_date":
-        return await repository_products.get_products_high_date_by_category_id(pr_category_id, db)
+        return await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
 
 
 async def product_with_price_and_images_response(products: List[Type[Product]], db) -> list:

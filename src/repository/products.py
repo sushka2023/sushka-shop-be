@@ -24,10 +24,12 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     return product_
 
 
-async def get_products_all_for_crm(db: Session) -> List[Type[Product]] | None:
+async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter().\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -35,10 +37,12 @@ async def get_products_all_for_crm(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_all_for_crm_pr_category_id(pr_category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_all_for_crm_pr_category_id(limit: int, offset: int, pr_category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.product_category_id == pr_category_id).\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -46,10 +50,12 @@ async def get_products_all_for_crm_pr_category_id(pr_category_id: int, db: Sessi
     return product_with_price
 
 
-async def get_products_all_for_crm_pr_status(pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
+async def get_products_all_for_crm_pr_status(limit: int, offset: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -57,10 +63,12 @@ async def get_products_all_for_crm_pr_status(pr_status: ProductStatus, db: Sessi
     return product_with_price
 
 
-async def get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
+async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.product_category_id == pr_category_id, Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -68,10 +76,12 @@ async def get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id: 
     return product_with_price
 
 
-async def get_products_id(db: Session) -> List[Type[Product]] | None:
+async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Product.id)).\
+        order_by(asc(Product.id)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -79,11 +89,13 @@ async def get_products_id(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_id_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_id_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
         join(Product.product_category).\
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Product.id)).\
+        order_by(asc(Product.id)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -91,10 +103,12 @@ async def get_products_id_by_category_id(category_id: int, db: Session) -> List[
     return product_with_price
 
 
-async def get_products_name(db: Session):
+async def get_products_name(limit: int, offset: int, db: Session):
     products_ = db.query(Product). \
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated). \
-        order_by(asc(Product.name)).\
+        order_by(asc(Product.name)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -102,11 +116,13 @@ async def get_products_name(db: Session):
     return product_with_price
 
 
-async def get_products_name_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
         join(Product.product_category). \
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Product.name)).\
+        order_by(asc(Product.name)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -114,11 +130,13 @@ async def get_products_name_by_category_id(category_id: int, db: Session) -> Lis
     return product_with_price
 
 
-async def get_products_low_price(db: Session) -> List[Type[Product]] | None:
+async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         join(Price, Product.id == Price.product_id).\
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Price.price)).\
+        order_by(asc(Price.price)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -126,12 +144,14 @@ async def get_products_low_price(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_low_price_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         join(Price, Product.id == Price.product_id).\
         join(Product.product_category). \
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Price.price)).\
+        order_by(asc(Price.price)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -139,11 +159,13 @@ async def get_products_low_price_by_category_id(category_id: int, db: Session) -
     return product_with_price
 
 
-async def get_products_high_price(db: Session) -> List[Type[Product]] | None:
+async def get_products_high_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
         join(Price, Product.id == Price.product_id). \
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
-        order_by(desc(Price.price)).\
+        order_by(desc(Price.price)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -151,12 +173,14 @@ async def get_products_high_price(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_high_price_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         join(Price, Product.id == Price.product_id).\
         join(Product.product_category). \
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(desc(Price.price)).\
+        order_by(desc(Price.price)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -164,10 +188,12 @@ async def get_products_high_price_by_category_id(category_id: int, db: Session) 
     return product_with_price
 
 
-async def get_products_low_date(db: Session) -> List[Type[Product]] | None:
+async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Product.created_at)).\
+        order_by(asc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -175,11 +201,13 @@ async def get_products_low_date(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_low_date_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
         join(Product.product_category). \
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(asc(Product.created_at)).\
+        order_by(asc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -187,10 +215,12 @@ async def get_products_low_date_by_category_id(category_id: int, db: Session) ->
     return product_with_price
 
 
-async def get_products_high_date(db: Session) -> List[Type[Product]] | None:
+async def get_products_high_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product).\
         filter(Product.is_deleted == False, Product.product_status == ProductStatus.activated).\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)
@@ -198,11 +228,13 @@ async def get_products_high_date(db: Session) -> List[Type[Product]] | None:
     return product_with_price
 
 
-async def get_products_high_date_by_category_id(category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
         join(Product.product_category). \
         filter(Product.is_deleted == False, ProductCategory.id == category_id, Product.product_status == ProductStatus.activated).\
-        order_by(desc(Product.created_at)).\
+        order_by(desc(Product.created_at)). \
+        limit(limit). \
+        offset(offset). \
         all()
 
     product_with_price = await product_with_prices_and_images(products_, db)

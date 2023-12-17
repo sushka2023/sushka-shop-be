@@ -28,7 +28,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.get("/all", response_model=List[ProductResponse])
-async def products(pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
+async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
 
     # Redis client
     redis_client = get_redis()
@@ -39,7 +39,7 @@ async def products(pr_category_id: int = None, sort: str = "low_price", db: Sess
                             detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
 
     # We collect the key for caching
-    key = f"products_{sort}:pr_category_id:{pr_category_id}"
+    key = f"limit_{limit}:offset_{offset}:products_{sort}:pr_category_id:{pr_category_id}"
 
     cached_products = None
 
@@ -50,9 +50,9 @@ async def products(pr_category_id: int = None, sort: str = "low_price", db: Sess
     if not cached_products:
         # The data is not found in the cache, we get it from the database
         if pr_category_id is None:
-            products_ = await get_products_by_sort(sort, db)
+            products_ = await get_products_by_sort(limit, offset, sort, db)
         else:
-            products_ = await get_products_by_sort_and_category_id(sort, pr_category_id, db)
+            products_ = await get_products_by_sort_and_category_id(limit, offset, sort, pr_category_id, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
@@ -72,12 +72,12 @@ async def products(pr_category_id: int = None, sort: str = "low_price", db: Sess
 @router.get("/all_for_crm",
             response_model=List[ProductResponse],
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
+async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
 
     # Redis client
     redis_client = get_redis()
 
-    key = f"pr_category_id_{pr_category_id}:pr_status_{pr_status}"
+    key = f"limit_{limit}:offset_{offset}:pr_category_id_{pr_category_id}:pr_status_{pr_status}"
 
     cached_products = None
 
@@ -90,13 +90,13 @@ async def products_for_crm(pr_status: ProductStatus = None, pr_category_id: int 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
         if not pr_category_id and not pr_status:
-            products_ = await repository_products.get_products_all_for_crm(db)
+            products_ = await repository_products.get_products_all_for_crm(limit, offset, db)
         elif pr_category_id and not pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_category_id(pr_category_id, db)
+            products_ = await repository_products.get_products_all_for_crm_pr_category_id(limit, offset, pr_category_id, db)
         elif not pr_category_id and pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_status(pr_status, db)
+            products_ = await repository_products.get_products_all_for_crm_pr_status(limit, offset, pr_status, db)
         elif pr_category_id and pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_status_and_pr_category_id(pr_category_id, pr_status, db)
+            products_ = await repository_products.get_products_all_for_crm_pr_status_and_pr_category_id(limit, offset, pr_category_id, pr_status, db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
