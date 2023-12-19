@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from src.schemas.ukr_poshta import UkrPoshtaResponse
+from src.schemas.users import UserResponseForCRM
 
 
 class PostModel(BaseModel):
@@ -12,6 +13,7 @@ class PostModel(BaseModel):
 class PostResponse(BaseModel):
     id: int
     user_id: int
+    user: Optional[UserResponseForCRM] = []
     ukr_poshta_id: Optional[int] = None
     ukr_poshta: Optional[UkrPoshtaResponse] = []
     nova_poshta_id: Optional[int] = None
