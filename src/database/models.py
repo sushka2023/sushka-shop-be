@@ -233,24 +233,36 @@ class Post(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="posts")
-    nova_poshta = relationship("NovaPoshta", uselist=False, back_populates="post")
-    ukr_poshta = relationship("UkrPoshta", uselist=False, back_populates="post")
+    nova_poshta_id = Column(Integer, ForeignKey('nova_poshta.id'))
+    nova_poshta = relationship("NovaPoshta", back_populates="post")
+    ukr_poshta_id = Column(Integer, ForeignKey('ukr_poshta.id'))
+    ukr_poshta = relationship("UkrPoshta", back_populates="post")
 
 
 class NovaPoshta(Base):
     __tablename__ = 'nova_poshta'
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'))
+    office_number = Column(String(255), nullable=False)
+    street = Column(String(255), nullable=True)
+    house_number = Column(String(255), nullable=True)
+    apartment_number = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=True)
+    country = Column(String(255), nullable=True)
     post = relationship("Post", back_populates="nova_poshta")
-    address = Column(String(255), unique=False, nullable=True)
 
 
 class UkrPoshta(Base):
     __tablename__ = 'ukr_poshta'
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'))
+    street = Column(String(255), nullable=False)
+    house_number = Column(String(255), nullable=False)
+    apartment_number = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=True)
+    country = Column(String(255), nullable=True)
+    post_code = Column(String(255), nullable=False)
     post = relationship("Post", back_populates="ukr_poshta")
-    address = Column(String(255), unique=False, nullable=True)
 
 
 class Favorite(Base):
