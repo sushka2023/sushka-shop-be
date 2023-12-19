@@ -252,7 +252,7 @@ class NovaPoshta(Base):
     post = relationship("Post", back_populates="nova_poshta")
 
 
-class UkrPoshta(Base):
+class UkrPoshta(Base, UpdateFromDictMixin):
     __tablename__ = 'ukr_poshta'
     id = Column(Integer, primary_key=True)
     street = Column(String(255), nullable=False)
