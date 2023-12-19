@@ -5,7 +5,7 @@ from src.database.db import get_db
 from src.database.models import Role
 from src.repository import ukr_poshta as repository_ukrposhta
 
-from src.schemas.ukr_poshta import UkrPoshtaResponse, UkrPoshtaCreate
+from src.schemas.ukr_poshta import UkrPoshtaResponse, UkrPoshtaCreate, UkrPoshtaPartialUpdate
 from src.services.roles import RoleAccess
 
 
@@ -34,3 +34,31 @@ async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate,
         An ukrposhta object
     """
     return await repository_ukrposhta.create_ukr_poshta_office(ukr_postal_office, db)
+
+
+@router.patch("/{ukr_poshta_id}/partial-update",
+              dependencies=[Depends(allowed_operation_admin_moderator_user)],
+              response_model=UkrPoshtaResponse)
+async def update_ukr_poshta_data(
+    ukr_poshta_id: int,
+    ukr_poshta_data: UkrPoshtaPartialUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Change the ukrposhta data
+
+    Arguments:
+        ukr_poshta_id: int
+        ukr_poshta_data: UkrPoshtaForm: object with updated ukrposhta data
+        db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        UkrPoshta: object after the change operation
+    """
+    update_data = {
+        key: value
+        for key, value in ukr_poshta_data.model_dump().items()
+        if value is not None
+    }
+
+    return await repository_ukrposhta.update_ukr_poshta_data(db, ukr_poshta_id, update_data)

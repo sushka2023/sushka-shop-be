@@ -17,6 +17,16 @@ class UkrPoshtaCreate(UkrPoshtaModel):
     pass
 
 
+class UkrPoshtaPartialUpdate(BaseModel):
+    street: str | None = None
+    house_number: str | None = None
+    apartment_number: str | None = None
+    city: str | None = None
+    region: str | None = None
+    country: str | None = None
+    post_code: str | None = None
+
+
 class UkrPoshtaResponse(UkrPoshtaModel):
     id: int
 
