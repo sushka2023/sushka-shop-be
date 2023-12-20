@@ -42,3 +42,12 @@ async def get_posts_by_id_and_user_id(post_id: int, user_id: int, db: Session) -
         .filter(Post.id == post_id, Post.user_id == user_id).first()
     )
     return post
+
+
+async def get_all_posts(db: Session) -> list[Post]:
+    all_posts = (
+        db.query(Post)
+        .options(joinedload(Post.ukr_poshta))
+        .options(joinedload(Post.user))
+    )
+    return list(all_posts)

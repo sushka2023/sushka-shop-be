@@ -19,6 +19,40 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
+@router.get("/",
+            response_model=list[PostResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def get_posts(db: Session = Depends(get_db)):
+    """
+        The function returns a list of all post offices in the database.
+
+        Args:
+            db: Session: Access the database
+
+        Returns:
+            A list of posts
+        """
+    return await repository_posts.get_all_posts(db)
+
+
+@router.get("/my-post-offices",
+            response_model=PostResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def get_my_post_offices(current_user: User = Depends(auth_service.get_current_user),
+                              db: Session = Depends(get_db)):
+    """
+        The function returns all post offices for current user in the database.
+
+        Args:
+            current_user: User: Get the current user
+            db: Session: Access the database
+
+        Returns:
+            A post object
+        """
+    return await repository_posts.get_posts_by_user_id(current_user.id, db)
+
+
 @router.post("/create",
              response_model=PostResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
