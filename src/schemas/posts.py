@@ -14,17 +14,21 @@ class PostResponse(BaseModel):
     id: int
     user_id: int
     user: Optional[UserResponseForCRM] = []
-    ukr_poshta_id: Optional[int] = None
-    ukr_poshta: Optional[UkrPoshtaResponse] = []
-    nova_poshta_id: Optional[int] = None
+    ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
 
     class Config:
         orm_mode = True
 
 
 class PostAddUkrPostalOffice(BaseModel):
+    post_id: int
     ukr_poshta_id: Optional[int] = None
 
 
 class PostAddNovaPoshtaOffice(BaseModel):
+    post_id: int
     nova_poshta_id: Optional[int] = None
+
+
+class PostMessageResponse(BaseModel):
+    message: str

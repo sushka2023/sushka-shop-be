@@ -4,9 +4,8 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import posts as repository_posts
-from src.repository import ukr_poshta as repository_ukrposhta
 
-from src.schemas.posts import PostResponse, PostAddUkrPostalOffice
+from src.schemas.posts import PostResponse, PostAddUkrPostalOffice, PostMessageResponse
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -80,37 +79,26 @@ async def create_postal_office(current_user: User = Depends(auth_service.get_cur
     return new_post
 
 
-@router.put("/{post_id}/add_ukr_postal_office",
-            response_model=PostResponse,
-            dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def add_ukr_postal_office(post_id: int,
-                                update_post: PostAddUkrPostalOffice,
+@router.post("/add_ukr_postal_office",
+             response_model=PostMessageResponse,
+             dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def add_ukr_postal_office(ukr_poshta_data: PostAddUkrPostalOffice,
                                 current_user: User = Depends(auth_service.get_current_user),
                                 db: Session = Depends(get_db)):
     """
     The add_ukr_postal_office function updates an exists post for the current user.
 
     Args:
-        post_id: int
-        update_post: PostAddUkrPostalOffice: Validate the request body
+        ukr_poshta_data: PostAddUkrPostalOffice: Validate the request body
         current_user: User: Get the current user
         db: Session: Access the database
 
     Returns:
-        A post object with ukrposhta office
+        Message about successfully adding an address
     """
-    postal_office = await repository_posts.get_posts_by_id_and_user_id(post_id, current_user.id, db)
 
-    if not postal_office:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    ukr_postal_office = await repository_ukrposhta.get_ukr_poshta_by_id(update_post.ukr_poshta_id, db)
-
-    if not ukr_postal_office:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    updated_post = await repository_posts.add_ukr_postal_office_to_post(
-        update_post, postal_office.id, postal_office.user_id, db
+    await repository_posts.add_ukr_postal_office_to_post(
+        db=db, user_id=current_user.id, ukr_poshta_in=ukr_poshta_data
     )
 
-    return updated_post
+    return {"message": "An address of ukr postal office added successfully"}
