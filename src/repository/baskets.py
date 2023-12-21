@@ -13,5 +13,5 @@ async def create(current_user: User, db: Session):
 
 
 async def baskets(current_user: User, db: Session) -> Basket | None:
-    favorite = db.query(Basket).filter(Basket.user_id == current_user.id).first()
-    return favorite
+    basket = db.query(Basket).filter(Basket.user_id == current_user.id).first()
+    return basket
