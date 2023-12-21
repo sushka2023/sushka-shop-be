@@ -12,6 +12,7 @@ from src.schemas.users import UserModel, UserResponse, TokenModel, PasswordModel
 from src.repository import baskets as repository_baskets
 from src.repository import favorites as repository_favorites
 from src.repository import users as repository_users
+from src.repository import posts as repository_posts
 from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
 from src.services.exception_detail import ExDetail as Ex
@@ -56,6 +57,11 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
     if basket:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     await repository_baskets.create(new_user, db)  # New basket in user
+
+    post = await repository_posts.get_posts_by_user_id(new_user.id, db)
+    if post:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_posts.create_postal_office(new_user, db)  # New post in user
 
     background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
     return new_user
