@@ -17,6 +17,22 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
+@router.get("/",
+            response_model=list[UkrPoshtaResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def get_all_ukr_postal_offices(db: Session = Depends(get_db)):
+    """
+    The function returns a list of all ukr postal offices in the database.
+
+    Args:
+        db: Session: Access the database
+
+    Returns:
+        A list of ukr postal offices
+    """
+    return await repository_ukrposhta.get_ukr_poshta(db)
+
+
 @router.post("/create",
              response_model=UkrPoshtaResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)],
