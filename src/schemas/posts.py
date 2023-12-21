@@ -20,12 +20,12 @@ class PostResponse(BaseModel):
         orm_mode = True
 
 
-class PostAddUkrPostalOffice(BaseModel):
+class PostUkrPostalOffice(BaseModel):
     post_id: int
     ukr_poshta_id: Optional[int] = None
 
 
-class PostAddNovaPoshtaOffice(BaseModel):
+class PostNovaPoshtaOffice(BaseModel):
     post_id: int
     nova_poshta_id: Optional[int] = None
 

@@ -1,9 +1,10 @@
 from fastapi import HTTPException, status
+from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload, subqueryload
 
 from src.database.models import User, Post, post_ukrposhta_association
 from src.repository.ukr_poshta import get_ukr_poshta_by_id
-from src.schemas.posts import PostAddUkrPostalOffice
+from src.schemas.posts import PostUkrPostalOffice
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -16,7 +17,7 @@ async def create_postal_office(current_user: User, db: Session) -> Post:
 
 
 async def add_ukr_postal_office_to_post(
-    db: Session, ukr_poshta_in: PostAddUkrPostalOffice, user_id: int
+    db: Session, ukr_poshta_in: PostUkrPostalOffice, user_id: int
 ) -> None:
     post = await get_posts_by_id_and_user_id(
         db=db, post_id=ukr_poshta_in.post_id, user_id=user_id
@@ -32,6 +33,32 @@ async def add_ukr_postal_office_to_post(
 
     post_ukr_post_association = post_ukrposhta_association.insert().values(
         **ukr_poshta_in.model_dump()
+    )
+    db.execute(post_ukr_post_association)
+
+    db.commit()
+
+
+async def remove_ukr_postal_office_from_post(
+    db: Session, ukr_poshta_in: PostUkrPostalOffice, user_id: int
+) -> None:
+    post = await get_posts_by_id_and_user_id(
+        db=db, post_id=ukr_poshta_in.post_id, user_id=user_id
+    )
+
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    ukr_poshta_address = await get_ukr_poshta_by_id(db=db, ukr_poshta_id=ukr_poshta_in.ukr_poshta_id)
+
+    if not ukr_poshta_address:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    post_ukr_post_association = post_ukrposhta_association.delete().where(
+        and_(
+            post_ukrposhta_association.c.post_id == ukr_poshta_in.post_id,
+            post_ukrposhta_association.c.ukr_poshta_id == ukr_poshta_in.ukr_poshta_id
+        )
     )
     db.execute(post_ukr_post_association)
 

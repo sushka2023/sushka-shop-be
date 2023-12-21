@@ -5,7 +5,7 @@ from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import posts as repository_posts
 
-from src.schemas.posts import PostResponse, PostAddUkrPostalOffice, PostMessageResponse
+from src.schemas.posts import PostResponse, PostUkrPostalOffice, PostMessageResponse
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
@@ -67,7 +67,7 @@ async def create_postal_office(current_user: User = Depends(auth_service.get_cur
         db: Session: Access the database
 
     Returns:
-        A post object without ukrposhta and nova poshta offices
+        A post object
     """
     post = await repository_posts.get_posts_by_user_id(current_user.id, db)
 
@@ -82,7 +82,7 @@ async def create_postal_office(current_user: User = Depends(auth_service.get_cur
 @router.post("/add_ukr_postal_office",
              response_model=PostMessageResponse,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def add_ukr_postal_office(ukr_poshta_data: PostAddUkrPostalOffice,
+async def add_ukr_postal_office(ukr_poshta_data: PostUkrPostalOffice,
                                 current_user: User = Depends(auth_service.get_current_user),
                                 db: Session = Depends(get_db)):
     """
@@ -102,3 +102,28 @@ async def add_ukr_postal_office(ukr_poshta_data: PostAddUkrPostalOffice,
     )
 
     return {"message": "An address of ukr postal office added successfully"}
+
+
+@router.delete("/remove_ukr_postal_office",
+               response_model=PostMessageResponse,
+               dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def remove_ukr_postal_office(ukr_poshta_data: PostUkrPostalOffice,
+                                   current_user: User = Depends(auth_service.get_current_user),
+                                   db: Session = Depends(get_db)):
+    """
+    The remove_ukr_postal_office function deleted an exists post with address for the current user.
+
+    Args:
+        ukr_poshta_data: PostAddUkrPostalOffice: Validate the request body
+        current_user: User: Get the current user
+        db: Session: Access the database
+
+    Returns:
+        Message about successfully deleting an address from post
+    """
+
+    await repository_posts.remove_ukr_postal_office_from_post(
+        db=db, user_id=current_user.id, ukr_poshta_in=ukr_poshta_data
+    )
+
+    return {"message": "An address of ukr postal office from post deleted successfully"}
