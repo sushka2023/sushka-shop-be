@@ -1,12 +1,16 @@
+import pickle
+
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
+from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import posts as repository_posts
 
 from src.schemas.posts import PostResponse, PostUkrPostalOffice, PostMessageResponse
 from src.services.auth import auth_service
+from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -31,7 +35,30 @@ async def get_posts(db: Session = Depends(get_db)):
     Returns:
         A list of posts
     """
-    return await repository_posts.get_all_posts(db)
+    redis_client = get_redis()
+
+    key = f"posts"
+
+    cached_post = None
+
+    if redis_client:
+        cached_post = redis_client.get(key)
+
+    if not cached_post:
+        post_data = await repository_posts.get_all_posts(db)
+
+        if post_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
+            )
+
+        if redis_client:
+            redis_client.set(key, pickle.dumps(post_data))
+            redis_client.expire(key, 1800)
+    else:
+        post_data = pickle.loads(cached_post)
+
+    return post_data
 
 
 @router.get("/my-post-offices",
@@ -49,7 +76,30 @@ async def get_my_post_offices(current_user: User = Depends(auth_service.get_curr
     Returns:
         A post object
     """
-    return await repository_posts.get_posts_by_user_id(current_user.id, db)
+    redis_client = get_redis()
+
+    key = f"posts_{current_user}"
+
+    cached_posts_current_user = None
+
+    if redis_client:
+        cached_posts_current_user = redis_client.get(key)
+
+    if not cached_posts_current_user:
+        posts_data_current_user = await repository_posts.get_posts_by_user_id(current_user.id, db)
+
+        if posts_data_current_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
+            )
+
+        if redis_client:
+            redis_client.set(key, pickle.dumps(posts_data_current_user))
+            redis_client.expire(key, 1800)
+    else:
+        posts_data_current_user = pickle.loads(cached_posts_current_user)
+
+    return posts_data_current_user
 
 
 @router.post("/create",
@@ -76,6 +126,8 @@ async def create_postal_office(current_user: User = Depends(auth_service.get_cur
 
     new_post = await repository_posts.create_postal_office(current_user, db)
 
+    await delete_cache_in_redis()
+
     return new_post
 
 
@@ -100,6 +152,7 @@ async def add_ukr_postal_office(ukr_poshta_data: PostUkrPostalOffice,
     await repository_posts.add_ukr_postal_office_to_post(
         db=db, user_id=current_user.id, ukr_poshta_in=ukr_poshta_data
     )
+    await delete_cache_in_redis()
 
     return {"message": "An address of ukr postal office added successfully"}
 
@@ -125,5 +178,6 @@ async def remove_ukr_postal_office(ukr_poshta_data: PostUkrPostalOffice,
     await repository_posts.remove_ukr_postal_office_from_post(
         db=db, user_id=current_user.id, ukr_poshta_in=ukr_poshta_data
     )
+    await delete_cache_in_redis()
 
     return {"message": "An address of ukr postal office from post deleted successfully"}
