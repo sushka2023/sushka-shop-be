@@ -19,7 +19,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 @router.get("/",
             response_model=list[UkrPoshtaResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator)])
+            dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_all_ukr_postal_offices(db: Session = Depends(get_db)):
     """
     The function returns a list of all ukr postal offices in the database.
