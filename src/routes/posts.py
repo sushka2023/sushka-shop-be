@@ -22,45 +22,6 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/",
-            response_model=list[PostResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator)])
-async def get_posts(db: Session = Depends(get_db)):
-    """
-    The function returns a list of all post offices in the database.
-
-    Args:
-        db: Session: Access the database
-
-    Returns:
-        A list of posts
-    """
-    redis_client = get_redis()
-
-    key = f"posts"
-
-    cached_post = None
-
-    if redis_client:
-        cached_post = redis_client.get(key)
-
-    if not cached_post:
-        post_data = await repository_posts.get_all_posts(db)
-
-        if post_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
-            )
-
-        if redis_client:
-            redis_client.set(key, pickle.dumps(post_data))
-            redis_client.expire(key, 1800)
-    else:
-        post_data = pickle.loads(cached_post)
-
-    return post_data
-
-
 @router.get("/my-post-offices",
             response_model=PostResponse,
             dependencies=[Depends(allowed_operation_admin_moderator_user)])
@@ -100,35 +61,6 @@ async def get_my_post_offices(current_user: User = Depends(auth_service.get_curr
         posts_data_current_user = pickle.loads(cached_posts_current_user)
 
     return posts_data_current_user
-
-
-@router.post("/create",
-             response_model=PostResponse,
-             dependencies=[Depends(allowed_operation_admin_moderator_user)],
-             status_code=status.HTTP_201_CREATED)
-async def create_postal_office(current_user: User = Depends(auth_service.get_current_user),
-                               db: Session = Depends(get_db)):
-    """
-    The create_postal_office function creates a new postal office for the current user.
-    If the user already has a post, it will return an error.
-
-    Args:
-        current_user: User: Get the current user
-        db: Session: Access the database
-
-    Returns:
-        A post object
-    """
-    post = await repository_posts.get_posts_by_user_id(current_user.id, db)
-
-    if post:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
-
-    new_post = await repository_posts.create_postal_office(current_user, db)
-
-    await delete_cache_in_redis()
-
-    return new_post
 
 
 @router.post("/add_ukr_postal_office",
