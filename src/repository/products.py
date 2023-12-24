@@ -77,9 +77,12 @@ async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offs
 
 
 async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+    products_ = db.query(Product). \
+        join(Price). \
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Product.id)). \
         limit(limit). \
         offset(offset). \
@@ -110,11 +113,14 @@ async def get_products_id_with_weight(limit: int, offset: int, db: Session, weig
 
 async def get_products_id_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
+        join(Price). \
         join(Product.product_category). \
         options(joinedload(Product.product_category)). \
         filter(Product.is_deleted == False,
                ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Product.id)). \
         limit(limit). \
         offset(offset). \
@@ -147,8 +153,11 @@ async def get_products_id_by_category_id_with_weight(limit: int, offset: int, ca
 
 async def get_products_name(limit: int, offset: int, db: Session):
     products_ = db.query(Product). \
+        join(Price). \
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated). \
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ). \
         order_by(asc(Product.name)). \
         limit(limit). \
         offset(offset). \
@@ -178,11 +187,14 @@ async def get_products_name_with_weight(limit: int, offset: int, db: Session, we
 
 async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
+        join(Price). \
         join(Product.product_category). \
         options(joinedload(Product.product_category)). \
         filter(Product.is_deleted == False,
                ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Product.name)). \
         limit(limit). \
         offset(offset). \
@@ -217,7 +229,9 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
     products_ = db.query(Product).\
         join(Price).\
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Price.price)). \
         limit(limit). \
         offset(offset). \
@@ -288,7 +302,9 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
     products_ = db.query(Product). \
         join(Price). \
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(desc(Price.price)). \
         limit(limit). \
         offset(offset). \
@@ -356,9 +372,12 @@ async def get_products_high_price_by_category_id_with_weight(limit: int, offset:
 
 
 async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+    products_ = db.query(Product). \
+        join(Price). \
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Product.created_at)). \
         limit(limit). \
         offset(offset). \
@@ -388,11 +407,14 @@ async def get_products_low_date_with_weight(limit: int, offset: int, db: Session
 
 async def get_products_low_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
+        join(Price). \
         join(Product.product_category). \
         options(joinedload(Product.product_category)). \
         filter(Product.is_deleted == False,
                ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(asc(Product.created_at)). \
         limit(limit). \
         offset(offset). \
@@ -424,9 +446,12 @@ async def get_products_low_date_by_category_id_with_weight(limit: int, offset: i
 
 
 async def get_products_high_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+    products_ = db.query(Product). \
+        join(Price). \
         filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(desc(Product.created_at)). \
         limit(limit). \
         offset(offset). \
@@ -456,11 +481,14 @@ async def get_products_high_date_with_weight(limit: int, offset: int, db: Sessio
 
 async def get_products_high_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
     products_ = db.query(Product). \
+        join(Price). \
         join(Product.product_category). \
         options(joinedload(Product.product_category)). \
         filter(Product.is_deleted == False,
                ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated).\
+               Product.product_status == ProductStatus.activated,
+               Price.is_active == True
+               ).\
         order_by(desc(Product.created_at)). \
         limit(limit). \
         offset(offset). \
