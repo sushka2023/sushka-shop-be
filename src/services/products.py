@@ -13,38 +13,67 @@ from src.services.cloud_image import CloudImage
 from src.services.exception_detail import ExDetail as Ex
 
 
-async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session):
-    if sort == "id":
-        return await repository_products.get_products_id(limit, offset, db)
-    elif sort == "name":
-        return await repository_products.get_products_name(limit, offset, db)
-    elif sort == "low_price":
-        return await repository_products.get_products_low_price(limit, offset, db)
-    elif sort == "high_price":
-        return await repository_products.get_products_high_price(limit, offset, db)
-    elif sort == "low_date":
-        return await repository_products.get_products_low_date(limit, offset, db)
-    elif sort == "high_date":
-        return await repository_products.get_products_high_date(limit, offset, db)
+async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session, weight: str = None):
+    if not weight:
+        if sort == "id":
+            return await repository_products.get_products_id(limit=limit, offset=offset, db=db)
+        elif sort == "name":
+            return await repository_products.get_products_name(limit=limit, offset=offset, db=db)
+        elif sort == "low_price":
+            return await repository_products.get_products_low_price(limit=limit, offset=offset, db=db)
+        elif sort == "high_price":
+            return await repository_products.get_products_high_price(limit=limit, offset=offset, db=db)
+        elif sort == "low_date":
+            return await repository_products.get_products_low_date(limit=limit, offset=offset, db=db)
+        elif sort == "high_date":
+            return await repository_products.get_products_high_date(limit=limit, offset=offset, db=db)
+
+    elif weight:
+        if sort == "id":
+            return await repository_products.get_products_id_with_weight(limit=limit, offset=offset, weight=weight, db=db)
+        elif sort == "name":
+            return await repository_products.get_products_name_with_weight(limit=limit, offset=offset, weight=weight, db=db)
+        elif sort == "low_price":
+            return await repository_products.get_products_low_price_with_weight(limit=limit, offset=offset, weight=weight, db=db)
+        elif sort == "high_price":
+            return await repository_products.get_products_high_price_with_weight(limit=limit, offset=offset, weight=weight, db=db)
+        elif sort == "low_date":
+            return await repository_products.get_products_low_date_with_weight(limit=limit, offset=offset, weight=weight, db=db)
+        elif sort == "high_date":
+            return await repository_products.get_products_high_date_with_weight(limit=limit, offset=offset, weight=weight, db=db)
 
 
-async def get_products_by_sort_and_category_id(limit: int, offset: int, sort: str, pr_category_id: int, db: Session):
+async def get_products_by_sort_and_category_id(limit: int, offset: int, sort: str, pr_category_id: int, db: Session, weight: str = None):
     product_category = await repository_product_categories.product_category_by_id(pr_category_id, db)
     if product_category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+    if not weight:
+        if sort == "id":
+            return await repository_products.get_products_id_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
+        elif sort == "name":
+            return await repository_products.get_products_name_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
+        elif sort == "low_price":
+            return await repository_products.get_products_low_price_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
+        elif sort == "high_price":
+            return await repository_products.get_products_high_price_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
+        elif sort == "low_date":
+            return await repository_products.get_products_low_date_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
+        elif sort == "high_date":
+            return await repository_products.get_products_high_date_by_category_id(limit=limit, offset=offset, category_id=pr_category_id, db=db)
 
-    if sort == "id":
-        return await repository_products.get_products_id_by_category_id(limit, offset, pr_category_id, db)
-    elif sort == "name":
-        return await repository_products.get_products_name_by_category_id(limit, offset, pr_category_id, db)
-    elif sort == "low_price":
-        return await repository_products.get_products_low_price_by_category_id(limit, offset, pr_category_id, db)
-    elif sort == "high_price":
-        return await repository_products.get_products_high_price_by_category_id(limit, offset, pr_category_id, db)
-    elif sort == "low_date":
-        return await repository_products.get_products_low_date_by_category_id(limit, offset, pr_category_id, db)
-    elif sort == "high_date":
-        return await repository_products.get_products_high_date_by_category_id(limit, offset, pr_category_id, db)
+    elif weight:
+        if sort == "id":
+            return await repository_products.get_products_id_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
+        elif sort == "name":
+            return await repository_products.get_products_name_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
+        elif sort == "low_price":
+            return await repository_products.get_products_low_price_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
+        elif sort == "high_price":
+            return await repository_products.get_products_high_price_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
+        elif sort == "low_date":
+            return await repository_products.get_products_low_date_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
+        elif sort == "high_date":
+            return await repository_products.get_products_high_date_by_category_id_with_weight(limit=limit, offset=offset, category_id=pr_category_id, db=db, weight=weight)
 
 
 async def product_with_price_and_images_response(products: List[Type[Product]], db) -> list:

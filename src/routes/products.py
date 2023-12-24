@@ -28,7 +28,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.get("/all", response_model=List[ProductResponse])
-async def products(limit: int, offset: int, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
+async def products(limit: int, offset: int, weight: str = None, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
 
     # Redis client
     redis_client = get_redis()
@@ -39,7 +39,7 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
                             detail=f"Invalid sort parameter. Allowed values: {', '.join(allowed_sorts)}")
 
     # We collect the key for caching
-    key = f"limit_{limit}:offset_{offset}:products_{sort}:pr_category_id:{pr_category_id}"
+    key = f"limit_{limit}:offset_{offset}:products_{sort}:pr_category_id_{pr_category_id}:weight_{weight}"
 
     cached_products = None
 
@@ -49,10 +49,17 @@ async def products(limit: int, offset: int, pr_category_id: int = None, sort: st
 
     if not cached_products:
         # The data is not found in the cache, we get it from the database
-        if pr_category_id is None:
-            products_ = await get_products_by_sort(limit, offset, sort, db)
-        else:
-            products_ = await get_products_by_sort_and_category_id(limit, offset, sort, pr_category_id, db)
+        products_ = list()
+        if not weight:
+            if not pr_category_id:
+                products_ = await get_products_by_sort(limit=limit, offset=offset, sort=sort, db=db)
+            elif pr_category_id:
+                products_ = await get_products_by_sort_and_category_id(limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, db=db)
+        elif weight:
+            if not pr_category_id:
+                products_ = await get_products_by_sort(limit=limit, offset=offset, sort=sort, weight=weight, db=db)
+            elif pr_category_id:
+                products_ = await get_products_by_sort_and_category_id(limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, weight=weight, db=db)
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
