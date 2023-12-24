@@ -5,7 +5,7 @@ from sqlalchemy import select, exists
 
 from sqlalchemy.exc import NoSuchTableError
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post
 from src.seed.test_users_data import USERS_DATA
 from src.services.password_utils import hash_password
 
@@ -23,7 +23,7 @@ def create_table_dict(*model_classes):
     return table_dict
 
 
-TABLE_NAMES = create_table_dict(User, Basket, Favorite)
+TABLE_NAMES = create_table_dict(User, Basket, Favorite, Post)
 num_users = len(USERS_DATA)
 
 
@@ -58,6 +58,7 @@ def create_fake_data(num_records):
         "users": [],
         "baskets": [],
         "favorites": [],
+        "posts": [],
     }
 
     for _ in range(num_records):
@@ -72,6 +73,9 @@ def create_fake_data(num_records):
         data["baskets"].extend(create_fake_basket(user_id) for user_id in user_id_list)
         data["favorites"].extend(
             create_fake_favorite(user_id) for user_id in user_id_list
+        )
+        data["posts"].extend(
+            create_fake_post(user_id) for user_id in user_id_list
         )
 
     return data
@@ -93,6 +97,15 @@ def create_fake_favorite(user_id):
         "user_id": user_id,
     }
     return favorite
+
+
+def create_fake_post(user_id):
+    """Creating a specific post according to the user ID"""
+
+    post = {
+        "user_id": user_id,
+    }
+    return post
 
 
 def create_product_category():

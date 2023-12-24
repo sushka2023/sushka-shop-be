@@ -15,6 +15,22 @@ product_subcategory_association = Table(
 )
 
 
+post_ukrposhta_association = Table(
+    'post_ukrposhta_association',
+    Base.metadata,
+    Column('post_id', Integer, ForeignKey('posts.id')),
+    Column('ukr_poshta_id', Integer, ForeignKey('ukr_poshta.id'))
+)
+
+
+post_novaposhta_association = Table(
+    'post_novaposhta_association',
+    Base.metadata,
+    Column('post_id', Integer, ForeignKey('posts.id')),
+    Column('nova_poshta_id', Integer, ForeignKey('nova_poshta.id'))
+)
+
+
 class Role(enum.Enum):
     """
     Roles users.
@@ -233,24 +249,45 @@ class Post(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", back_populates="posts")
-    nova_poshta = relationship("NovaPoshta", uselist=False, back_populates="post")
-    ukr_poshta = relationship("UkrPoshta", uselist=False, back_populates="post")
+
+    ukr_poshta = relationship(
+        "UkrPoshta", secondary=post_ukrposhta_association, back_populates="post"
+    )
+    nova_poshta = relationship(
+        "NovaPoshta", secondary=post_novaposhta_association, back_populates="post"
+    )
 
 
 class NovaPoshta(Base):
     __tablename__ = 'nova_poshta'
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'))
-    post = relationship("Post", back_populates="nova_poshta")
-    address = Column(String(255), unique=False, nullable=True)
+    office_number = Column(String(255), nullable=False)
+    street = Column(String(255), nullable=True)
+    house_number = Column(String(255), nullable=True)
+    apartment_number = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=True)
+    country = Column(String(255), nullable=True)
+
+    post = relationship(
+        "Post", secondary=post_novaposhta_association, back_populates="nova_poshta"
+    )
 
 
-class UkrPoshta(Base):
+class UkrPoshta(Base, UpdateFromDictMixin):
     __tablename__ = 'ukr_poshta'
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'))
-    post = relationship("Post", back_populates="ukr_poshta")
-    address = Column(String(255), unique=False, nullable=True)
+    street = Column(String(255), nullable=False)
+    house_number = Column(String(255), nullable=False)
+    apartment_number = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=True)
+    country = Column(String(255), nullable=True)
+    post_code = Column(String(255), nullable=False)
+
+    post = relationship(
+        "Post", secondary=post_ukrposhta_association, back_populates="ukr_poshta"
+    )
 
 
 class Favorite(Base):
