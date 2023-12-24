@@ -10,8 +10,8 @@ from src.schemas.product_sub_category import ProductSubCategoryResponse
 
 
 class ProductModel(BaseModel):
-    name: str = Field(min_length=6, max_length=150)
-    description: str = Field(min_length=20, max_length=400)
+    name: str = Field(min_length=1, max_length=50)
+    description: str = Field(min_length=1, max_length=150)
     product_category_id: int
     sub_categories_id: List[int]
     new_product: bool
