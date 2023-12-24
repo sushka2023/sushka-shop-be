@@ -5,7 +5,7 @@ from sqlalchemy import select, exists
 
 from sqlalchemy.exc import NoSuchTableError
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus
 from src.seed.test_users_data import USERS_DATA
 from src.services.password_utils import hash_password
 
@@ -125,6 +125,7 @@ def create_product_items():
                 name=product_name,
                 description=product_description,
                 product_category_id=choice(product_category_ids),
+                product_status=ProductStatus.activated
             )
         )
 
