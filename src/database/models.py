@@ -154,7 +154,7 @@ class Image(Base):
     product = relationship("Product", back_populates="images")
     review_id = Column('review_id', ForeignKey('reviews.id', ondelete='CASCADE'), default=None)
     review = relationship("Review", back_populates="images")
-    image_url = Column(String(255), unique=True, nullable=False)
+    image_url = Column(String(255), unique=False, nullable=False)
     created_at = Column('created_at', DateTime, default=func.now())
     description = Column(String(255), unique=False, nullable=False)
     image_type = Column('image_type', Enum(ImageType), default=None)

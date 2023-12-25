@@ -1,11 +1,12 @@
-from random import choice
+from random import choice, choices, randint, sample
 
 from faker import Faker
-from sqlalchemy import select, exists
+from sqlalchemy import select, exists, insert, func
 
 from sqlalchemy.exc import NoSuchTableError
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post, Price, \
+    ProductSubCategory, product_subcategory_association, Image
 from src.seed.test_users_data import USERS_DATA
 from src.services.password_utils import hash_password
 
@@ -112,10 +113,10 @@ def create_product_category():
     """Creating categories of products and insert them into database"""
 
     categories = [
-        "Marshmallow",
-        "Pastille",
-        "Phrypse",
-        "Sets",
+        "Пастила",
+        "Фріпси",
+        "Набори пастили",
+        "Набори фріпсів",
     ]
 
     for category in categories:
@@ -126,21 +127,130 @@ def create_product_category():
 def create_product_items():
     """Creating products with random value of category ID and insert them into database"""
 
-    number_of_products = 10
+    number_of_products = 100
     product_category_ids = session.scalars(select(ProductCategory.id)).all()
 
     for i in range(1, number_of_products + 1):
         product_name = f"Product {i}"
-        product_description = f"Description Product {i}"
+        product_description = f"Фруктова екстракухня: найсолодший смак сушених фруктів, вирощених на хмарах. Ласкаво просимо в небесний смак! #ФейкПродукт"
 
         session.add(
             Product(
                 name=product_name,
                 description=product_description,
                 product_category_id=choice(product_category_ids),
-                product_status=ProductStatus.activated
+                product_status=choices([ProductStatus.activated, ProductStatus.archived, ProductStatus.new], weights=[80, 10, 10])[0],
+                new_product=choices([True, False], weights=[10, 90])[0],
+                is_deleted=choices([True, False], weights=[5, 95])[0],
+                is_popular=choices([True, False], weights=[5, 95])[0],
+                is_favorite=choices([True, False], weights=[5, 95])[0],
             )
         )
+
+    session.commit()
+
+
+def create_price_item():
+    """Create product price in db"""
+    product_ids = session.scalars(select(Product.id)).all()
+    weight = [str(50), str(100), str(150), str(200), str(300), str(400), str(500), str(1000)]
+    count_price_for_product = range(1, 10)
+
+    for i in product_ids:
+
+        for _ in count_price_for_product:
+            price = choice(weight)
+            session.add(
+                Price(
+                    product_id=i,
+                    weight=price,
+                    price=float(price),
+                    old_price=float(price)+100.0,
+                    quantity=randint(1, 200),
+                    is_deleted=choices([True, False], weights=[20, 80])[0],
+                    is_active=choices([True, False], weights=[90, 10])[0],
+                    promotional=choices([True, False], weights=[5, 95])[0]
+                )
+            )
+
+    session.commit()
+
+
+def create_sub_category_product():
+    """Create sub category for product in db."""
+    sub_categories = [
+        "Структурна",
+        "Класична",
+        "Авторська",
+        "Йогуртова",
+        "Універсальна",
+    ]
+
+    for i in sub_categories:
+        session.add(ProductSubCategory(name=i,
+                                       is_deleted=choices([True, False], weights=[5, 95])[0]))
+        session.commit()
+
+
+def create_sub_category_associations_with_product():
+    """Create associations sub category with product"""
+    product_ids = session.scalars(select(Product.id)).all()
+    sub_category_ids = session.scalars(select(ProductSubCategory.id)).all()
+
+    for product_id in product_ids:
+        # Імітуємо випадкове рішення щодо наявності субкатегорій для продукту
+        if randint(0, 1):  # 50% ймовірність мати субкатегорії
+            # Випадкова кількість субкатегорій для кожного продукту
+            num_subcategories = randint(1, 5)  # Можете змінити діапазон від 1 до бажаної кількості
+            selected_subcategories = sample(sub_category_ids, num_subcategories)
+
+            for subcategory_id in selected_subcategories:
+                session.execute(
+                    insert(product_subcategory_association).values(
+                        product_id=product_id,
+                        subcategory_id=subcategory_id
+                    )
+                )
+
+    session.commit()
+
+
+def create_images_item():
+    """Create product images in db"""
+    product_ids = session.scalars(select(Product.id)).all()
+
+    # Список URL-адрес зображень
+    image_urls = [
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/b816d40b8b30880ca687de8302bf764cea121ff313700beaa9b18f696f00c083',
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/62e60b8b9500db64c6c9c3075770beda361a638afae6ff50957d8db53d4b086d',
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/4ac00bb9cb3e89fa00006c36c126b9e9cc445144a3b733542cfb900504342237',
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/cf5f4607f613c0ae855fd04cf9b26986a846de55207215b0965660890daaa3cc',
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/f195be21353591b0d0a1a8571da579b04ed6ed6498900a17409181117db3cfb0',
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/37259c382954a853198f027ebd9ec0bb099c09c193ca708ca0b8dec8524fe709'
+    ]
+
+    for product_id in product_ids:
+        # Загальна кількість картинок
+        total_images = 6
+        # Випадково визначаємо, які картинки будуть видалені
+        deleted_indices = sample(range(total_images), 2)
+
+        for i in range(total_images):
+            is_deleted = i in deleted_indices
+            main_image = i == 0  # Перша картинка вважається основною
+            image_url = choice(image_urls)
+
+            session.add(
+                Image(
+                    product_id=product_id,
+                    image_url=image_url,
+                    description=f'Image {i} for product description',
+                    image_type='product',
+                    is_deleted=is_deleted,
+                    main_image=main_image,
+                    created_at=func.now()
+                )
+            )
 
     session.commit()
 
@@ -176,6 +286,10 @@ def insert_data_into_tables(data, tables):
 
     create_product_category()
     create_product_items()
+    create_price_item()
+    create_sub_category_product()
+    create_sub_category_associations_with_product()
+    create_images_item()
     session.commit()
     print("Data inserted successfully.")
 
