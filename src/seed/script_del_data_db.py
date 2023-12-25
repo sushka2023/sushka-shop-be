@@ -3,7 +3,8 @@ from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy import inspect
 
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, Post, BlacklistToken, Image, Price
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, Post, BlacklistToken, Image, Price, \
+    ProductSubCategory
 
 
 def get_table_names(models):
@@ -43,7 +44,11 @@ if __name__ == "__main__":
                      Image,
                      Price,
                      BlacklistToken,
+                     ProductSubCategory
                      ]
     table_names_to_clear = get_table_names(model_classes)
+
+    # Додавання таблиць які не визначені класами в моделях
+    table_names_to_clear.insert(3, 'product_subcategory_association')
 
     clear_tables(table_names_to_clear)

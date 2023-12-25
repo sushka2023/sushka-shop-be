@@ -1,11 +1,12 @@
-from random import choice, choices, randint
+from random import choice, choices, randint, sample
 
 from faker import Faker
-from sqlalchemy import select, exists
+from sqlalchemy import select, exists, insert
 
 from sqlalchemy.exc import NoSuchTableError
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post, Price
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post, Price, \
+    ProductSubCategory, product_subcategory_association
 from src.seed.test_users_data import USERS_DATA
 from src.services.password_utils import hash_password
 
@@ -175,6 +176,45 @@ def create_price_item():
     session.commit()
 
 
+def create_sub_category_product():
+    """Create sub category for product in db."""
+    sub_categories = [
+        "Структурна",
+        "Класична",
+        "Авторська",
+        "Йогуртова",
+        "Універсальна",
+    ]
+
+    for i in sub_categories:
+        session.add(ProductSubCategory(name=i,
+                                       is_deleted=choices([True, False], weights=[5, 95])[0]))
+        session.commit()
+
+
+def create_sub_category_associations_with_product():
+    """Create associations sub category with product"""
+    product_ids = session.scalars(select(Product.id)).all()
+    sub_category_ids = session.scalars(select(ProductSubCategory.id)).all()
+
+    for product_id in product_ids:
+        # Імітуємо випадкове рішення щодо наявності субкатегорій для продукту
+        if randint(0, 1):  # 50% ймовірність мати субкатегорії
+            # Випадкова кількість субкатегорій для кожного продукту
+            num_subcategories = randint(1, 5)  # Можете змінити діапазон від 1 до бажаної кількості
+            selected_subcategories = sample(sub_category_ids, num_subcategories)
+
+            for subcategory_id in selected_subcategories:
+                session.execute(
+                    insert(product_subcategory_association).values(
+                        product_id=product_id,
+                        subcategory_id=subcategory_id
+                    )
+                )
+
+    session.commit()
+
+
 def insert_user(user_data):
     """Insert user data into database"""
 
@@ -207,6 +247,8 @@ def insert_data_into_tables(data, tables):
     create_product_category()
     create_product_items()
     create_price_item()
+    create_sub_category_product()
+    create_sub_category_associations_with_product()
     session.commit()
     print("Data inserted successfully.")
 
