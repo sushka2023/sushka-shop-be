@@ -1,11 +1,11 @@
-from random import choice, choices
+from random import choice, choices, randint
 
 from faker import Faker
 from sqlalchemy import select, exists
 
 from sqlalchemy.exc import NoSuchTableError
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, ProductStatus, Post, Price
 from src.seed.test_users_data import USERS_DATA
 from src.services.password_utils import hash_password
 
@@ -149,6 +149,32 @@ def create_product_items():
     session.commit()
 
 
+def create_price_item():
+    """Create product price in db"""
+    product_ids = session.scalars(select(Product.id)).all()
+    weight = [str(50), str(100), str(150), str(200), str(300), str(400), str(500), str(1000)]
+    count_price_for_product = range(1, 10)
+
+    for i in product_ids:
+
+        for _ in count_price_for_product:
+            price = choice(weight)
+            session.add(
+                Price(
+                    product_id=i,
+                    weight=price,
+                    price=float(price),
+                    old_price=float(price)+100.0,
+                    quantity=randint(1, 200),
+                    is_deleted=choices([True, False], weights=[20, 80])[0],
+                    is_active=choices([True, False], weights=[90, 10])[0],
+                    promotional=choices([True, False], weights=[5, 95])[0]
+                )
+            )
+
+    session.commit()
+
+
 def insert_user(user_data):
     """Insert user data into database"""
 
@@ -180,6 +206,7 @@ def insert_data_into_tables(data, tables):
 
     create_product_category()
     create_product_items()
+    create_price_item()
     session.commit()
     print("Data inserted successfully.")
 
