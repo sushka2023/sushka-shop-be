@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy import inspect
 
 from src.database.db import get_db
-from src.database.models import User, Basket, Favorite, ProductCategory, Product, Post
+from src.database.models import User, Basket, Favorite, ProductCategory, Product, Post, BlacklistToken, Image, Price
 
 
 def get_table_names(models):
@@ -34,7 +34,16 @@ def clear_tables(table_names):
 
 
 if __name__ == "__main__":
-    model_classes = [Basket, Favorite, Post, User, Product, ProductCategory]
+    model_classes = [Basket,
+                     Favorite,
+                     Post,
+                     Product,
+                     ProductCategory,
+                     User,
+                     Image,
+                     Price,
+                     BlacklistToken,
+                     ]
     table_names_to_clear = get_table_names(model_classes)
 
     clear_tables(table_names_to_clear)

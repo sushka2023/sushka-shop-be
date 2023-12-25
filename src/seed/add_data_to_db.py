@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, choices
 
 from faker import Faker
 from sqlalchemy import select, exists
@@ -112,10 +112,10 @@ def create_product_category():
     """Creating categories of products and insert them into database"""
 
     categories = [
-        "Marshmallow",
-        "Pastille",
-        "Phrypse",
-        "Sets",
+        "Пастила",
+        "Фріпси",
+        "Набори пастили",
+        "Набори фріпсів",
     ]
 
     for category in categories:
@@ -126,19 +126,23 @@ def create_product_category():
 def create_product_items():
     """Creating products with random value of category ID and insert them into database"""
 
-    number_of_products = 10
+    number_of_products = 100
     product_category_ids = session.scalars(select(ProductCategory.id)).all()
 
     for i in range(1, number_of_products + 1):
         product_name = f"Product {i}"
-        product_description = f"Description Product {i}"
+        product_description = f"Фруктова екстракухня: найсолодший смак сушених фруктів, вирощених на хмарах. Ласкаво просимо в небесний смак! #ФейкПродукт"
 
         session.add(
             Product(
                 name=product_name,
                 description=product_description,
                 product_category_id=choice(product_category_ids),
-                product_status=ProductStatus.activated
+                product_status=choices([ProductStatus.activated, ProductStatus.archived, ProductStatus.new], weights=[80, 10, 10])[0],
+                new_product=choices([True, False], weights=[10, 90])[0],
+                is_deleted=choices([True, False], weights=[5, 95])[0],
+                is_popular=choices([True, False], weights=[5, 95])[0],
+                is_favorite=choices([True, False], weights=[5, 95])[0],
             )
         )
 
