@@ -224,19 +224,18 @@ def create_images_item():
         'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/b816d40b8b30880ca687de8302bf764cea121ff313700beaa9b18f696f00c083',
         'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/62e60b8b9500db64c6c9c3075770beda361a638afae6ff50957d8db53d4b086d',
         'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/4ac00bb9cb3e89fa00006c36c126b9e9cc445144a3b733542cfb900504342237',
-        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/cf5f4607f613c0ae855fd04cf9b26986a846de55207215b0965660890daaa3cc',
-        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/f195be21353591b0d0a1a8571da579b04ed6ed6498900a17409181117db3cfb0',
-        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/37259c382954a853198f027ebd9ec0bb099c09c193ca708ca0b8dec8524fe709'
+        'https://res.cloudinary.com/dj1xvjden/image/upload/v1/sushka_store/f195be21353591b0d0a1a8571da579b04ed6ed6498900a17409181117db3cfb0'
     ]
 
     for product_id in product_ids:
         # Загальна кількість картинок
-        total_images = 6
+        total_images = 4
         # Випадково визначаємо, які картинки будуть видалені
-        deleted_indices = sample(range(total_images), 2)
+        # deleted_indices = sample(range(total_images), 2)
 
         for i in range(total_images):
-            is_deleted = i in deleted_indices
+            # is_deleted = i in deleted_indices
+            is_deleted = False
             main_image = i == 0  # Перша картинка вважається основною
             image_url = choice(image_urls)
 

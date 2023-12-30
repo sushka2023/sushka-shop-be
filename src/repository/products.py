@@ -162,7 +162,7 @@ async def get_products_name(limit: int, offset: int, db: Session):
         limit(limit). \
         offset(offset). \
         all()
-
+    print(products_)
     product_with_price = await product_with_prices_and_images(products_, db)
 
     return product_with_price
