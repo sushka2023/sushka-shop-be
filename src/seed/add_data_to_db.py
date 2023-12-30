@@ -153,13 +153,13 @@ def create_product_items():
 def create_price_item():
     """Create product price in db"""
     product_ids = session.scalars(select(Product.id)).all()
-    weight = [str(50), str(100), str(150), str(200), str(300), str(400), str(500), str(1000)]
-    count_price_for_product = range(1, 10)
+    weights = [str(50), str(100), str(150), str(200), str(300), str(400), str(500), str(1000)]
+    # count_price_for_product = range(1, 10)
 
     for i in product_ids:
 
-        for _ in count_price_for_product:
-            price = choice(weight)
+        for weight in weights:
+            price = weight
             session.add(
                 Price(
                     product_id=i,
