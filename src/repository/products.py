@@ -105,17 +105,29 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
 
 
 async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        filter(
-        Product.is_deleted == False,
-        Product.product_status == ProductStatus.activated,
-        Price.weight == weight,
-        Price.is_active == True). \
-        order_by(asc(Product.id)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    subquery = (
+        select(1)
+        .where(
+            and_(
+                Product.id == Price.product_id,
+                Product.is_deleted == False,
+                Product.product_status == ProductStatus.activated,
+                Price.is_active == True,
+                Price.weight == weight
+            )
+        )
+        .correlate(Product)
+        .limit(1)
+    )
+
+    products_ = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -153,19 +165,30 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
 
 
 async def get_products_id_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Product.id)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    subquery = (
+        select(1)
+        .where(
+            and_(
+                Product.id == Price.product_id,
+                Product.is_deleted == False,
+                Product.product_status == ProductStatus.activated,
+                Price.is_active == True,
+                Price.weight == weight,
+                Product.product_category_id == category_id
+            )
+        )
+        .correlate(Product)
+        .limit(1)
+    )
+
+    products_ = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -202,16 +225,29 @@ async def get_products_name(limit: int, offset: int, db: Session):
 
 
 async def get_products_name_with_weight(limit: int, offset: int, db: Session, weight: str):
-    products_ = db.query(Product). \
-        join(Price). \
-        filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True). \
-        order_by(asc(Product.name)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    subquery = (
+        select(1)
+        .where(
+            and_(
+                Product.id == Price.product_id,
+                Product.is_deleted == False,
+                Product.product_status == ProductStatus.activated,
+                Price.is_active == True,
+                Price.weight == weight
+            )
+        )
+        .correlate(Product)
+        .limit(1)
+    )
+
+    products_ = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(Product.name)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -249,19 +285,30 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
 
 
 async def get_products_name_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Product.name)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    subquery = (
+        select(1)
+        .where(
+            and_(
+                Product.id == Price.product_id,
+                Product.is_deleted == False,
+                Product.product_status == ProductStatus.activated,
+                Price.is_active == True,
+                Price.weight == weight,
+                Product.product_category_id == category_id
+            )
+        )
+        .correlate(Product)
+        .limit(1)
+    )
+
+    products_ = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(Product.name)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -295,16 +342,26 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
 
 
 async def get_products_low_price_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        join(Price).\
-        filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Price.price)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated
+        )
+        .group_by(Product.id)
+        .order_by(asc(func.min(price_alias.price)))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -339,19 +396,27 @@ async def get_products_low_price_by_category_id(limit: int, offset: int, categor
 
 
 async def get_products_low_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        join(Price).\
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Price.price)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+            Product.product_category_id == category_id
+        )
+        .group_by(Product.id)
+        .order_by(asc(func.min(price_alias.price)))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -385,16 +450,26 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
 
 
 async def get_products_high_price_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(desc(Price.price)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+        )
+        .group_by(Product.id)
+        .order_by(desc(func.max(price_alias.price)))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -429,19 +504,27 @@ async def get_products_high_price_by_category_id(limit: int, offset: int, catego
 
 
 async def get_products_high_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        join(Price).\
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(desc(Price.price)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+            Product.product_category_id == category_id
+        )
+        .group_by(Product.id)
+        .order_by(desc(func.max(price_alias.price)))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -475,16 +558,26 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Ty
 
 
 async def get_products_low_date_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+        )
+        .group_by(Product.id)
+        .order_by(asc(Product.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -519,19 +612,27 @@ async def get_products_low_date_by_category_id(limit: int, offset: int, category
 
 
 async def get_products_low_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(asc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+            Product.product_category_id == category_id
+        )
+        .group_by(Product.id)
+        .order_by(asc(Product.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -565,16 +666,26 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> List[T
 
 
 async def get_products_high_date_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        filter(Product.is_deleted == False,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+        )
+        .group_by(Product.id)
+        .order_by(desc(Product.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
@@ -609,19 +720,27 @@ async def get_products_high_date_by_category_id(limit: int, offset: int, categor
 
 
 async def get_products_high_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
-    products_ = db.query(Product). \
-        join(Price). \
-        join(Product.product_category). \
-        options(joinedload(Product.product_category)). \
-        filter(Product.is_deleted == False,
-               ProductCategory.id == category_id,
-               Product.product_status == ProductStatus.activated,
-               Price.weight == weight,
-               Price.is_active == True). \
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    price_alias = aliased(Price)
+
+    products_ = (
+        db.query(Product)
+        .join(price_alias, and_(
+            Product.id == price_alias.product_id,
+            price_alias.is_active == True,
+            price_alias.is_deleted == False,
+            price_alias.weight == weight
+        ))
+        .filter(
+            Product.is_deleted == False,
+            Product.product_status == ProductStatus.activated,
+            Product.product_category_id == category_id
+        )
+        .group_by(Product.id)
+        .order_by(desc(Product.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
