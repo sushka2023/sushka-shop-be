@@ -2,6 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from src.schemas.nova_poshta import NovaPoshtaDataResponse
 from src.schemas.ukr_poshta import UkrPoshtaResponse
 from src.schemas.users import UserResponseForCRM
 
@@ -15,6 +16,7 @@ class PostResponse(BaseModel):
     user_id: int
     user: Optional[UserResponseForCRM] = []
     ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
+    nova_poshta: Optional[list[NovaPoshtaDataResponse]] = []
 
     class Config:
         orm_mode = True
