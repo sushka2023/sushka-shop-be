@@ -104,7 +104,7 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
     return product_with_price
 
 
-async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     subquery = (
         select(1)
         .where(
@@ -113,7 +113,7 @@ async def get_products_id_with_weight(limit: int, offset: int, db: Session, weig
                 Product.is_deleted == False,
                 Product.product_status == ProductStatus.activated,
                 Price.is_active == True,
-                Price.weight == weight
+                Price.weight.in_(weight)
             )
         )
         .correlate(Product)
@@ -164,7 +164,7 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
     return product_with_price
 
 
-async def get_products_id_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_id_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     subquery = (
         select(1)
         .where(
@@ -173,7 +173,7 @@ async def get_products_id_by_category_id_with_weight(limit: int, offset: int, ca
                 Product.is_deleted == False,
                 Product.product_status == ProductStatus.activated,
                 Price.is_active == True,
-                Price.weight == weight,
+                Price.weight.in_(weight),
                 Product.product_category_id == category_id
             )
         )
@@ -224,7 +224,7 @@ async def get_products_name(limit: int, offset: int, db: Session):
     return product_with_price
 
 
-async def get_products_name_with_weight(limit: int, offset: int, db: Session, weight: str):
+async def get_products_name_with_weight(limit: int, offset: int, db: Session, weight: list[str]):
     subquery = (
         select(1)
         .where(
@@ -233,7 +233,7 @@ async def get_products_name_with_weight(limit: int, offset: int, db: Session, we
                 Product.is_deleted == False,
                 Product.product_status == ProductStatus.activated,
                 Price.is_active == True,
-                Price.weight == weight
+                Price.weight.in_(weight)
             )
         )
         .correlate(Product)
@@ -284,7 +284,7 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
     return product_with_price
 
 
-async def get_products_name_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_name_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     subquery = (
         select(1)
         .where(
@@ -293,7 +293,7 @@ async def get_products_name_by_category_id_with_weight(limit: int, offset: int, 
                 Product.is_deleted == False,
                 Product.product_status == ProductStatus.activated,
                 Price.is_active == True,
-                Price.weight == weight,
+                Price.weight.in_(weight),
                 Product.product_category_id == category_id
             )
         )
@@ -341,7 +341,7 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
     return product_with_price
 
 
-async def get_products_low_price_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_low_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -350,7 +350,7 @@ async def get_products_low_price_with_weight(limit: int, offset: int, db: Sessio
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -395,7 +395,7 @@ async def get_products_low_price_by_category_id(limit: int, offset: int, categor
     return product_with_price
 
 
-async def get_products_low_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_low_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -404,7 +404,7 @@ async def get_products_low_price_by_category_id_with_weight(limit: int, offset: 
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -449,7 +449,7 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
     return product_with_price
 
 
-async def get_products_high_price_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_high_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -458,7 +458,7 @@ async def get_products_high_price_with_weight(limit: int, offset: int, db: Sessi
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -503,7 +503,7 @@ async def get_products_high_price_by_category_id(limit: int, offset: int, catego
     return product_with_price
 
 
-async def get_products_high_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_high_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -512,7 +512,7 @@ async def get_products_high_price_by_category_id_with_weight(limit: int, offset:
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -557,7 +557,7 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Ty
     return product_with_price
 
 
-async def get_products_low_date_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_low_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -566,7 +566,7 @@ async def get_products_low_date_with_weight(limit: int, offset: int, db: Session
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -611,7 +611,7 @@ async def get_products_low_date_by_category_id(limit: int, offset: int, category
     return product_with_price
 
 
-async def get_products_low_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_low_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -620,7 +620,7 @@ async def get_products_low_date_by_category_id_with_weight(limit: int, offset: i
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -665,7 +665,7 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> List[T
     return product_with_price
 
 
-async def get_products_high_date_with_weight(limit: int, offset: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_high_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -674,7 +674,7 @@ async def get_products_high_date_with_weight(limit: int, offset: int, db: Sessio
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,
@@ -719,7 +719,7 @@ async def get_products_high_date_by_category_id(limit: int, offset: int, categor
     return product_with_price
 
 
-async def get_products_high_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: str) -> List[Type[Product]] | None:
+async def get_products_high_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
     price_alias = aliased(Price)
 
     products_ = (
@@ -728,7 +728,7 @@ async def get_products_high_date_by_category_id_with_weight(limit: int, offset: 
             Product.id == price_alias.product_id,
             price_alias.is_active == True,
             price_alias.is_deleted == False,
-            price_alias.weight == weight
+            price_alias.weight.in_(weight)
         ))
         .filter(
             Product.is_deleted == False,

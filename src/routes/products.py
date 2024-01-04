@@ -17,7 +17,7 @@ from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
-from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id
+from src.services.products import get_products_by_sort, get_products_by_sort_and_category_id, parser_weight
 
 router = APIRouter(prefix="/product", tags=["product"])
 
@@ -32,20 +32,24 @@ async def products(limit: int, offset: int, weight: str = None, pr_category_id: 
     """
     The products function returns a list of products.
         The function accepts the following parameters:
-            limit - number of products to return (default = 10)
-            offset - number of products to skip (default = 0)
-            weight - product weight in grams, if specified, only those with this weight will be returned (optional)
-                     If not specified, all weights are considered. Allowed values: &quot;100&quot;, &quot;200&quot;, &quot;300&quot; and so on up to 1000.
-                     Any other value is invalid and will result in an error response from the server.
+            limit - number of products to return
+            offset - number of products to skip
+            weight - product weight in grams, can be specified as a range or single value, for example str: 50,100,150,200,300,400,500,1000 (optional)
+            pr_category_id - id category from which you want to get the list of goods (optional)
 
-    :param limit: int: Limit the number of products returned
-    :param offset: int: Skip the first offset records
-    :param weight: str: Filter products by weight
+    :param limit: int: Limit the number of products to be displayed
+    :param offset: int: Specify the offset of the list
+    :param weight: str: Filter the products by weight (50,100,150,200,300,400,500,1000)
     :param pr_category_id: int: Filter the products by category
-    :param sort: str: Sort the products by id, name, low_price or high_price
-    :param db: Session: Access the database
+    :param sort: str: Sort the list of products by price or date
+    :param db: Session: Pass the database session to the function
     :return: A list of products
     """
+
+    #  Weight to list -->
+    if weight:
+        weight = await parser_weight(weight)
+
     # Redis client
     redis_client = get_redis()
     # List of allowed sorts
