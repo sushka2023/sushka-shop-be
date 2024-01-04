@@ -16,7 +16,7 @@ async def price_by_product_id(id_product: int, db: Session) -> List[Type[PriceRe
 
 async def price_by_product(product: Type[Product], db: Session) -> List[Type[PriceResponse]]:
     prices_in_ascending_order = (db.query(Price).
-                                 filter(Price.product == product, Price.is_active == True, Price.is_deleted == False).
+                                 filter(Price.product == product).
                                  order_by(asc(Price.price)).
                                  all())
     return prices_in_ascending_order
