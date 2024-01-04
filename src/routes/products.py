@@ -29,7 +29,23 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 @router.get("/all", response_model=List[ProductResponse])
 async def products(limit: int, offset: int, weight: str = None, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
+    """
+    The products function returns a list of products.
+        The function accepts the following parameters:
+            limit - number of products to return (default = 10)
+            offset - number of products to skip (default = 0)
+            weight - product weight in grams, if specified, only those with this weight will be returned (optional)
+                     If not specified, all weights are considered. Allowed values: &quot;100&quot;, &quot;200&quot;, &quot;300&quot; and so on up to 1000.
+                     Any other value is invalid and will result in an error response from the server.
 
+    :param limit: int: Limit the number of products returned
+    :param offset: int: Skip the first offset records
+    :param weight: str: Filter products by weight
+    :param pr_category_id: int: Filter the products by category
+    :param sort: str: Sort the products by id, name, low_price or high_price
+    :param db: Session: Access the database
+    :return: A list of products
+    """
     # Redis client
     redis_client = get_redis()
     # List of allowed sorts
@@ -81,6 +97,16 @@ async def products(limit: int, offset: int, weight: str = None, pr_category_id: 
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
 
+    """
+    The products_for_crm function returns a list of products for the CRM.
+
+    :param limit: int: Limit the number of products returned
+    :param offset: int: Indicate the number of records to skip
+    :param pr_status: ProductStatus: Filter products by status
+    :param pr_category_id: int: Filter the products by category
+    :param db: Session: Pass the database connection to the function
+    :return: A list of products
+    """
     # Redis client
     redis_client = get_redis()
 
@@ -125,15 +151,17 @@ async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = N
              dependencies=[Depends(allowed_operation_admin_moderator)],
              status_code=status.HTTP_201_CREATED)
 async def create_product(body: ProductModel, db: Session = Depends(get_db)):
+
     """
     The create_product function creates a new product in the database.
+        Args:
+            body (ProductModel): The ProductModel object to be created.
+            db (Session, optional): SQLAlchemy Session. Defaults to Depends(get_db).
 
-    Args:
-        body: ProductModel: Validate the request body
-        db: Session: Pass the database session to the repository layer
-
-    Returns:
-        A productmodel object
+    :param body: ProductModel: Validate the request body
+    :param db: Session: Get the database session
+    :return: A productresponse object
+    :doc-author: Trelent
     """
     product = await repository_products.product_by_name(body.name, db)
     if product:
@@ -231,6 +259,14 @@ async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_one_product(product_id: int, db: Session = Depends(get_db)):
+    """
+    The get_one_product function returns a single product from the database.
+
+    :param product_id: int: Specify the product id
+    :param db: Session: Pass the database session to the function
+    :return: A product by id
+    :doc-author: Trelent
+    """
     # Redis client
     redis_client = get_redis()
 
