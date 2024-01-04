@@ -13,7 +13,7 @@ from src.services.cloud_image import CloudImage
 from src.services.exception_detail import ExDetail as Ex
 
 
-async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session, weight: str = None):
+async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session, weight: list[str] = None):
     if not weight:
         if sort == "id":
             return await repository_products.get_products_id(limit=limit, offset=offset, db=db)
@@ -43,7 +43,7 @@ async def get_products_by_sort(limit: int, offset: int, sort: str, db: Session, 
             return await repository_products.get_products_high_date_with_weight(limit=limit, offset=offset, weight=weight, db=db)
 
 
-async def get_products_by_sort_and_category_id(limit: int, offset: int, sort: str, pr_category_id: int, db: Session, weight: str = None):
+async def get_products_by_sort_and_category_id(limit: int, offset: int, sort: str, pr_category_id: int, db: Session, weight: list[str] = None):
     product_category = await repository_product_categories.product_category_by_id(pr_category_id, db)
     if product_category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -104,3 +104,7 @@ async def product_with_price_and_images_response(products: List[Type[Product]], 
 async def product_with_prices_and_images(products: list, db: Session) -> list:
     product_with_prices_ = await product_with_price_and_images_response(products, db)
     return product_with_prices_
+
+
+async def parser_weight(weight: str) -> list:
+    return weight.split(',')
