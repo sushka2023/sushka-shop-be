@@ -25,6 +25,7 @@ class PriceResponse(BaseModel):
     old_price: Optional[float]
     quantity: int
     is_active: bool
+    is_deleted: bool
     promotional: bool
 
     class Config:
