@@ -258,7 +258,7 @@ class Post(Base):
     )
 
 
-class NovaPoshta(Base):
+class NovaPoshta(Base, UpdateFromDictMixin):
     __tablename__ = 'nova_poshta'
     id = Column(Integer, primary_key=True)
     address_warehouse = Column(String(255), nullable=True)
