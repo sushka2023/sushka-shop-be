@@ -261,13 +261,14 @@ class Post(Base):
 class NovaPoshta(Base):
     __tablename__ = 'nova_poshta'
     id = Column(Integer, primary_key=True)
-    office_number = Column(String(255), nullable=False)
+    address_warehouse = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=True)
+    area = Column(String(255), nullable=True)
     street = Column(String(255), nullable=True)
     house_number = Column(String(255), nullable=True)
     apartment_number = Column(String(255), nullable=True)
-    city = Column(String(255), nullable=False)
-    region = Column(String(255), nullable=True)
-    country = Column(String(255), nullable=True)
+    floor = Column(Integer, nullable=True)
 
     post = relationship(
         "Post", secondary=post_novaposhta_association, back_populates="nova_poshta"
