@@ -159,13 +159,13 @@ def create_price_item():
     for i in product_ids:
 
         for weight in weights:
-            price = weight
+            price = float(randint(100, 1000))
             session.add(
                 Price(
                     product_id=i,
-                    weight=price,
-                    price=float(price),
-                    old_price=float(price)+100.0,
+                    weight=weight,
+                    price=price,
+                    old_price=price+100.0,
                     quantity=randint(1, 200),
                     is_deleted=choices([True, False], weights=[20, 80])[0],
                     is_active=choices([True, False], weights=[90, 10])[0],
