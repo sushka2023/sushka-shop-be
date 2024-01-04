@@ -8,7 +8,7 @@ from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import posts as repository_posts
 
-from src.schemas.posts import PostResponse, PostUkrPostalOffice, PostMessageResponse
+from src.schemas.posts import PostResponse, PostUkrPostalOffice, PostMessageResponse, PostNovaPoshtaOffice
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -61,6 +61,58 @@ async def get_my_post_offices(current_user: User = Depends(auth_service.get_curr
         posts_data_current_user = pickle.loads(cached_posts_current_user)
 
     return posts_data_current_user
+
+
+@router.post("/add_nova_poshta_data",
+             response_model=PostMessageResponse,
+             dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def add_nova_poshta_data(nova_poshta_data: PostNovaPoshtaOffice,
+                               current_user: User = Depends(auth_service.get_current_user),
+                               db: Session = Depends(get_db)):
+    """
+    The add_nova_poshta_data function updates an exists post for the current user.
+
+    Args:
+        nova_poshta_data: PostNovaPoshtaOffice: Validate the request body
+        current_user: User: Get the current user
+        db: Session: Access the database
+
+    Returns:
+        Message about successfully adding novaposhta data
+    """
+
+    await repository_posts.add_nova_postal_data_to_post(
+        db=db, user_id=current_user.id, nova_poshta_in=nova_poshta_data
+    )
+    await delete_cache_in_redis()
+
+    return {"message": "The nova poshta data added successfully"}
+
+
+@router.delete("/remove_nova_poshta_data",
+               response_model=PostMessageResponse,
+               dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def remove_nova_poshta_data(nova_poshta_data: PostNovaPoshtaOffice,
+                                  current_user: User = Depends(auth_service.get_current_user),
+                                  db: Session = Depends(get_db)):
+    """
+    The remove_nova_poshta_data function deleted an exists post with novaposhta data for the current user.
+
+    Args:
+        nova_poshta_data: PostNovaPoshtaOffice: Validate the request body
+        current_user: User: Get the current user
+        db: Session: Access the database
+
+    Returns:
+        Message about successfully deleting novaposhta data from post
+    """
+
+    await repository_posts.remove_nova_postal_data_from_post(
+        db=db, user_id=current_user.id, nova_poshta_in=nova_poshta_data
+    )
+    await delete_cache_in_redis()
+
+    return {"message": "The nova poshta data from post deleted successfully"}
 
 
 @router.post("/add_ukr_postal_office",
