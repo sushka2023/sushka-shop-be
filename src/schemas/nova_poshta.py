@@ -48,18 +48,3 @@ class NovaPoshtaResponse(NovaPoshtaModel):
 
     class Config:
         orm_mode = True
-
-
-class NovaPoshtaDataResponse(BaseModel):
-    id: int
-    address_warehouse: Optional[str] = ""
-    city: str
-    region: Optional[str] = ""
-    area: Optional[str] = ""
-    street: Optional[str] = ""
-    house_number: Optional[str] = ""
-    apartment_number: Optional[str] = ""
-    floor: Optional[int] = None
-
-    class Config:
-        orm_mode = True

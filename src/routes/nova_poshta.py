@@ -1,9 +1,6 @@
-import pickle
-
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role
 from src.repository import nova_poshta as repository_novaposhta
@@ -13,11 +10,10 @@ from src.schemas.nova_poshta import (
     NovaPoshtaResponse,
     NovaPoshtaCreate,
     NovaPoshtaAddressDeliveryPartialUpdate,
-    NovaPoshtaDataResponse
 )
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
-from src.services.exception_detail import ExDetail as Ex
+
 
 router = APIRouter(prefix="/nova_poshta", tags=["novaposhta offices"])
 
@@ -25,45 +21,6 @@ router = APIRouter(prefix="/nova_poshta", tags=["novaposhta offices"])
 allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
-
-
-@router.get("/",
-            response_model=list[NovaPoshtaDataResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def get_all_nova_postal_warehouse(db: Session = Depends(get_db)):
-    """
-    The function returns a list of all nova postal warehouse in the database.
-
-    Args:
-        db: Session: Access the database
-
-    Returns:
-        A list of nova postal objects
-    """
-    redis_client = get_redis()
-
-    key = f"novaposhta"
-
-    cached_novaposhta = None
-
-    if redis_client:
-        cached_novaposhta = redis_client.get(key)
-
-    if not cached_novaposhta:
-        novaposhta_data = await repository_novaposhta.get_all_nova_poshta_data(db)
-
-        if novaposhta_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
-            )
-
-        if redis_client:
-            redis_client.set(key, pickle.dumps(novaposhta_data))
-            redis_client.expire(key, 1800)
-    else:
-        novaposhta_data = pickle.loads(cached_novaposhta)
-
-    return novaposhta_data
 
 
 @router.post("/create_address_delivery",
@@ -141,7 +98,9 @@ async def update_nova_poshta_data(
         if value is not None
     }
 
-    updated_novaposhta_data = await repository_novaposhta.update_nova_poshta_data(db, nova_poshta_id, update_data)
+    updated_novaposhta_data = (
+        await repository_novaposhta.update_nova_poshta_data(db, nova_poshta_id, update_data)
+    )
 
     await delete_cache_in_redis()
 

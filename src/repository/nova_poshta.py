@@ -28,10 +28,6 @@ async def create_nova_poshta_warehouse(
     return new_nova_poshta_warehouse
 
 
-async def get_all_nova_poshta_data(db: Session) -> list[NovaPoshta]:
-    return db.query(NovaPoshta).all()
-
-
 async def get_nova_poshta_by_id(nova_poshta_id: int, db: Session) -> NovaPoshta | None:
     return db.query(NovaPoshta).filter_by(id=nova_poshta_id).first()
 

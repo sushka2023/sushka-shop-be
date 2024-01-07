@@ -8,7 +8,12 @@ from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import posts as repository_posts
 
-from src.schemas.posts import PostResponse, PostUkrPostalOffice, PostMessageResponse, PostNovaPoshtaOffice
+from src.schemas.posts import (
+    PostResponse,
+    PostUkrPostalOffice,
+    PostMessageResponse,
+    PostNovaPoshtaOffice
+)
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -47,7 +52,9 @@ async def get_my_post_offices(current_user: User = Depends(auth_service.get_curr
         cached_posts_current_user = redis_client.get(key)
 
     if not cached_posts_current_user:
-        posts_data_current_user = await repository_posts.get_posts_by_user_id(current_user.id, db)
+        posts_data_current_user = (
+            await repository_posts.get_posts_by_user_id(current_user.id, db)
+        )
 
         if posts_data_current_user is None:
             raise HTTPException(
