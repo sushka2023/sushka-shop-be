@@ -15,10 +15,6 @@ async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate, db: Sessi
     return new_ukr_poshta_office
 
 
-async def get_ukr_poshta(db: Session) -> list[UkrPoshta]:
-    return db.query(UkrPoshta).all()
-
-
 async def get_ukr_poshta_by_id(ukr_poshta_id: int, db: Session) -> UkrPoshta | None:
     return db.query(UkrPoshta).filter_by(id=ukr_poshta_id).first()
 
