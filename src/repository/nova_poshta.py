@@ -17,7 +17,7 @@ async def create_nova_poshta_address_delivery(
     return new_nova_poshta_address_delivery
 
 
-async def create_nova_poshta_warehous(
+async def create_nova_poshta_warehouse(
         nova_post_warehouse: NovaPoshtaCreate,
         db: Session,
 ) -> NovaPoshta:

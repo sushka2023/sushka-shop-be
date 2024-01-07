@@ -108,7 +108,7 @@ async def create_nova_poshta_warehouse(nova_postal_warehouse: NovaPoshtaCreate,
         An novaposhta object
     """
     new_nova_poshta_warehouse = (
-        await repository_novaposhta.create_nova_poshta_warehous(nova_postal_warehouse, db)
+        await repository_novaposhta.create_nova_poshta_warehouse(nova_postal_warehouse, db)
     )
 
     await delete_cache_in_redis()
