@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from src.database.db import get_db
 from src.routes import users, auth, product_category, prices, products, favorites, favorite_items, baskets, \
-    basket_items, images, product_sub_category, reviews, orders, cooperation, posts, ukr_poshta
+    basket_items, images, product_sub_category, reviews, orders, cooperation, posts, ukr_poshta, nova_poshta
 
 import logging
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
@@ -87,3 +87,4 @@ app.include_router(orders.router, prefix='/api')
 app.include_router(cooperation.router, prefix='/api')
 app.include_router(posts.router, prefix='/api')
 app.include_router(ukr_poshta.router, prefix='/api')
+app.include_router(nova_poshta.router, prefix='/api')
