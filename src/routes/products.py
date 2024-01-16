@@ -12,7 +12,7 @@ from src.repository.prices import price_by_product
 from src.repository.product_sub_categories import insert_sub_category_for_product
 from src.repository.products import product_by_id, get_products_all_for_crm
 from src.schemas.images import ImageResponse
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
@@ -27,7 +27,7 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/all", response_model=List[ProductResponse])
+@router.get("/all", response_model=ProductWithTotalResponse)
 async def products(limit: int, offset: int, weight: str = None, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
     """
     The products function returns a list of products.

@@ -1,9 +1,10 @@
-from typing import List, Type
+from typing import List, Type, Dict
 
 from sqlalchemy import desc, asc, select, exists, and_, func
 from sqlalchemy.orm import Session, joinedload, aliased
 
 from src.database.models import Product, Price, ProductCategory, ProductStatus
+from src.schemas.product import ProductWithTotalResponse
 from src.services.products import product_with_prices_and_images
 
 
@@ -75,7 +76,7 @@ async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offs
     return product_with_price
 
 
-async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_id(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -99,9 +100,18 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
 async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
