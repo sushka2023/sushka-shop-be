@@ -63,7 +63,7 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     await repository_posts.create_postal_office(new_user, db)  # New post in user
 
-    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
+    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url.__str__())  # Send email verefication user
     return new_user
 
 
