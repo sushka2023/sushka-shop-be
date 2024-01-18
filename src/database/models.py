@@ -256,7 +256,7 @@ class Order(Base):
     ordered_product = relationship("OrderedProduct", back_populates="orders")
     post_type = Column('post_type', Enum(PostType), default=PostType.nova_poshta)
     address_warehouse = Column(String(255), nullable=True)
-    city = Column(String(255), nullable=False)
+    city = Column(String(255), nullable=True)
     region = Column(String(255), nullable=True)
     area = Column(String(255), nullable=True)
     street = Column(String(255), nullable=True)
