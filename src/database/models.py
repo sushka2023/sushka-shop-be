@@ -153,6 +153,7 @@ class Product(Base):
     product_status = Column('product_status', Enum(ProductStatus), default=ProductStatus.new)
     created_at = Column('created_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now())
+    ordered_products = relationship("OrderedProduct", back_populates="product")
 
 
 class Image(Base):
@@ -182,6 +183,7 @@ class Price(Base):
     is_deleted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
     promotional = Column(Boolean, default=False)
+    ordered_products = relationship("OrderedProduct", back_populates="prices")
 
 
 class ProductCategory(Base):
@@ -272,6 +274,7 @@ class OrderedProduct(Base):
     product = relationship("Product", back_populates="ordered_products")
     price_id = Column(Integer, ForeignKey('prices.id'))
     prices = relationship("Price", back_populates="ordered_products")
+    orders = relationship("Order", back_populates="ordered_product")
 
 
 class Post(Base):
