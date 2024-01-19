@@ -63,7 +63,7 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     await repository_posts.create_postal_office(new_user, db)  # New post in user
 
-    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url)  # Send email verefication user
+    background_tasks.add_task(send_email, new_user.email, new_user.first_name, request.base_url.__str__())  # Send email verefication user
     return new_user
 
 
@@ -201,7 +201,7 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
     if user.is_active:
         return {"message": "Your email is already confirmed"}
     if user:
-        background_tasks.add_task(send_email, user.email, user.username, request.base_url)
+        background_tasks.add_task(send_email, user.email, user.username, request.base_url.__str__())
     return {"message": "Check your email for confirmation."}
 
 
@@ -227,7 +227,7 @@ async def send_email_reset_password(email: str, background_tasks: BackgroundTask
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST)
     if not user.is_active:
         return {"message": "Your email is not confirmed"}
-    background_tasks.add_task(send_reset_email, user.email, request.base_url)
+    background_tasks.add_task(send_reset_email, user.email, request.base_url.__str__())
     return {"message": "Letter sent successfully"}
 
 
