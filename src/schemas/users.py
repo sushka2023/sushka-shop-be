@@ -46,6 +46,9 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
     refresh_token: Optional[str]
+    is_deleted: bool
+    is_blocked: bool
+    is_active: bool
 
     class Config:
         orm_mode = True
@@ -110,6 +113,15 @@ class TokenModel(BaseModel):
 
 class PasswordModel(BaseModel):
     password_checksum: str = Field(min_length=8, max_length=255)
+
+    @validator("password_checksum", pre=True)
+    def validate_password(cls, password_checksum):
+        if not password_pattern.match(password_checksum):
+            raise ValueError(
+                "Password is not valid! The password must consist of at least one lowercase, "
+                "uppercase letter, number and symbols."
+            )
+        return password_checksum
 
 
 class UserBlockOrRemoveModel(BaseModel):
