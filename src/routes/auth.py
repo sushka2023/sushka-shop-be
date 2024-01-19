@@ -83,8 +83,6 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not confirmed")
     if user.is_deleted:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
     if user.is_blocked:

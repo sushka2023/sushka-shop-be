@@ -123,6 +123,11 @@ async def create_review(
         A review object
     """
 
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Email is not confirmed"
+        )
+
     existing_review = await repository_reviews.get_review_for_product_by_user(db, review.product_id, current_user.id)
 
     if existing_review:
