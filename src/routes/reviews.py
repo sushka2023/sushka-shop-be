@@ -123,7 +123,7 @@ async def create_review(
         A review object
     """
 
-    if not current_user.is_active:
+    if current_user.is_active is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Email is not confirmed"
         )
