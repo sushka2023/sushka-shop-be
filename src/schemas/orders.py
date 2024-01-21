@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from src.database.models import PaymentTypes, OrderStatus
+from src.schemas.basket_items import BasketItemsResponse
 
 
 class OrderModel(BaseModel):
@@ -21,6 +22,7 @@ class OrderResponse(BaseModel):
     confirmation_pay: bool
     call_manager: bool
     status_order: OrderStatus
+    ordered_product: BasketItemsResponse
 
     class Config:
         orm_mode = True
