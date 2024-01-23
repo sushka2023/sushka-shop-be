@@ -8,10 +8,14 @@ from src.database.models import Role, User
 from src.repository import basket_items as repository_basket_items
 from src.repository import baskets as repository_baskets
 from src.repository import products as repository_products
+from src.repository import prices as repository_prices
 from src.repository.products import product_by_id
 from src.schemas.basket_items import BasketItemsModel, BasketItemsResponse, ChangeQuantityBasketItemsModel, \
     BasketItemsRemoveModel
+from src.schemas.images import ImageResponse
+from src.schemas.product import ProductResponse
 from src.services.auth import auth_service
+from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -48,9 +52,36 @@ async def basket_items(current_user: User = Depends(auth_service.get_current_use
 
     for item in basket_items_:
         product = await product_by_id(item.product_id, db)
+
+        selected_price = await repository_prices.price_by_product_id_and_price_id(
+            item.product_id, item.price_id_by_the_user, db
+        )
+
+        if not selected_price:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price_id_by_the_user")
+
+        exist_product = ProductResponse(id=product.id,
+                                        name=product.name,
+                                        description=product.description,
+                                        product_category_id=product.product_category_id,
+                                        new_product=product.new_product,
+                                        is_popular=product.is_popular,
+                                        is_favorite=product.is_favorite,
+                                        product_status=product.product_status,
+                                        sub_categories=product.sub_categories,
+                                        images=[ImageResponse(id=item.id,
+                                                              product_id=item.product_id,
+                                                              image_url=CloudImage.get_transformation_image(
+                                                                  item.image_url, "product"
+                                                              ),
+                                                              description=item.description,
+                                                              image_type=item.image_type,
+                                                              main_image=item.main_image) for item in product.images],
+                                        prices=[selected_price])
+
         basket_items_with_product.append(BasketItemsResponse(id=item.id,
                                                              basket_id=item.basket_id,
-                                                             product=product,
+                                                             product=exist_product,
                                                              quantity=item.quantity,
                                                              price_id_by_the_user=item.price_id_by_the_user))
 
@@ -83,24 +114,59 @@ async def add_items_to_basket(body: BasketItemsModel,
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_item = await repository_basket_items.basket_item(body, current_user, db)
+    selected_price = await repository_prices.price_by_product_id_and_price_id(
+        body.product_id, body.price_id_by_the_user, db
+    )
+
+    if not selected_price:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price_id_by_the_user")
+
+    basket_item = await repository_basket_items.basket_item(
+        body, current_user, db, selected_price.id,
+    )
 
     add_product_to_basket = None
 
     if basket_item:
         add_product_to_basket = await repository_basket_items.update(body, basket, db)
     elif not basket_item:
-        add_product_to_basket = await repository_basket_items.create(body, basket, db)
+        add_product_to_basket = await repository_basket_items.create(
+            db=db,
+            basket_id=basket.id,
+            product_id=body.product_id,
+            quantity=body.quantity,
+            price_id_by_the_user=body.price_id_by_the_user,
+        )
 
     basket_items_with_product = list()
 
     if add_product_to_basket:
         product = await product_by_id(add_product_to_basket.product_id, db)
+
+        exist_product = ProductResponse(id=product.id,
+                                        name=product.name,
+                                        description=product.description,
+                                        product_category_id=product.product_category_id,
+                                        new_product=product.new_product,
+                                        is_popular=product.is_popular,
+                                        is_favorite=product.is_favorite,
+                                        product_status=product.product_status,
+                                        sub_categories=product.sub_categories,
+                                        images=[ImageResponse(id=item.id,
+                                                              product_id=item.product_id,
+                                                              image_url=CloudImage.get_transformation_image(
+                                                                  item.image_url, "product"
+                                                              ),
+                                                              description=item.description,
+                                                              image_type=item.image_type,
+                                                              main_image=item.main_image) for item in product.images],
+                                        prices=[selected_price])
+
         add_product_to_basket = BasketItemsResponse(id=add_product_to_basket.id,
                                                     basket_id=add_product_to_basket.basket_id,
-                                                    product=product,
+                                                    product=exist_product,
                                                     quantity=add_product_to_basket.quantity,
-                                                    price_id_by_the_user=add_product_to_basket.price_id_by_the_user)
+                                                    price_id_by_the_user=selected_price.id)
         return add_product_to_basket
 
     else:
