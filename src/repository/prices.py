@@ -27,6 +27,12 @@ async def price_by_id(id_price: int, db: Session) -> Type[Price]:
     return price
 
 
+async def price_by_product_id_and_price_id(product_id: int, price_id: int, db: Session) -> Price:
+    return db.query(Price).filter(
+        Price.product_id == product_id, Price.id == price_id, Price.is_deleted == False
+    ).first()
+
+
 async def create_price(body: PriceModel, db: Session) -> PriceResponse:
     new_price = Price(**body.dict())
     db.add(new_price)
