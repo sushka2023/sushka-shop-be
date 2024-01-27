@@ -28,7 +28,7 @@ class ProductResponse(BaseModel):
     is_popular: bool
     is_favorite: bool
     product_status: ProductStatus
-    sub_categories: List[ProductSubCategoryResponse]
+    sub_categories: List[ProductSubCategoryResponse] = []
     images: List[ImageResponse]
     prices: List[PriceResponse]
 
