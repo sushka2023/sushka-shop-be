@@ -38,3 +38,19 @@ class ProductResponse(BaseModel):
 
 class ProductArchiveModel(BaseModel):
     id: int
+
+
+class ProductResponseForOrder(BaseModel):
+    id: int
+    name: str
+    description: str
+    product_category_id: int
+    new_product: bool
+    is_popular: bool
+    is_favorite: bool
+    product_status: ProductStatus
+    images: List[ImageResponse]
+    prices: List[PriceResponse]
+
+    class Config:
+        orm_mode = True
