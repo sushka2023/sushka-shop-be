@@ -3,13 +3,13 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from src.database.models import PaymentsTypes, OrdersStatus
-from src.schemas.product import ProductResponse
+from src.schemas.product import ProductResponseForOrder
 
 
 class OrderedProductResponse(BaseModel):
     id: int
     product_id: int
-    products: ProductResponse
+    products: ProductResponseForOrder
     price_id: int
     order_id: int
     quantity: int
