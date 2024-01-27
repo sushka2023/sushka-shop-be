@@ -9,7 +9,7 @@ from src.schemas.product import ProductResponse
 class OrderedProductResponse(BaseModel):
     id: int
     product_id: int
-    product: ProductResponse
+    products: ProductResponse
     price_id: int
     order_id: int
     quantity: int
