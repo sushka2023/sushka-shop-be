@@ -1,25 +1,11 @@
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 
-from src.database.models import Basket, User, Order, BasketItem, OrderStatus
-from src.repository.prices import price_by_product_id
+from src.database.models import Basket, User, Order, BasketItem, OrdersStatus
 from src.schemas.orders import OrderModel
-
-
-async def calculate_basket_total_cost(basket: Basket, db: Session):
-    """Determination of total order value"""
-
-    total_cost = 0.0
-
-    if basket.basket_items:
-        for basket_item in basket.basket_items:
-            product = basket_item.product
-            prices = await price_by_product_id(product.id, db)
-            if prices:
-                for price in prices:
-                    total_cost += float(price.price * basket_item.quantity)
-
-    return total_cost
+from src.services.orders import calculate_basket_total_cost
+from src.services.products import move_product_to_ordered
+from src.repository import prices as repository_prices
 
 
 async def get_order_by_id(order_id: int, db: Session) -> Order | None:
@@ -63,7 +49,20 @@ async def create_order(order_data: OrderModel, user_id: int, db: Session):
     if not user.basket:
         user.basket = Basket()
 
-    total_cost = await calculate_basket_total_cost(user.basket, db)
+    total_cost = await calculate_basket_total_cost(user.basket)
+
+    ordered_products = []
+    for basket_item in user.basket.basket_items:
+        ordered_product = await move_product_to_ordered(db, basket_item)
+
+        selected_price = await repository_prices.price_by_product_id_and_price_id(
+            ordered_product.product_id, ordered_product.price_id, db
+        )
+
+        if selected_price:
+            ordered_product.products.prices = [selected_price]
+
+        ordered_products.append(ordered_product)
 
     order = Order(
         user_id=user.id,
@@ -71,6 +70,7 @@ async def create_order(order_data: OrderModel, user_id: int, db: Session):
         price_order=total_cost,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        ordered_products=ordered_products
     )
 
     db.add(order)
@@ -88,7 +88,7 @@ async def confirm_order(order_id: int, db: Session) -> Order | None:
     order = await get_order_by_id(order_id=order_id, db=db)
     if order and order.confirmation_manager is False:
         order.confirmation_manager = True
-        order.status_order = OrderStatus.in_processing
+        order.status_order = OrdersStatus.in_processing
         db.commit()
         return order
     return None
