@@ -59,7 +59,7 @@ class ImageType(enum.Enum):
     review: str = 'review'
 
 
-class PaymentTypes(enum.Enum):
+class PaymentsTypes(enum.Enum):
     """
     Payment types.
     """
@@ -76,15 +76,24 @@ class ProductStatus(enum.Enum):
     archived: str = 'archived'
 
       
-class OrderStatus(enum.Enum):
+class OrdersStatus(enum.Enum):
     """
-    Status of the order
+    Status of the orders
     """
     new: str = 'new'
     in_processing: str = 'in processing'
     shipped: str = 'shipped'
     delivered: str = 'delivered'
     cancelled: str = 'cancelled'
+
+
+class PostType(enum.Enum):
+    """
+    Post types.
+    """
+    nova_poshta_warehouse: str = 'nova_poshta_warehouse'
+    nova_poshta_address: str = 'nova_poshta_address'
+    ukr_poshta: str = 'ukr_poshta'
 
 
 class UpdateFromDictMixin:
@@ -145,6 +154,7 @@ class Product(Base):
     product_status = Column('product_status', Enum(ProductStatus), default=ProductStatus.new)
     created_at = Column('created_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now())
+    ordered_products = relationship("OrderedProduct", back_populates="products")
 
 
 class Image(Base):
@@ -174,6 +184,7 @@ class Price(Base):
     is_deleted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
     promotional = Column(Boolean, default=False)
+    ordered_products = relationship("OrderedProduct", back_populates="prices")
 
 
 class ProductCategory(Base):
@@ -226,6 +237,46 @@ class BasketItem(Base):
     product = relationship("Product")
     quantity = Column(Integer, default=1)
     price_id_by_the_user = Column(Integer)
+
+
+class Order(Base):
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", back_populates="orders")
+    basket_id = Column(Integer, ForeignKey('baskets.id'))
+    basket = relationship("Basket", back_populates="order")
+    price_order = Column(Float, unique=False, nullable=False)
+    payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
+    created_at = Column('created_at', DateTime, default=func.now())
+    confirmation_manager = Column(Boolean, default=False)
+    confirmation_pay = Column(Boolean, default=False)
+    call_manager = Column(Boolean, default=False)
+    status_order = Column('status_order', Enum(OrdersStatus), default=OrdersStatus.new)
+    ordered_products = relationship("OrderedProduct", back_populates="order")
+    post_type = Column('post_type', Enum(PostType), default=PostType.nova_poshta_warehouse)
+    address_warehouse = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=True)
+    region = Column(String(255), nullable=True)
+    area = Column(String(255), nullable=True)
+    street = Column(String(255), nullable=True)
+    house_number = Column(String(255), nullable=True)
+    apartment_number = Column(String(255), nullable=True)
+    floor = Column(Integer, nullable=True)
+    country = Column(String(255), nullable=True)
+    post_code = Column(String(255), nullable=True)
+
+
+class OrderedProduct(Base):
+    __tablename__ = 'ordered_products'
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'))
+    products = relationship("Product", back_populates="ordered_products")
+    price_id = Column(Integer, ForeignKey('prices.id'))
+    prices = relationship("Price", back_populates="ordered_products")
+    order_id = Column(Integer, ForeignKey('orders.id'))
+    order = relationship("Order", back_populates="ordered_products")
+    quantity = Column(Integer)
 
 
 class Post(Base):
