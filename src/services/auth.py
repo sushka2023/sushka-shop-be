@@ -100,17 +100,7 @@ class Auth:
         else:
             raise cls.credentials_exception
 
-        with get_redis() as redis_cl:
-            token_blacklisted = redis_cl.get(f"bl_token:{email}")
-
-        if token_blacklisted is None:
-            token_blacklisted = await repository_users.is_blacklisted_token(token, db)
-            if token_blacklisted:
-                with get_redis() as redis_cl:
-                    redis_cl.set(f"bl_token:{email}", pickle.dumps(token_blacklisted))
-                    redis_cl.expire(f"bl_token:{email}", 900)
-        else:
-            token_blacklisted = pickle.loads(token_blacklisted)
+        token_blacklisted = await repository_users.is_blacklisted_token(token, db)
 
         if token_blacklisted:
             raise cls.credentials_exception

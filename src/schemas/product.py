@@ -38,3 +38,8 @@ class ProductResponse(BaseModel):
 
 class ProductArchiveModel(BaseModel):
     id: int
+
+
+class ProductWithTotalResponse(BaseModel):
+    products: List[ProductResponse]
+    total_count: int

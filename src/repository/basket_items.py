@@ -8,11 +8,19 @@ from src.database.models import BasketItem, User, Basket, Product
 from src.schemas.basket_items import BasketItemsModel, BasketItemsRemoveModel
 
 
-async def create(body: BasketItemsModel, basket: Basket, db: Session) -> BasketItem:
-    new_basket_item = BasketItem(basket_id=basket.id,
-                                 product_id=body.product_id,
-                                 quantity=body.quantity,
-                                 price_id_by_the_user=body.price_id_by_the_user)
+async def create(
+        db: Session,
+        basket_id: int,
+        product_id: int,
+        quantity: int,
+        price_id_by_the_user: int
+):
+    new_basket_item = BasketItem(
+        basket_id=basket_id,
+        product_id=product_id,
+        quantity=quantity,
+        price_id_by_the_user=price_id_by_the_user
+    )
     db.add(new_basket_item)
     db.commit()
     db.refresh(new_basket_item)
@@ -47,11 +55,18 @@ async def basket_items(current_user: User, db: Session) -> List[BasketItem] | No
     return basket_items_
 
 
-async def basket_item(body: BasketItemsRemoveModel, current_user: User, db: Session) -> Type[BasketItem] | None:
-    return db.query(BasketItem).join(Basket).filter(
+async def basket_item(
+        body: BasketItemsRemoveModel, current_user: User, db: Session, price_id_by_the_user: int = None
+) -> Type[BasketItem] | None:
+    query = db.query(BasketItem).join(Basket).filter(
         BasketItem.product_id == body.product_id,
         Basket.user_id == current_user.id
-    ).first()
+    )
+
+    if price_id_by_the_user is not None:
+        query = query.filter(BasketItem.price_id_by_the_user == price_id_by_the_user)
+
+    return query.first()
 
 
 async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketItem] | None:
@@ -59,7 +74,9 @@ async def basket_item_for_id(basket_item_id: int, db: Session) -> Type[BasketIte
 
 
 async def get_b_item_from_product_id(product_id: int, basket_id: int, db: Session):
-    basket_item_ = db.query(BasketItem).filter(BasketItem.product_id == product_id, BasketItem.basket_id == basket_id).first()
+    basket_item_ = db.query(BasketItem).filter(
+        BasketItem.product_id == product_id, BasketItem.basket_id == basket_id
+    ).first()
     return basket_item_
 
 
