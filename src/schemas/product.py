@@ -1,9 +1,8 @@
-from datetime import datetime
-from typing import Optional, List, Tuple, Type
+from typing import List
 
 from pydantic import BaseModel, Field
 
-from src.database.models import ProductCategory, Price, Image, ProductSubCategory, ProductStatus
+from src.database.models import ProductStatus
 from src.schemas.images import ImageResponse
 from src.schemas.price import PriceResponse
 from src.schemas.product_sub_category import ProductSubCategoryResponse
@@ -50,7 +49,6 @@ class ProductResponseForOrder(BaseModel):
     is_favorite: bool
     product_status: ProductStatus
     images: List[ImageResponse]
-    prices: List[PriceResponse]
 
     class Config:
         orm_mode = True
