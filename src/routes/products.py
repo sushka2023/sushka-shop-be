@@ -97,7 +97,7 @@ async def products(limit: int, offset: int, weight: str = None, pr_category_id: 
 
 
 @router.get("/all_for_crm",
-            response_model=List[ProductResponse],
+            response_model=ProductWithTotalResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
 
