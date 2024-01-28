@@ -243,7 +243,7 @@ class Order(Base):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("User", back_populates="orders")
+    user = relationship("User", lazy="joined", back_populates="orders")
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
     price_order = Column(Float, unique=False, nullable=False)
