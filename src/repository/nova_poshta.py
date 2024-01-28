@@ -10,7 +10,7 @@ async def create_nova_poshta_address_delivery(
         nova_post_address_delivery: NovaPoshtaAddressDeliveryCreate,
         db: Session,
 ) -> NovaPoshta:
-    new_nova_poshta_address_delivery = NovaPoshta(**nova_post_address_delivery.model_dump())
+    new_nova_poshta_address_delivery = NovaPoshta(**nova_post_address_delivery.dict)
     db.add(new_nova_poshta_address_delivery)
     db.commit()
     db.refresh(new_nova_poshta_address_delivery)
@@ -21,7 +21,7 @@ async def create_nova_poshta_warehouse(
         nova_post_warehouse: NovaPoshtaCreate,
         db: Session,
 ) -> NovaPoshta:
-    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.model_dump())
+    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.dict())
     db.add(new_nova_poshta_warehouse)
     db.commit()
     db.refresh(new_nova_poshta_warehouse)

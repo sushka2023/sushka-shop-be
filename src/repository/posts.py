@@ -33,7 +33,7 @@ async def add_ukr_postal_office_to_post(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     post_ukr_post_association = post_ukrposhta_association.insert().values(
-        **ukr_poshta_in.model_dump()
+        **ukr_poshta_in.dict()
     )
     db.execute(post_ukr_post_association)
 
@@ -82,7 +82,7 @@ async def add_nova_postal_data_to_post(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     post_nova_post_association = post_novaposhta_association.insert().values(
-        **nova_poshta_in.model_dump()
+        **nova_poshta_in.dict()
     )
     db.execute(post_nova_post_association)
 
