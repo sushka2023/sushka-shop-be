@@ -279,6 +279,15 @@ class OrderedProduct(Base):
     quantity = Column(Integer)
 
 
+class BasketAnonUser(Base):
+    __tablename__ = 'basket_anon_users'
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'))
+    product = relationship("Product")
+    quantity = Column(Integer, default=1)
+    price_id_by_anon_user = Column(Integer)
+
+
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
