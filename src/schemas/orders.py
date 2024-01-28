@@ -3,7 +3,9 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from src.database.models import PaymentsTypes, OrdersStatus
+from src.schemas.price import PriceResponse
 from src.schemas.product import ProductResponseForOrder
+from src.schemas.users import UserResponseForCRM
 
 
 class OrderedProductResponse(BaseModel):
@@ -11,6 +13,7 @@ class OrderedProductResponse(BaseModel):
     product_id: int
     products: ProductResponseForOrder
     price_id: int
+    prices: PriceResponse
     order_id: int
     quantity: int
 
@@ -26,6 +29,7 @@ class OrderModel(BaseModel):
 class OrderResponse(BaseModel):
     id: int
     user_id: int
+    user: UserResponseForCRM
     basket_id: int
     price_order: float
     payment_type: PaymentsTypes
