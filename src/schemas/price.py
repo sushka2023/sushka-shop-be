@@ -19,7 +19,7 @@ class PriceModel(BaseModel):
 
 class PriceResponse(BaseModel):
     id: int
-    product_id: Optional[int]
+    product_id: int
     weight: str
     price: float
     old_price: Optional[float]
