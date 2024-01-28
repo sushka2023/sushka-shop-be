@@ -1,7 +1,7 @@
 from sqlalchemy import desc
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
-from src.database.models import Basket, User, Order, BasketItem, OrdersStatus
+from src.database.models import Basket, User, Order, BasketItem, OrdersStatus, OrderedProduct
 from src.schemas.orders import OrderModel
 from src.services.orders import calculate_basket_total_cost
 from src.services.products import move_product_to_ordered
@@ -14,8 +14,16 @@ async def get_order_by_id(order_id: int, db: Session) -> Order | None:
 
 async def get_orders_by_user(limit: int, offset: int, user: User, db: Session) -> list[Order]:
     return (
-        db.query(Order).filter(Order.user_id == user.id)
-        .order_by(desc(Order.created_at)).limit(limit).offset(offset).all()
+        db.query(Order)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.ordered_products)
+            .selectinload(OrderedProduct.products)
+        )
+        .filter(Order.user_id == user.id)
+        .order_by(desc(Order.created_at))
+        .limit(limit).offset(offset)
+        .all()
     )
 
 
@@ -60,12 +68,13 @@ async def create_order(order_data: OrderModel, user_id: int, db: Session):
         )
 
         if selected_price:
-            ordered_product.products.prices = [selected_price]
+            ordered_product.prices = selected_price
 
         ordered_products.append(ordered_product)
 
     order = Order(
         user_id=user.id,
+        user=user,
         basket_id=user.basket.id,
         price_order=total_cost,
         payment_type=order_data.payment_type,
