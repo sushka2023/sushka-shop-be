@@ -1,7 +1,7 @@
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from src.database.models import Basket, User, Order, BasketItem, OrdersStatus, OrderedProduct
+from src.database.models import Basket, User, Order, BasketItem, OrdersStatus, OrderedProduct, Price
 from src.schemas.orders import OrderModel
 from src.services.orders import calculate_basket_total_cost
 from src.services.products import move_product_to_ordered
@@ -18,8 +18,14 @@ async def get_orders_by_user(limit: int, offset: int, user: User, db: Session) -
         .options(
             selectinload(Order.user),
             selectinload(Order.ordered_products)
-            .selectinload(OrderedProduct.products)
+            .selectinload(OrderedProduct.prices)
+            .options(
+                joinedload(Price.product),
+                joinedload(Price.ordered_products)
+            )
         )
+        .filter(OrderedProduct.order_id == Order.id)
+        .filter(Price.id == OrderedProduct.price_id)
         .filter(Order.user_id == user.id)
         .order_by(desc(Order.created_at))
         .limit(limit).offset(offset)
