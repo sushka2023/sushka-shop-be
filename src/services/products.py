@@ -3,7 +3,7 @@ from typing import List, Type
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.database.models import Product, Price, BasketItem, OrderedProduct
+from src.database.models import Product, BasketItem, OrderedProduct
 from src.repository import products as repository_products
 from src.repository import product_categories as repository_product_categories
 from src.repository.prices import price_by_product
