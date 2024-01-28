@@ -1,4 +1,8 @@
+import logging
+
+from fastapi import HTTPException, status
 from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.database.models import Basket, User, Order, BasketItem, OrdersStatus, OrderedProduct, Price
@@ -6,6 +10,9 @@ from src.schemas.orders import OrderModel
 from src.services.orders import calculate_basket_total_cost
 from src.services.products import move_product_to_ordered
 from src.repository import prices as repository_prices
+
+
+logger = logging.getLogger(__name__)
 
 
 async def get_order_by_id(order_id: int, db: Session) -> Order | None:
@@ -51,8 +58,13 @@ async def get_user_with_basket_and_items(user_id: int, db: Session) -> User:
 
 async def delete_basket_items_by_basket_id(basket_id: int, db: Session):
     """User Shopping Cart Cleaning"""
-    db.query(BasketItem).filter(BasketItem.basket_id == basket_id).delete()
-    db.commit()
+    try:
+        db.query(BasketItem).filter(BasketItem.basket_id == basket_id).delete()
+        db.commit()
+    except SQLAlchemyError as e:
+        logger.exception("SQLAlchemyError")
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 async def create_order(order_data: OrderModel, user_id: int, db: Session):
