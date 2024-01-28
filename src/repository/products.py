@@ -24,56 +24,68 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     return product_
 
 
-async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
         filter().\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+        order_by(desc(Product.created_at))
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_category_id(limit: int, offset: int, pr_category_id: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+async def get_products_all_for_crm_pr_category_id(limit: int, offset: int, pr_category_id: int, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
         filter(Product.product_category_id == pr_category_id).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+        order_by(desc(Product.created_at))
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_status(limit: int, offset: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+async def get_products_all_for_crm_pr_status(limit: int, offset: int, pr_status: ProductStatus, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
         filter(Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+        order_by(desc(Product.created_at))
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
+async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
         filter(Product.product_category_id == pr_category_id, Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+        order_by(desc(Product.created_at))
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
 async def get_products_id(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
