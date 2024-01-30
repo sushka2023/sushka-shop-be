@@ -244,8 +244,12 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", lazy="joined", back_populates="orders")
+    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
+    anonymous_user = relationship("AnonymousUser", lazy="joined", back_populates="orders")
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
+    basket_number_id = Column(Integer, ForeignKey('basket_number_anon_users.id'))
+    basket_number = relationship("BasketNumberAnonUser", back_populates="order")
     price_order = Column(Float, unique=False, nullable=False)
     payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
     created_at = Column('created_at', DateTime, default=func.now())
@@ -279,9 +283,28 @@ class OrderedProduct(Base):
     quantity = Column(Integer)
 
 
+class AnonymousUser(Base):
+    __tablename__ = 'anonymous_users'
+    id = Column(Integer, primary_key=True)
+    user_anon_id = Column(String(255), unique=True, nullable=False)
+    orders = relationship("Order", back_populates="anonymous_user")
+    baskets = relationship("BasketNumberAnonUser", back_populates="anonymous_user")
+
+
+class BasketNumberAnonUser(Base):
+    __tablename__ = 'basket_number_anon_users'
+    id = Column(Integer, primary_key=True)
+    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
+    anonymous_user = relationship("AnonymousUser", back_populates="baskets")
+    basket_items_anon_user = relationship("BasketAnonUser", uselist=True, back_populates="basket_number")
+    order = relationship("Order", uselist=False, back_populates="basket_number")
+
+
 class BasketAnonUser(Base):
     __tablename__ = 'basket_anon_users'
     id = Column(Integer, primary_key=True)
+    basket_number_id = Column(Integer, ForeignKey('basket_number_anon_users.id'))
+    basket_number = relationship("BasketNumberAnonUser", back_populates="basket_items_anon_user")
     product_id = Column(Integer, ForeignKey('products.id'))
     product = relationship("Product")
     quantity = Column(Integer, default=1)
