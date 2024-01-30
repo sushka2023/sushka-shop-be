@@ -1,31 +1,18 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
-from src.schemas.product import ProductResponse
 
-
-class BasketAnonUserModel(BaseModel):
-    product_id: int
-    price_id_by_anon_user: Optional[int]
-    quantity: int = 1
-
-
-class BasketAnonUserResponse(BaseModel):
+class AnonymousUserResponse(BaseModel):
     id: int
-    product_id: int
-    product: ProductResponse
-    price_id_by_anon_user: int
-    quantity: int
+    user_anon_id: str
 
     class Config:
         orm_mode = True
 
 
-class BasketAnonUserRemoveModel(BaseModel):
-    product_id: int
-
-
-class ChangeQuantityBasketItemModel(BaseModel):
+class BasketNumberAnonUserResponse(BaseModel):
     id: int
-    quantity: int
+    anonymous_user_id: int
+    anonymous_user: AnonymousUserResponse
+
+    class Config:
+        orm_mode = True
