@@ -6,7 +6,7 @@ from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
 from src.database.models import AnonymousUser, BasketNumberAnonUser, BasketAnonUser, Product
-from src.schemas.basket_anon_user import BasketAnonUserModel, BasketAnonUserRemoveModel
+from src.schemas.basket_anon_user import BasketAnonUserModel
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -144,3 +144,20 @@ async def update_quantity(basket_item: Type[BasketAnonUser], quantity: int, db) 
         db.refresh(basket_item)
         return basket_item
     return None
+
+
+async def get_basket_item_by_product_id(basket_id: int, product_id: int, db: Session):
+    basket_item = (
+        db.query(BasketAnonUser)
+        .join(BasketNumberAnonUser)
+        .filter(
+            BasketAnonUser.product_id == product_id,
+            BasketNumberAnonUser.id == basket_id
+        ).first()
+    )
+    return basket_item
+
+
+async def remove_item(basket_item: BasketAnonUser, db: Session):
+    db.delete(basket_item)
+    db.commit()
