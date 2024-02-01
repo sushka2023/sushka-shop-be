@@ -1,9 +1,11 @@
+from typing import Optional, Type
 from uuid import uuid4
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.database.models import AnonymousUser, BasketNumberAnonUser
+from src.database.models import AnonymousUser, BasketNumberAnonUser, BasketAnonUser
+from src.schemas.basket_anon_user import BasketAnonUserModel, BasketAnonUserRemoveModel
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -31,7 +33,7 @@ async def create_basket_for_anonymous_user(db: Session):
     return new_basket_number
 
 
-async def get_anonymous_user(db: Session, user_anon_id: str):
+async def get_anonymous_user_by_key_id(db: Session, user_anon_id: str):
     anon_user = db.query(AnonymousUser).filter(AnonymousUser.user_anon_id == user_anon_id).first()
 
     if not anon_user:
@@ -40,13 +42,71 @@ async def get_anonymous_user(db: Session, user_anon_id: str):
     return anon_user
 
 
-async def get_basket_for_anonymous_user(db: Session, anon_user_id: int):
+async def get_basket_for_anonymous_user(db: Session, user_id: int):
     basket_number = (
         db.query(BasketNumberAnonUser)
-        .filter(BasketNumberAnonUser.anonymous_user_id == anon_user_id).first()
+        .filter(BasketNumberAnonUser.anonymous_user_id == user_id).first()
     )
 
     if not basket_number:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     return basket_number
+
+
+async def add_items_to_basket_anon_user(
+        db: Session, basket_number_id: int, product_id: int, price_id_by_anon_user: int, quantity: int
+):
+    new_basket_anon_user = BasketAnonUser(
+        basket_number_id=basket_number_id,
+        product_id=product_id,
+        quantity=quantity,
+        price_id_by_anon_user=price_id_by_anon_user
+    )
+    db.add(new_basket_anon_user)
+    db.commit()
+    db.refresh(new_basket_anon_user)
+    return new_basket_anon_user
+
+
+async def get_existing_basket_anon_user(
+        basket_number: BasketNumberAnonUser, product_id: int, db: Session
+) -> Optional[BasketAnonUser]:
+    return db.query(BasketAnonUser).filter(
+        BasketAnonUser.basket_number_id == basket_number.id,
+        BasketAnonUser.product_id == product_id
+    ).first()
+
+
+async def update_basket_anon_user(
+        body: BasketAnonUserModel, basket_number: BasketNumberAnonUser, db: Session
+):
+    existing_basket_item = await get_existing_basket_anon_user(basket_number, body.product_id, db)
+
+    if existing_basket_item:
+        existing_basket_item.quantity += body.quantity
+        existing_basket_item.price_id_by_anon_user = body.price_id_by_anon_user
+        db.commit()
+        db.refresh(existing_basket_item)
+        return existing_basket_item
+
+
+async def basket_item_anon_user(
+        product_id: int,
+        user_id: int,
+        db: Session,
+        price_id_by_anon_user: int = None
+) -> Type[BasketAnonUser] | None:
+    query = (
+        db.query(BasketAnonUser)
+        .join(BasketNumberAnonUser)
+        .filter(
+            BasketAnonUser.product_id == product_id,
+            BasketNumberAnonUser.anonymous_user_id == user_id
+        )
+    )
+
+    if price_id_by_anon_user is not None:
+        query = query.filter(BasketAnonUser.price_id_by_anon_user == price_id_by_anon_user)
+
+    return query.first()
