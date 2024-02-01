@@ -47,3 +47,7 @@ class BasketAnonUserRemoveModel(BaseModel):
 class ChangeQuantityBasketItemModel(BaseModel):
     id: int
     quantity: int
+
+
+class BasketAnonUserMessage(BaseModel):
+    message: str
