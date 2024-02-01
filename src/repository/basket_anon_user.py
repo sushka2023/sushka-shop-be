@@ -122,3 +122,25 @@ async def basket_items_anon_user(db: Session) -> list[BasketAnonUser] | None:
         .all()
     )
     return basket_items
+
+
+async def get_basket_item_by_id(basket_id: int, basket_item_id: int, db: Session) -> Type[BasketAnonUser] | None:
+    basket_item = (
+        db.query(BasketAnonUser)
+        .join(BasketNumberAnonUser)
+        .filter(
+            BasketAnonUser.id == basket_item_id,
+            BasketNumberAnonUser.id == basket_id
+        ).first()
+    )
+
+    return basket_item
+
+
+async def update_quantity(basket_item: Type[BasketAnonUser], quantity: int, db) -> Type[BasketAnonUser] | None:
+    if basket_item:
+        basket_item.quantity = quantity
+        db.commit()
+        db.refresh(basket_item)
+        return basket_item
+    return None
