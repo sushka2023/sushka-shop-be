@@ -10,6 +10,7 @@ from src.schemas.basket_anon_user import (
     BasketNumberAnonUserResponse,
     BasketAnonUserModel,
     BasketAnonUserResponse,
+    ChangeQuantityBasketItemModel,
 )
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
@@ -176,3 +177,68 @@ async def basket_items_anon_user(db: Session = Depends(get_db)):
                                                                 price_id_by_anon_user=item.price_id_by_anon_user))
 
     return basket_items_with_product
+
+
+@router.patch("/change_quantity", response_model=BasketAnonUserResponse)
+async def change_quantity_items_to_basket(
+        body: ChangeQuantityBasketItemModel,
+        user_anon_id: str = Header(...),
+        db: Session = Depends(get_db)
+):
+    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+
+    if not anon_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_number = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
+
+    if not basket_number:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_item = await repository_basket_anon_user.get_basket_item_by_id(basket_number.id, body.id, db)
+
+    if not basket_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    selected_price = await repository_prices.price_by_product_id_and_price_id(
+        basket_item.product_id, basket_item.price_id_by_anon_user, db
+    )
+
+    if not selected_price:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price_id_by_anon_user")
+
+    update_quantity_basket_item = await repository_basket_anon_user.update_quantity(basket_item, body.quantity, db)
+
+    product = await product_by_id(basket_item.product_id, db)
+
+    exist_product = ProductResponse(id=product.id,
+                                    name=product.name,
+                                    description=product.description,
+                                    product_category_id=product.product_category_id,
+                                    new_product=product.new_product,
+                                    is_popular=product.is_popular,
+                                    is_favorite=product.is_favorite,
+                                    product_status=product.product_status,
+                                    sub_categories=product.sub_categories,
+                                    images=[ImageResponse(id=item.id,
+                                                          product_id=item.product_id,
+                                                          image_url=CloudImage.get_transformation_image(
+                                                              item.image_url, "product"
+                                                          ),
+                                                          description=item.description,
+                                                          image_type=item.image_type,
+                                                          main_image=item.main_image) for item in product.images],
+                                    prices=[selected_price])
+
+    update_quantity_basket_item = BasketAnonUserResponse(id=update_quantity_basket_item.id,
+                                                         basket_number_id=(
+                                                             update_quantity_basket_item.basket_number_id
+                                                         ),
+                                                         product_id=update_quantity_basket_item.product_id,
+                                                         product=exist_product,
+                                                         quantity=update_quantity_basket_item.quantity,
+                                                         price_id_by_anon_user=(
+                                                             update_quantity_basket_item.price_id_by_anon_user)
+                                                         )
+
+    return update_quantity_basket_item
