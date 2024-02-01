@@ -11,6 +11,8 @@ from src.schemas.basket_anon_user import (
     BasketAnonUserModel,
     BasketAnonUserResponse,
     ChangeQuantityBasketItemModel,
+    BasketAnonUserRemoveModel,
+    BasketAnonUserMessage,
 )
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
@@ -242,3 +244,53 @@ async def change_quantity_items_to_basket(
                                                          )
 
     return update_quantity_basket_item
+
+
+@router.delete("/remove_product", response_model=BasketAnonUserMessage)
+async def remove_product(
+        body: BasketAnonUserRemoveModel,
+        user_anon_id: str = Header(...),
+        db: Session = Depends(get_db)
+):
+    """
+    The remove_product function removes a product from the basket.
+        The function takes in a body of type BasketItemsRemoveModel, which contains the id of the product to be removed.
+        Finally, it takes in an optional db parameter, which is used for database access.
+
+    Args:
+        user_anon_id: AnonymousUser: unique identity data of anonym user
+        body: BasketAnonUserRemoveModel: Get the product_id from the request body
+        db: Session: Get a database session
+
+    Returns:
+        None
+    """
+    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+
+    if not anon_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_number = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
+
+    if not basket_number:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    product = await product_by_id(body.product_id, db)
+
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_item = await repository_basket_anon_user.basket_item_anon_user(product.id, anon_user.id, db)
+
+    if not basket_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    product_from_basket = (
+        await repository_basket_anon_user.get_basket_item_by_product_id(
+            basket_number.id, body.product_id, db
+        )
+    )
+
+    await repository_basket_anon_user.remove_item(product_from_basket, db)
+
+    return {"message": "Product removed successfully"}
