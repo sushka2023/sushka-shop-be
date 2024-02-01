@@ -2,9 +2,10 @@ from typing import Optional, Type
 from uuid import uuid4
 
 from fastapi import HTTPException, status
+from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
-from src.database.models import AnonymousUser, BasketNumberAnonUser, BasketAnonUser
+from src.database.models import AnonymousUser, BasketNumberAnonUser, BasketAnonUser, Product
 from src.schemas.basket_anon_user import BasketAnonUserModel, BasketAnonUserRemoveModel
 from src.services.exception_detail import ExDetail as Ex
 
@@ -110,3 +111,14 @@ async def basket_item_anon_user(
         query = query.filter(BasketAnonUser.price_id_by_anon_user == price_id_by_anon_user)
 
     return query.first()
+
+
+async def basket_items_anon_user(db: Session) -> list[BasketAnonUser] | None:
+    basket_items = (
+        db.query(BasketAnonUser)
+        .join(BasketNumberAnonUser, BasketNumberAnonUser.id == BasketAnonUser.basket_number_id)
+        .join(Product, Product.id == BasketAnonUser.product_id)
+        .order_by(asc(Product.name))
+        .all()
+    )
+    return basket_items
