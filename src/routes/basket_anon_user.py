@@ -269,7 +269,7 @@ async def remove_product(
         db: Session: Get a database session
 
     Returns:
-        None
+        Message about successfully deleting of product from basket
     """
     anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
 
