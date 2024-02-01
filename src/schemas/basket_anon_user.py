@@ -42,3 +42,8 @@ class BasketAnonUserResponse(BaseModel):
 
 class BasketAnonUserRemoveModel(BaseModel):
     product_id: int
+
+
+class ChangeQuantityBasketItemModel(BaseModel):
+    id: int
+    quantity: int
