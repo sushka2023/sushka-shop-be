@@ -120,3 +120,59 @@ async def add_items_to_basket_for_anon_user(
 
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+
+@router.get("/", response_model=list[BasketAnonUserResponse])
+async def basket_items_anon_user(db: Session = Depends(get_db)):
+    """
+    The basket_items_anon_user function returns a list of all the items in the basket.
+
+    Args:
+        db: Session: Access the database
+
+    Returns:
+        A list of basket items
+    """
+    basket_items = await repository_basket_anon_user.basket_items_anon_user(db)
+    if basket_items is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_items_with_product = list()
+
+    for item in basket_items:
+        product = await product_by_id(item.product_id, db)
+
+        selected_price = await repository_prices.price_by_product_id_and_price_id(
+            item.product_id, item.price_id_by_anon_user, db
+        )
+
+        if not selected_price:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price_id_by_anon_user")
+
+        exist_product = ProductResponse(id=product.id,
+                                        name=product.name,
+                                        description=product.description,
+                                        product_category_id=product.product_category_id,
+                                        new_product=product.new_product,
+                                        is_popular=product.is_popular,
+                                        is_favorite=product.is_favorite,
+                                        product_status=product.product_status,
+                                        sub_categories=product.sub_categories,
+                                        images=[ImageResponse(id=item.id,
+                                                              product_id=item.product_id,
+                                                              image_url=CloudImage.get_transformation_image(
+                                                                  item.image_url, "product"
+                                                              ),
+                                                              description=item.description,
+                                                              image_type=item.image_type,
+                                                              main_image=item.main_image) for item in product.images],
+                                        prices=[selected_price])
+
+        basket_items_with_product.append(BasketAnonUserResponse(id=item.id,
+                                                                basket_number_id=item.basket_number_id,
+                                                                product_id=item.product_id,
+                                                                product=exist_product,
+                                                                quantity=item.quantity,
+                                                                price_id_by_anon_user=item.price_id_by_anon_user))
+
+    return basket_items_with_product
