@@ -193,6 +193,17 @@ async def change_quantity_items_to_basket(
         user_anon_id: str = Header(...),
         db: Session = Depends(get_db)
 ):
+    """
+    The change_quantity_items_to_basket function updates quantity of product in the basket.
+
+    Args:
+        user_anon_id: AnonymousUser: unique identity data of anonym user
+        body: ChangeQuantityBasketItemModel: Get the quantity of product from the request body
+        db: Session: Get a database session
+
+    Returns:
+        The Product with updated quantity of it in the basket
+    """
     anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
 
     if not anon_user:
