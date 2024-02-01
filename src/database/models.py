@@ -269,6 +269,10 @@ class Order(Base):
     floor = Column(Integer, nullable=True)
     country = Column(String(255), nullable=True)
     post_code = Column(String(255), nullable=True)
+    first_name_anon_user = Column(String(255), nullable=True)
+    last_name_anon_user = Column(String(255), nullable=True)
+    email_anon_user = Column(String(150), unique=True, nullable=True)
+    phone_number_anon_user = Column(String(50), nullable=True)
 
 
 class OrderedProduct(Base):
