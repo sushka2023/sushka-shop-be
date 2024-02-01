@@ -113,11 +113,12 @@ async def basket_item_anon_user(
     return query.first()
 
 
-async def basket_items_anon_user(db: Session) -> list[BasketAnonUser] | None:
+async def basket_items_anon_user(user_id: int, db: Session) -> list[BasketAnonUser] | None:
     basket_items = (
         db.query(BasketAnonUser)
         .join(BasketNumberAnonUser, BasketNumberAnonUser.id == BasketAnonUser.basket_number_id)
         .join(Product, Product.id == BasketAnonUser.product_id)
+        .filter(BasketNumberAnonUser.anonymous_user_id == user_id)
         .order_by(asc(Product.name))
         .all()
     )

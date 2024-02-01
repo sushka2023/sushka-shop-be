@@ -126,17 +126,23 @@ async def add_items_to_basket_for_anon_user(
 
 
 @router.get("/", response_model=list[BasketAnonUserResponse])
-async def basket_items_anon_user(db: Session = Depends(get_db)):
+async def basket_items_anon_user(user_anon_id: str = Header(...), db: Session = Depends(get_db)):
     """
     The basket_items_anon_user function returns a list of all the items in the basket.
 
     Args:
+        user_anon_id: AnonymousUser: unique identity data of anonym user
         db: Session: Access the database
 
     Returns:
         A list of basket items
     """
-    basket_items = await repository_basket_anon_user.basket_items_anon_user(db)
+    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+
+    if not anon_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    basket_items = await repository_basket_anon_user.basket_items_anon_user(anon_user.id, db)
     if basket_items is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
