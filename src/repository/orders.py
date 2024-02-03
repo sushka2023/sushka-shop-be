@@ -1,16 +1,13 @@
 import logging
 
-from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import desc
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.database.models import (
     Basket,
     User,
     Order,
-    BasketItem,
     OrdersStatus,
     OrderedProduct,
     Price,
@@ -23,9 +20,14 @@ from src.schemas.orders import (
     OrderAnonymUserNovaPoshtaAddressModel,
     OrderAnonymUserUkrPoshtaModel,
 )
-from src.services.orders import calculate_basket_total_cost, calculate_basket_total_cost_for_anonym_user, \
-    move_product_to_ordered_for_anon_user, delete_basket_items_by_basket_number_id
-from src.services.products import move_product_to_ordered
+from src.services.orders import (
+    calculate_basket_total_cost,
+    calculate_basket_total_cost_for_anonym_user,
+    move_product_to_ordered,
+    move_product_to_ordered_for_anon_user,
+    delete_basket_items_by_basket_id,
+    delete_basket_items_by_basket_number_id,
+)
 from src.repository import prices as repository_prices
 from src.services.validation import validate_phone_number
 
@@ -36,7 +38,9 @@ async def get_order_by_id(order_id: int, db: Session) -> Order | None:
     return db.query(Order).filter_by(id=order_id).first()
 
 
-async def get_orders_by_user(limit: int, offset: int, user: User, db: Session) -> list[Order]:
+async def get_orders_by_user(
+        limit: int, offset: int, user: User, db: Session
+) -> list[Order]:
     return (
         db.query(Order)
         .options(
@@ -57,7 +61,9 @@ async def get_orders_by_user(limit: int, offset: int, user: User, db: Session) -
     )
 
 
-async def get_orders_for_crm(limit: int, offset: int, db: Session) -> list[Order]:
+async def get_orders_for_crm(
+        limit: int, offset: int, db: Session
+) -> list[Order]:
     return db.query(Order).order_by(desc(Order.created_at)).limit(limit).offset(offset).all()
 
 
@@ -71,17 +77,6 @@ async def get_user_with_basket_and_items(user_id: int, db: Session) -> User:
         .first()
     )
     return user
-
-
-async def delete_basket_items_by_basket_id(basket_id: int, db: Session):
-    """User Shopping Cart Cleaning"""
-    try:
-        db.query(BasketItem).filter(BasketItem.basket_id == basket_id).delete()
-        db.commit()
-    except SQLAlchemyError as e:
-        logger.exception("SQLAlchemyError")
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 async def create_order(order_data: OrderModel, user_id: int, db: Session):
@@ -138,7 +133,9 @@ async def confirm_order(order_id: int, db: Session) -> Order | None:
     return None
 
 
-async def get_anon_user_with_basket_and_items(user_anon_id: str, db: Session) -> AnonymousUser:
+async def get_anon_user_with_basket_and_items(
+        user_anon_id: str, db: Session
+) -> AnonymousUser:
     anon_user = (
         db.query(AnonymousUser)
         .options(
@@ -161,7 +158,9 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
     if not anon_user.baskets:
         anon_user.baskets = BasketNumberAnonUser()
 
-    total_cost_order_anon_user = await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    total_cost_order_anon_user = (
+        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    )
 
     ordered_products = []
     for basket_item in anon_user.baskets[0].basket_items_anon_user:
@@ -218,7 +217,9 @@ async def create_order_anonym_user_with_nova_poshta_address(
     if not anon_user.baskets:
         anon_user.baskets = BasketNumberAnonUser()
 
-    total_cost_order_anon_user = await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    total_cost_order_anon_user = (
+        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    )
 
     ordered_products = []
     for basket_item in anon_user.baskets[0].basket_items_anon_user:
@@ -280,7 +281,9 @@ async def create_order_anonym_user_with_ukr_poshta(
     if not anon_user.baskets:
         anon_user.baskets = BasketNumberAnonUser()
 
-    total_cost_order_anon_user = await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    total_cost_order_anon_user = (
+        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+    )
 
     ordered_products = []
     for basket_item in anon_user.baskets[0].basket_items_anon_user:
