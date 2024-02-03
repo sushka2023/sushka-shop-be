@@ -50,6 +50,10 @@ class OrderConfirmModel(BaseModel):
     id: int
 
 
+class OrderMessageResponse(BaseModel):
+    message: str
+
+
 class OrderAnonymUserNovaPoshtaWarehouseModel(BaseModel):
     first_name_anon_user: str
     last_name_anon_user: str
