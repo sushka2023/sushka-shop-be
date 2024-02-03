@@ -61,10 +61,24 @@ async def get_orders_by_user(
     )
 
 
-async def get_orders_for_crm(
+async def get_orders_auth_user_for_crm(
         limit: int, offset: int, db: Session
 ) -> list[Order]:
-    return db.query(Order).order_by(desc(Order.created_at)).limit(limit).offset(offset).all()
+    return (
+        db.query(Order).filter(Order.is_authenticated)
+        .order_by(desc(Order.created_at))
+        .limit(limit).offset(offset).all()
+    )
+
+
+async def get_orders_anonym_user_for_crm(
+        limit: int, offset: int, db: Session
+) -> list[Order]:
+    return (
+        db.query(Order).filter(Order.is_authenticated == False)
+        .order_by(desc(Order.created_at))
+        .limit(limit).offset(offset).all()
+    )
 
 
 async def get_user_with_basket_and_items(user_id: int, db: Session) -> User:
@@ -79,7 +93,7 @@ async def get_user_with_basket_and_items(user_id: int, db: Session) -> User:
     return user
 
 
-async def create_order(order_data: OrderModel, user_id: int, db: Session):
+async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Session):
     """Create an order and clean the user’s shopping cart after creating an order"""
 
     user = await get_user_with_basket_and_items(user_id, db)
@@ -109,6 +123,7 @@ async def create_order(order_data: OrderModel, user_id: int, db: Session):
         price_order=total_cost,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        is_authenticated=order_data.is_authenticated,
         ordered_products=ordered_products
     )
 
@@ -195,6 +210,7 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
         price_order=total_cost_order_anon_user,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        is_authenticated=order_data.is_authenticated,
         ordered_products=ordered_products
     )
 
@@ -259,6 +275,7 @@ async def create_order_anonym_user_with_nova_poshta_address(
         price_order=total_cost_order_anon_user,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        is_authenticated=order_data.is_authenticated,
         ordered_products=ordered_products
     )
 
@@ -324,6 +341,7 @@ async def create_order_anonym_user_with_ukr_poshta(
         price_order=total_cost_order_anon_user,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        is_authenticated=order_data.is_authenticated,
         ordered_products=ordered_products
     )
 
