@@ -17,7 +17,8 @@ from src.schemas.orders import (
     OrderAnonymUserNovaPoshtaWarehouseResponse,
     OrderAnonymUserNovaPoshtaAddressResponse,
     OrderAnonymUserUkrPoshtaResponse,
-    OrderAnonymUserResponse
+    OrderAnonymUserResponse,
+    OrderMessageResponse
 )
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -34,7 +35,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.get(
-    "/", response_model=list[OrderResponse],
+    "/for_current_user", response_model=list[OrderResponse],
     dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_orders_current_user(
         limit: int,
@@ -137,35 +138,6 @@ async def create_order_auth_user(
     return new_order
 
 
-@router.put("/confirm_order",
-            response_model=OrderResponse,
-            dependencies=[Depends(allowed_operation_admin_moderator)])
-async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
-    """
-    The confirm_order function confirms an order.
-
-    Args:
-        order: OrderConfirmModel: Get the id of the order to confirm and changed status of field confirmation_manager
-        db: Session: Access the database
-
-    Returns:
-        An order confirmed model object
-    """
-    order = await repository_orders.get_order_by_id(order.id, db)
-
-    if order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    if order.confirmation_manager:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
-
-    confirmed_order = await repository_orders.confirm_order(order.id, db)
-
-    await delete_cache_in_redis()
-
-    return confirmed_order
-
-
 @router.post("/create_for_anonym_user_with_nova_poshta_warehouse",
              response_model=OrderAnonymUserNovaPoshtaWarehouseResponse,
              status_code=status.HTTP_201_CREATED)
@@ -251,3 +223,32 @@ async def create_order_anonym_user_with_ukr_poshta(
     )
 
     return new_order_anonym_user
+
+
+@router.put("/confirm_order",
+            response_model=OrderMessageResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
+    """
+    The confirm_order function confirms an order.
+
+    Args:
+        order: OrderConfirmModel: Get the id of the order to confirm and changed status of field confirmation_manager
+        db: Session: Access the database
+
+    Returns:
+        Message that the order was confirmed successfully
+    """
+    order = await repository_orders.get_order_by_id(order.id, db)
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    if order.confirmation_manager:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+
+    await repository_orders.confirm_order(order.id, db)
+
+    await delete_cache_in_redis()
+
+    return {"message": "Order confirmed successfully"}
