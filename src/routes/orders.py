@@ -16,7 +16,8 @@ from src.schemas.orders import (
     OrderAnonymUserUkrPoshtaModel,
     OrderAnonymUserNovaPoshtaWarehouseResponse,
     OrderAnonymUserNovaPoshtaAddressResponse,
-    OrderAnonymUserUkrPoshtaResponse
+    OrderAnonymUserUkrPoshtaResponse,
+    OrderAnonymUserResponse
 )
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -35,11 +36,12 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 @router.get(
     "/", response_model=list[OrderResponse],
     dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def get_orders(
+async def get_orders_current_user(
         limit: int,
         offset: int,
         current_user: User = Depends(auth_service.get_current_user),
-        db: Session = Depends(get_db)):
+        db: Session = Depends(get_db)
+):
     """
     The function returns a list of all orders in the database which were created by a current user.
 
@@ -73,9 +75,9 @@ async def get_orders(
     return orders
 
 
-@router.get("/all_for_crm", response_model=list[OrderResponse],
+@router.get("/all_auth_users_for_crm", response_model=list[OrderResponse],
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def get_orders_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
+async def get_orders_auth_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
     """
     The function returns a list of all orders in the database.
 
@@ -87,14 +89,31 @@ async def get_orders_for_crm(limit: int, offset: int, db: Session = Depends(get_
     Returns:
         A list of orders
     """
-    return await repository_orders.get_orders_for_crm(limit, offset, db)
+    return await repository_orders.get_orders_auth_user_for_crm(limit, offset, db)
+
+
+@router.get("/all_anonym_users_for_crm", response_model=list[OrderAnonymUserResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def get_orders_anonym_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
+    """
+    The function returns a list of all orders in the database.
+
+    Args:
+        limit: int: Limit the number of orders returned
+        offset: int: Specify the offset of the first order to be returned
+        db: Session: Access the database
+
+    Returns:
+        A list of orders
+    """
+    return await repository_orders.get_orders_anonym_user_for_crm(limit, offset, db)
 
 
 @router.post("/create_for_auth_user",
              response_model=OrderResponse,
              status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def create_order(
+async def create_order_auth_user(
         order_data: OrderModel,
         current_user: User = Depends(auth_service.get_current_user),
         db: Session = Depends(get_db),
@@ -111,7 +130,7 @@ async def create_order(
             An order object
         """
 
-    new_order = await repository_orders.create_order(order_data, current_user.id, db)
+    new_order = await repository_orders.create_order_auth_user(order_data, current_user.id, db)
 
     await delete_cache_in_redis()
 
