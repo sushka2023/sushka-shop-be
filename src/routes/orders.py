@@ -1,13 +1,23 @@
 import pickle
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import orders as repository_orders
-from src.schemas.orders import OrderResponse, OrderModel, OrderConfirmModel
+from src.schemas.orders import (
+    OrderResponse,
+    OrderModel,
+    OrderConfirmModel,
+    OrderAnonymUserNovaPoshtaWarehouseModel,
+    OrderAnonymUserNovaPoshtaAddressModel,
+    OrderAnonymUserUkrPoshtaModel,
+    OrderAnonymUserNovaPoshtaWarehouseResponse,
+    OrderAnonymUserNovaPoshtaAddressResponse,
+    OrderAnonymUserUkrPoshtaResponse
+)
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -80,7 +90,7 @@ async def get_orders_for_crm(limit: int, offset: int, db: Session = Depends(get_
     return await repository_orders.get_orders_for_crm(limit, offset, db)
 
 
-@router.post("/create",
+@router.post("/create_for_auth_user",
              response_model=OrderResponse,
              status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
@@ -90,7 +100,7 @@ async def create_order(
         db: Session = Depends(get_db),
 ):
     """
-        The create_order function creates a new order in the database.
+        The create of order function creates a new order in the database.
 
         Args:
             order_data: OrderModel: Validate the request body
@@ -135,3 +145,90 @@ async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db))
     await delete_cache_in_redis()
 
     return confirmed_order
+
+
+@router.post("/create_for_anonym_user_with_nova_poshta_warehouse",
+             response_model=OrderAnonymUserNovaPoshtaWarehouseResponse,
+             status_code=status.HTTP_201_CREATED)
+async def create_order_anonym_user_with_nova_poshta_warehouse(
+        order_data: OrderAnonymUserNovaPoshtaWarehouseModel,
+        user_anon_id: str = Header(...),
+        db: Session = Depends(get_db),
+):
+    """
+        The create of order function creates a new order in the database.
+
+        Args:
+            order_data: OrderAnonymUserNovaPoshtaWarehouseModel: Validate the request body
+            db: Session: Pass the database session to the repository layer
+            user_anon_id: AnonymousUser: unique identity data of anonym user
+
+        Returns:
+            An order object
+        """
+
+    new_order_anonym_user = (
+        await repository_orders.create_order_anonym_user_with_nova_poshta_warehouse(
+            order_data, user_anon_id, db
+        )
+    )
+
+    return new_order_anonym_user
+
+
+@router.post("/create_for_anonym_user_with_nova_poshta_address",
+             response_model=OrderAnonymUserNovaPoshtaAddressResponse,
+             status_code=status.HTTP_201_CREATED)
+async def create_order_anonym_user_with_nova_poshta_warehouse(
+        order_data: OrderAnonymUserNovaPoshtaAddressModel,
+        user_anon_id: str = Header(...),
+        db: Session = Depends(get_db),
+):
+    """
+        The create of order function creates a new order in the database.
+
+        Args:
+            order_data: OrderAnonymUserNovaPoshtaAddressModel: Validate the request body
+            db: Session: Pass the database session to the repository layer
+            user_anon_id: AnonymousUser: unique identity data of anonym user
+
+        Returns:
+            An order object
+        """
+
+    new_order_anonym_user = (
+        await repository_orders.create_order_anonym_user_with_nova_poshta_address(
+            order_data, user_anon_id, db
+        )
+    )
+
+    return new_order_anonym_user
+
+
+@router.post("/create_for_anonym_user_with_ukr_poshta",
+             response_model=OrderAnonymUserUkrPoshtaResponse,
+             status_code=status.HTTP_201_CREATED)
+async def create_order_anonym_user_with_ukr_poshta(
+        order_data: OrderAnonymUserUkrPoshtaModel,
+        user_anon_id: str = Header(...),
+        db: Session = Depends(get_db),
+):
+    """
+        The create of order function creates a new order in the database.
+
+        Args:
+            order_data: OrderAnonymUserUkrPoshtaModel: Validate the request body
+            db: Session: Pass the database session to the repository layer
+            user_anon_id: AnonymousUser: unique identity data of anonym user
+
+        Returns:
+            An order object
+        """
+
+    new_order_anonym_user = (
+        await repository_orders.create_order_anonym_user_with_ukr_poshta(
+            order_data, user_anon_id, db
+        )
+    )
+
+    return new_order_anonym_user
