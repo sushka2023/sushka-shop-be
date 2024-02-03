@@ -4,7 +4,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from src.database.models import Basket, BasketNumberAnonUser, BasketAnonUser, OrderedProduct
+from src.database.models import (
+    Basket, BasketNumberAnonUser, BasketAnonUser, OrderedProduct, BasketItem
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +51,20 @@ async def calculate_basket_total_cost_for_anonym_user(basket: BasketNumberAnonUs
     return total_cost_order
 
 
-async def delete_basket_items_by_basket_number_id(basket_number_id: int, db: Session):
-    """Anonym User Shopping Basket Cleaning"""
-    try:
-        db.query(BasketAnonUser).filter(BasketAnonUser.basket_number_id == basket_number_id).delete()
-        db.commit()
-    except SQLAlchemyError as e:
-        logger.exception("SQLAlchemyError")
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+async def move_product_to_ordered(db: Session, basket_item: BasketItem) -> OrderedProduct | None:
+    ordered_product = OrderedProduct(
+        product_id=basket_item.product_id,
+        price_id=basket_item.price_id_by_the_user,
+        quantity=basket_item.quantity
+    )
+    db.add(ordered_product)
+    db.commit()
+    db.refresh(ordered_product)
+
+    if ordered_product.id is not None:
+        return ordered_product
+    else:
+        return None
 
 
 async def move_product_to_ordered_for_anon_user(
@@ -76,3 +83,25 @@ async def move_product_to_ordered_for_anon_user(
         return ordered_product
     else:
         return None
+
+
+async def delete_basket_items_by_basket_id(basket_id: int, db: Session):
+    """User Shopping Cart Cleaning"""
+    try:
+        db.query(BasketItem).filter(BasketItem.basket_id == basket_id).delete()
+        db.commit()
+    except SQLAlchemyError as e:
+        logger.exception("SQLAlchemyError")
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+async def delete_basket_items_by_basket_number_id(basket_number_id: int, db: Session):
+    """Anonym User Shopping Basket Cleaning"""
+    try:
+        db.query(BasketAnonUser).filter(BasketAnonUser.basket_number_id == basket_number_id).delete()
+        db.commit()
+    except SQLAlchemyError as e:
+        logger.exception("SQLAlchemyError")
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
