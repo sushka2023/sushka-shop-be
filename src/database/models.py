@@ -273,6 +273,7 @@ class Order(Base):
     last_name_anon_user = Column(String(255), nullable=True)
     email_anon_user = Column(String(150), unique=True, nullable=True)
     phone_number_anon_user = Column(String(50), nullable=True)
+    is_authenticated = Column(Boolean, default=False)
 
 
 class OrderedProduct(Base):
