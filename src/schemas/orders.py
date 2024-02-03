@@ -25,6 +25,7 @@ class OrderedProductResponse(BaseModel):
 class OrderModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
+    is_authenticated: bool
 
 
 class OrderResponse(BaseModel):
@@ -60,6 +61,7 @@ class OrderAnonymUserNovaPoshtaWarehouseModel(BaseModel):
     address_warehouse: str
     payment_type: PaymentsTypes
     call_manager: bool
+    is_authenticated: Optional[bool] = False
 
 
 class OrderAnonymUserNovaPoshtaAddressModel(BaseModel):
@@ -78,6 +80,7 @@ class OrderAnonymUserNovaPoshtaAddressModel(BaseModel):
     floor: Optional[int] = None
     payment_type: PaymentsTypes
     call_manager: bool
+    is_authenticated: Optional[bool] = False
 
 
 class OrderAnonymUserUkrPoshtaModel(BaseModel):
@@ -97,6 +100,7 @@ class OrderAnonymUserUkrPoshtaModel(BaseModel):
     post_code: str
     payment_type: PaymentsTypes
     call_manager: bool
+    is_authenticated: Optional[bool] = False
 
 
 class OrderAnonymUserNovaPoshtaWarehouseResponse(BaseModel):
@@ -116,6 +120,7 @@ class OrderAnonymUserNovaPoshtaWarehouseResponse(BaseModel):
     confirmation_manager: bool
     confirmation_pay: bool
     call_manager: bool
+    is_authenticated: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
@@ -146,6 +151,7 @@ class OrderAnonymUserNovaPoshtaAddressResponse(BaseModel):
     confirmation_manager: bool
     confirmation_pay: bool
     call_manager: bool
+    is_authenticated: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
@@ -177,6 +183,40 @@ class OrderAnonymUserUkrPoshtaResponse(BaseModel):
     confirmation_manager: bool
     confirmation_pay: bool
     call_manager: bool
+    is_authenticated: bool
+    status_order: OrdersStatus
+    ordered_products: list[OrderedProductResponse] = []
+
+    class Config:
+        orm_mode = True
+
+
+class OrderAnonymUserResponse(BaseModel):
+    id: int
+    anonymous_user_id: int
+    basket_number_id: int
+    price_order: float
+    first_name_anon_user: str
+    last_name_anon_user: str
+    email_anon_user: EmailStr
+    phone_number_anon_user: Optional[str] = ""
+    post_type: PostType
+    country: Optional[str] = ""
+    city: str
+    address_warehouse: Optional[str] = ""
+    area: Optional[str] = ""
+    region: Optional[str] = ""
+    street: Optional[str] = ""
+    house_number: Optional[str] = ""
+    apartment_number: Optional[str] = ""
+    floor: Optional[int] = None
+    post_code: Optional[str] = ""
+    payment_type: PaymentsTypes
+    created_at: datetime
+    confirmation_manager: bool
+    confirmation_pay: bool
+    call_manager: bool
+    is_authenticated: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
