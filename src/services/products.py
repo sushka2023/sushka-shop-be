@@ -108,19 +108,3 @@ async def product_with_prices_and_images(products: list, db: Session) -> list:
 
 async def parser_weight(weight: str) -> list:
     return weight.split(',')
-
-
-async def move_product_to_ordered(db: Session, basket_item: BasketItem) -> OrderedProduct | None:
-    ordered_product = OrderedProduct(
-        product_id=basket_item.product_id,
-        price_id=basket_item.price_id_by_the_user,
-        quantity=basket_item.quantity
-    )
-    db.add(ordered_product)
-    db.commit()
-    db.refresh(ordered_product)
-
-    if ordered_product.id is not None:
-        return ordered_product
-    else:
-        return None
