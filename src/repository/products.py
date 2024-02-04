@@ -25,11 +25,9 @@ async def product_by_id(body: int, db: Session) -> Product | None:
 
 
 async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
-    subquery = (
-        db.query(Product)
-        .filter()
-        .order_by(desc(Product.created_at))
-    )
+    subquery = db.query(Product).\
+        filter().\
+        order_by(desc(Product.created_at))
 
     products_ = subquery.limit(limit).offset(offset).all()
 
@@ -42,14 +40,10 @@ async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> Prod
     return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_category_id(
-        limit: int, offset: int, pr_category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
-    subquery = (
-        db.query(Product)
-        .filter(Product.product_category_id == pr_category_id)
-        .order_by(desc(Product.created_at))
-    )
+async def get_products_all_for_crm_pr_category_id(limit: int, offset: int, pr_category_id: int, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
+        filter(Product.product_category_id == pr_category_id).\
+        order_by(desc(Product.created_at))
 
     products_ = subquery.limit(limit).offset(offset).all()
 
@@ -62,14 +56,10 @@ async def get_products_all_for_crm_pr_category_id(
     return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_status(
-        limit: int, offset: int, pr_status: ProductStatus, db: Session
-) -> ProductWithTotalResponse | None:
-    subquery = (
-        db.query(Product)
-        .filter(Product.product_status == pr_status)
-        .order_by(desc(Product.created_at))
-    )
+async def get_products_all_for_crm_pr_status(limit: int, offset: int, pr_status: ProductStatus, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
+        filter(Product.product_status == pr_status).\
+        order_by(desc(Product.created_at))
 
     products_ = subquery.limit(limit).offset(offset).all()
 
@@ -82,17 +72,10 @@ async def get_products_all_for_crm_pr_status(
     return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_status_and_pr_category_id(
-        limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session
-) -> ProductWithTotalResponse | None:
-    subquery = (
-        db.query(Product)
-        .filter(
-            Product.product_category_id == pr_category_id,
-            Product.product_status == pr_status
-        )
-        .order_by(desc(Product.created_at))
-    )
+async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session) -> ProductWithTotalResponse | None:
+    subquery = db.query(Product).\
+        filter(Product.product_category_id == pr_category_id, Product.product_status == pr_status).\
+        order_by(desc(Product.created_at))
 
     products_ = subquery.limit(limit).offset(offset).all()
 
@@ -143,9 +126,7 @@ async def get_products_id(limit: int, offset: int, db: Session) -> ProductWithTo
     return product_with_total_price
 
 
-async def get_products_id_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -184,9 +165,7 @@ async def get_products_id_with_weight(
     return product_with_total_price
 
 
-async def get_products_id_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_id_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -225,9 +204,7 @@ async def get_products_id_by_category_id(
     return product_with_total_price
 
 
-async def get_products_id_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_id_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -305,9 +282,7 @@ async def get_products_name(limit: int, offset: int, db: Session) -> ProductWith
     return product_with_total_price
 
 
-async def get_products_name_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_name_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -346,9 +321,7 @@ async def get_products_name_with_weight(
     return product_with_total_price
 
 
-async def get_products_name_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -387,9 +360,7 @@ async def get_products_name_by_category_id(
     return product_with_total_price
 
 
-async def get_products_name_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_name_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -458,9 +429,7 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> Produc
     return product_with_total_price
 
 
-async def get_products_low_price_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_low_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -490,9 +459,7 @@ async def get_products_low_price_with_weight(
     return product_with_total_price
 
 
-async def get_products_low_price_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_low_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -522,9 +489,7 @@ async def get_products_low_price_by_category_id(
     return product_with_total_price
 
 
-async def get_products_low_price_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_low_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -584,9 +549,7 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> Produ
     return product_with_total_price
 
 
-async def get_products_high_price_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_high_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -616,9 +579,7 @@ async def get_products_high_price_with_weight(
     return product_with_total_price
 
 
-async def get_products_high_price_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_high_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -648,9 +609,7 @@ async def get_products_high_price_by_category_id(
     return product_with_total_price
 
 
-async def get_products_high_price_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_high_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -710,9 +669,7 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> Product
     return product_with_total_price
 
 
-async def get_products_low_date_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_low_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -742,9 +699,7 @@ async def get_products_low_date_with_weight(
     return product_with_total_price
 
 
-async def get_products_low_date_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_low_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -774,9 +729,7 @@ async def get_products_low_date_by_category_id(
     return product_with_total_price
 
 
-async def get_products_low_date_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_low_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -836,9 +789,7 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> Produc
     return product_with_total_price
 
 
-async def get_products_high_date_with_weight(
-        limit: int, offset: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_high_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -868,9 +819,7 @@ async def get_products_high_date_with_weight(
     return product_with_total_price
 
 
-async def get_products_high_date_by_category_id(
-        limit: int, offset: int, category_id: int, db: Session
-) -> ProductWithTotalResponse | None:
+async def get_products_high_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
@@ -900,9 +849,7 @@ async def get_products_high_date_by_category_id(
     return product_with_total_price
 
 
-async def get_products_high_date_by_category_id_with_weight(
-        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
-) -> ProductWithTotalResponse | None:
+async def get_products_high_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
     subquery = (
