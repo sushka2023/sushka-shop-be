@@ -52,3 +52,8 @@ class ProductResponseForOrder(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ProductWithTotalResponse(BaseModel):
+    products: List[ProductResponse]
+    total_count: int

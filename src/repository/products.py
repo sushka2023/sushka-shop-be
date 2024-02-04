@@ -4,6 +4,7 @@ from sqlalchemy import desc, asc, select, exists, and_, func
 from sqlalchemy.orm import Session, joinedload, aliased
 
 from src.database.models import Product, Price, ProductCategory, ProductStatus
+from src.schemas.product import ProductWithTotalResponse
 from src.services.products import product_with_prices_and_images
 
 
@@ -23,59 +24,88 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     return product_
 
 
-async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        filter().\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
+    subquery = (
+        db.query(Product)
+        .filter()
+        .order_by(desc(Product.created_at))
+    )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_category_id(limit: int, offset: int, pr_category_id: int, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        filter(Product.product_category_id == pr_category_id).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+async def get_products_all_for_crm_pr_category_id(
+        limit: int, offset: int, pr_category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
+    subquery = (
+        db.query(Product)
+        .filter(Product.product_category_id == pr_category_id)
+        .order_by(desc(Product.created_at))
+    )
 
-    product_with_price = await product_with_prices_and_images(products_, db)
+    products_ = subquery.limit(limit).offset(offset).all()
 
-    return product_with_price
-
-
-async def get_products_all_for_crm_pr_status(limit: int, offset: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        filter(Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_all_for_crm_pr_status_and_pr_category_id(limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session) -> List[Type[Product]] | None:
-    products_ = db.query(Product).\
-        filter(Product.product_category_id == pr_category_id, Product.product_status == pr_status).\
-        order_by(desc(Product.created_at)). \
-        limit(limit). \
-        offset(offset). \
-        all()
+async def get_products_all_for_crm_pr_status(
+        limit: int, offset: int, pr_status: ProductStatus, db: Session
+) -> ProductWithTotalResponse | None:
+    subquery = (
+        db.query(Product)
+        .filter(Product.product_status == pr_status)
+        .order_by(desc(Product.created_at))
+    )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_all_for_crm_pr_status_and_pr_category_id(
+        limit: int, offset: int, pr_category_id: int, pr_status: ProductStatus, db: Session
+) -> ProductWithTotalResponse | None:
+    subquery = (
+        db.query(Product)
+        .filter(
+            Product.product_category_id == pr_category_id,
+            Product.product_status == pr_status
+        )
+        .order_by(desc(Product.created_at))
+    )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
+
+    product_with_price = await product_with_prices_and_images(products_, db)
+
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
+
+
+async def get_products_id(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -99,12 +129,23 @@ async def get_products_id(limit: int, offset: int, db: Session) -> List[Type[Pro
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_id_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_id_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -129,12 +170,23 @@ async def get_products_id_with_weight(limit: int, offset: int, db: Session, weig
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_id_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_id_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -159,12 +211,23 @@ async def get_products_id_by_category_id(limit: int, offset: int, category_id: i
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_id_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_id_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -190,12 +253,21 @@ async def get_products_id_by_category_id_with_weight(limit: int, offset: int, ca
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_name(limit: int, offset: int, db: Session):
+async def get_products_name(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -219,12 +291,23 @@ async def get_products_name(limit: int, offset: int, db: Session):
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_name_with_weight(limit: int, offset: int, db: Session, weight: list[str]):
+async def get_products_name_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -249,12 +332,23 @@ async def get_products_name_with_weight(limit: int, offset: int, db: Session, we
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_name_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_name_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -279,12 +373,23 @@ async def get_products_name_by_category_id(limit: int, offset: int, category_id:
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_name_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_name_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     subquery = (
         select(1)
         .where(
@@ -310,15 +415,24 @@ async def get_products_name_by_category_id_with_weight(limit: int, offset: int, 
         .all()
     )
 
+    total_count = (
+        db.query(Product)
+        .filter(exists(subquery))
+        .order_by(asc(Product.id))
+        .count()
+    )
+
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_price(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -331,20 +445,25 @@ async def get_products_low_price(limit: int, offset: int, db: Session) -> List[T
         )
         .group_by(Product.id)
         .order_by(asc(func.min(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_low_price_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -358,20 +477,25 @@ async def get_products_low_price_with_weight(limit: int, offset: int, db: Sessio
         )
         .group_by(Product.id)
         .order_by(asc(func.min(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_price_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -385,20 +509,25 @@ async def get_products_low_price_by_category_id(limit: int, offset: int, categor
         )
         .group_by(Product.id)
         .order_by(asc(func.min(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_low_price_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -413,20 +542,23 @@ async def get_products_low_price_by_category_id_with_weight(limit: int, offset: 
         )
         .group_by(Product.id)
         .order_by(asc(func.min(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_price(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_price(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -439,20 +571,25 @@ async def get_products_high_price(limit: int, offset: int, db: Session) -> List[
         )
         .group_by(Product.id)
         .order_by(desc(func.max(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_price_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_high_price_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -466,20 +603,25 @@ async def get_products_high_price_with_weight(limit: int, offset: int, db: Sessi
         )
         .group_by(Product.id)
         .order_by(desc(func.max(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_price_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_price_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -493,20 +635,25 @@ async def get_products_high_price_by_category_id(limit: int, offset: int, catego
         )
         .group_by(Product.id)
         .order_by(desc(func.max(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_price_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_high_price_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -521,20 +668,23 @@ async def get_products_high_price_by_category_id_with_weight(limit: int, offset:
         )
         .group_by(Product.id)
         .order_by(desc(func.max(price_alias.price)))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_date(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -547,20 +697,25 @@ async def get_products_low_date(limit: int, offset: int, db: Session) -> List[Ty
         )
         .group_by(Product.id)
         .order_by(asc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_low_date_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -574,20 +729,25 @@ async def get_products_low_date_with_weight(limit: int, offset: int, db: Session
         )
         .group_by(Product.id)
         .order_by(asc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_low_date_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -601,20 +761,25 @@ async def get_products_low_date_by_category_id(limit: int, offset: int, category
         )
         .group_by(Product.id)
         .order_by(asc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_low_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_low_date_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -629,20 +794,23 @@ async def get_products_low_date_by_category_id_with_weight(limit: int, offset: i
         )
         .group_by(Product.id)
         .order_by(asc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_date(limit: int, offset: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_date(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -655,20 +823,25 @@ async def get_products_high_date(limit: int, offset: int, db: Session) -> List[T
         )
         .group_by(Product.id)
         .order_by(desc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_date_with_weight(limit: int, offset: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_high_date_with_weight(
+        limit: int, offset: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -682,20 +855,25 @@ async def get_products_high_date_with_weight(limit: int, offset: int, db: Sessio
         )
         .group_by(Product.id)
         .order_by(desc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_date_by_category_id(limit: int, offset: int, category_id: int, db: Session) -> List[Type[Product]] | None:
+async def get_products_high_date_by_category_id(
+        limit: int, offset: int, category_id: int, db: Session
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -709,20 +887,25 @@ async def get_products_high_date_by_category_id(limit: int, offset: int, categor
         )
         .group_by(Product.id)
         .order_by(desc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
-async def get_products_high_date_by_category_id_with_weight(limit: int, offset: int, category_id: int, db: Session, weight: list[str]) -> List[Type[Product]] | None:
+async def get_products_high_date_by_category_id_with_weight(
+        limit: int, offset: int, category_id: int, db: Session, weight: list[str]
+) -> ProductWithTotalResponse | None:
     price_alias = aliased(Price)
 
-    products_ = (
+    subquery = (
         db.query(Product)
         .join(price_alias, and_(
             Product.id == price_alias.product_id,
@@ -737,14 +920,17 @@ async def get_products_high_date_by_category_id_with_weight(limit: int, offset: 
         )
         .group_by(Product.id)
         .order_by(desc(Product.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+
+    products_ = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
 
     product_with_price = await product_with_prices_and_images(products_, db)
 
-    return product_with_price
+    product_with_total_price = ProductWithTotalResponse(products=product_with_price, total_count=total_count)
+
+    return product_with_total_price
 
 
 async def create_product(body: dict, db: Session) -> Type[Product]:
