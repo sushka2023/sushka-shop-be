@@ -5,14 +5,14 @@ from pydantic import BaseModel, EmailStr
 
 from src.database.models import PaymentsTypes, OrdersStatus, PostType
 from src.schemas.price import PriceResponse
-from src.schemas.product import ProductResponse
+from src.schemas.product import ProductResponseForOrder
 from src.schemas.users import UserResponseForOrder
 
 
 class OrderedProductResponse(BaseModel):
     id: int
     product_id: int
-    products: ProductResponse
+    products: ProductResponseForOrder
     price_id: int
     prices: PriceResponse
     order_id: int
