@@ -12,7 +12,6 @@ from src.schemas.basket_anon_user import (
     BasketItemAnonUserResponse,
     ChangeQuantityBasketItemModel,
     BasketItemAnonUserRemoveModel,
-    BasketItemAnonUserMessage,
 )
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
@@ -50,7 +49,9 @@ async def add_items_to_basket_for_anon_user(
     Returns:
         A basketanonusermodel object
     """
-    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    anon_user = (
+        await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    )
 
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -137,7 +138,9 @@ async def basket_items_anon_user(user_anon_id: str = Header(...), db: Session = 
     Returns:
         A list of basket items
     """
-    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    anon_user = (
+        await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    )
 
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -204,7 +207,9 @@ async def change_quantity_items_to_basket(
     Returns:
         The Product with updated quantity of it in the basket
     """
-    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    anon_user = (
+        await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    )
 
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -263,7 +268,7 @@ async def change_quantity_items_to_basket(
     return update_quantity_basket_item
 
 
-@router.delete("/remove_product", response_model=BasketItemAnonUserMessage)
+@router.delete("/remove_product", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_product(
         body: BasketItemAnonUserRemoveModel,
         user_anon_id: str = Header(...),
@@ -280,9 +285,11 @@ async def remove_product(
         db: Session: Get a database session
 
     Returns:
-        Message about successfully deleting of product from basket
+        None
     """
-    anon_user = await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    anon_user = (
+        await repository_basket_anon_user.get_anonymous_user_by_key_id(db=db, user_anon_id=user_anon_id)
+    )
 
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -292,29 +299,9 @@ async def remove_product(
     if not basket_anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    product = await product_by_id(body.product_id, db)
-
-    if not product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    basket_item = await repository_basket_anon_user.basket_item_anon_user(product.id, anon_user.id, db)
+    basket_item = await repository_basket_anon_user.get_basket_item_by_id(basket_anon_user.id, body.id, db)
 
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    product_from_basket = (
-        await repository_basket_anon_user.get_basket_item_by_product_id_and_price_id(
-            basket_anon_user.id, body.product_id, body.price_id_by_anon_user, db
-        )
-    )
-
-    if not product_from_basket:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    await repository_basket_anon_user.remove_item(product_from_basket, db)
-
-    return {
-        "message":
-            f"Product by id={product_from_basket.product_id} "
-            f"and price_id={product_from_basket.price_id_by_anon_user} removed successfully"
-    }
+    await repository_basket_anon_user.remove_item(basket_item, db)
