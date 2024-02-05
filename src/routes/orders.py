@@ -170,7 +170,7 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
 @router.post("/create_for_anonym_user_with_nova_poshta_address",
              response_model=OrderAnonymUserNovaPoshtaAddressResponse,
              status_code=status.HTTP_201_CREATED)
-async def create_order_anonym_user_with_nova_poshta_warehouse(
+async def create_order_anonym_user_with_nova_poshta_address(
         order_data: OrderAnonymUserNovaPoshtaAddressModel,
         user_anon_id: str = Header(...),
         db: Session = Depends(get_db),
