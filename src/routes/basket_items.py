@@ -15,7 +15,6 @@ from src.schemas.basket_items import (
     BasketItemsResponse,
     ChangeQuantityBasketItemsModel,
     BasketItemsRemoveModel,
-    BasketItemsMessageResponse,
 )
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
@@ -179,7 +178,7 @@ async def add_items_to_basket(body: BasketItemsModel,
 
 
 @router.delete("/remove",
-               response_model=BasketItemsMessageResponse,
+               status_code=status.HTTP_204_NO_CONTENT,
                dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def remove_product(body: BasketItemsRemoveModel,
                          current_user: User = Depends(auth_service.get_current_user),
@@ -202,25 +201,11 @@ async def remove_product(body: BasketItemsRemoveModel,
     if not basket:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_item = await repository_basket_items.basket_item(body, current_user, db)
+    basket_item = await repository_basket_items.basket_item_for_id(body.id, db)
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    product_from_basket = (
-        await repository_basket_items.get_b_item_from_product_id_and_price_id(
-            body.product_id, body.price_id_by_the_user, basket.id, db
-        )
-    )  # get product from basket
-    if not product_from_basket:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    await repository_basket_items.remove(product_from_basket, db)  # Remove product from basket
-
-    return {
-        "message":
-            f"Product by id={product_from_basket.product_id} "
-            f"and price_id={product_from_basket.price_id_by_the_user} removed successfully"
-    }
+    await repository_basket_items.remove(basket_item, db)  # Remove product from basket
 
 
 @router.patch("/quantity",
