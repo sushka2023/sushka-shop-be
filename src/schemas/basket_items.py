@@ -12,8 +12,7 @@ class BasketItemsModel(BaseModel):
 
 
 class BasketItemsRemoveModel(BaseModel):
-    product_id: int
-    price_id_by_the_user: Optional[int]
+    id: int
 
 
 class BasketItemsResponse(BaseModel):
@@ -35,7 +34,3 @@ class ChangeQuantityBasketItemsModel(BaseModel):
 class ChangePriceBasketItemsModel(BaseModel):
     id: int
     price_id: int
-
-
-class BasketItemsMessageResponse(BaseModel):
-    message: str
