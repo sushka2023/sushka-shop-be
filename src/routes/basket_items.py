@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -10,8 +10,13 @@ from src.repository import baskets as repository_baskets
 from src.repository import products as repository_products
 from src.repository import prices as repository_prices
 from src.repository.products import product_by_id
-from src.schemas.basket_items import BasketItemsModel, BasketItemsResponse, ChangeQuantityBasketItemsModel, \
-    BasketItemsRemoveModel
+from src.schemas.basket_items import (
+    BasketItemsModel,
+    BasketItemsResponse,
+    ChangeQuantityBasketItemsModel,
+    BasketItemsRemoveModel,
+    BasketItemsMessageResponse,
+)
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductResponse
 from src.services.auth import auth_service
@@ -174,16 +179,16 @@ async def add_items_to_basket(body: BasketItemsModel,
 
 
 @router.delete("/remove",
-               dependencies=[Depends(allowed_operation_admin_moderator_user)],
-               status_code=status.HTTP_204_NO_CONTENT)
+               response_model=BasketItemsMessageResponse,
+               dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def remove_product(body: BasketItemsRemoveModel,
                          current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
     """
     The remove_product function removes a product from the basket.
         The function takes in a body of type BasketItemsRemoveModel, which contains the id of the product to be removed.
-        It also takes in an optional current_user parameter, which is used to identify who's basket we are removing from.
-        Finally it takes in an optional db parameter, which is used for database access.
+        It also takes in an optional current_user parameter, which is used to identify whose basket we are removing from.
+        Finally, it takes in an optional db parameter, which is used for database access.
 
     Args:
         body: BasketItemsRemoveModel: Get the product_id from the request body
@@ -200,9 +205,22 @@ async def remove_product(body: BasketItemsRemoveModel,
     basket_item = await repository_basket_items.basket_item(body, current_user, db)
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    product_from_basket = await repository_basket_items.get_b_item_from_product_id(body.product_id, basket.id, db)  # get product from favorite
-    await repository_basket_items.remove(product_from_basket, db)  # Remove product from favorite
-    return None
+
+    product_from_basket = (
+        await repository_basket_items.get_b_item_from_product_id_and_price_id(
+            body.product_id, body.price_id_by_the_user, basket.id, db
+        )
+    )  # get product from basket
+    if not product_from_basket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    await repository_basket_items.remove(product_from_basket, db)  # Remove product from basket
+
+    return {
+        "message":
+            f"Product by id={product_from_basket.product_id} "
+            f"and price_id={product_from_basket.price_id_by_the_user} removed successfully"
+    }
 
 
 @router.patch("/quantity",
