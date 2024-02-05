@@ -71,22 +71,26 @@ async def add_items_to_basket_anon_user(
 
 
 async def get_existing_basket_anon_user(
-        basket_anon_user: BasketAnonUser, product_id: int, db: Session
+        basket_anon_user: BasketAnonUser, product_id: int, price_id: int, db: Session
 ) -> Optional[BasketItemAnonUser]:
     return db.query(BasketItemAnonUser).filter(
         BasketItemAnonUser.basket_anon_user_id == basket_anon_user.id,
-        BasketItemAnonUser.product_id == product_id
+        BasketItemAnonUser.product_id == product_id,
+        BasketItemAnonUser.price_id_by_anon_user == price_id,
     ).first()
 
 
 async def update_basket_anon_user(
         body: BasketItemAnonUserModel, basket_anon_user: BasketAnonUser, db: Session
 ):
-    existing_basket_item = await get_existing_basket_anon_user(basket_anon_user, body.product_id, db)
+    existing_basket_item = (
+        await get_existing_basket_anon_user(
+            basket_anon_user, body.product_id, body.price_id_by_anon_user, db
+        )
+    )
 
     if existing_basket_item:
         existing_basket_item.quantity += body.quantity
-        existing_basket_item.price_id_by_anon_user = body.price_id_by_anon_user
         db.commit()
         db.refresh(existing_basket_item)
         return existing_basket_item
