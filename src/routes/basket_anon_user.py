@@ -303,11 +303,18 @@ async def remove_product(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     product_from_basket = (
-        await repository_basket_anon_user.get_basket_item_by_product_id(
-            basket_anon_user.id, body.product_id, db
+        await repository_basket_anon_user.get_basket_item_by_product_id_and_price_id(
+            basket_anon_user.id, body.product_id, body.price_id_by_anon_user, db
         )
     )
 
+    if not product_from_basket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
     await repository_basket_anon_user.remove_item(product_from_basket, db)
 
-    return {"message": "Product removed successfully"}
+    return {
+        "message":
+            f"Product by id={product_from_basket.product_id} "
+            f"and price_id={product_from_basket.price_id_by_anon_user} removed successfully"
+    }
