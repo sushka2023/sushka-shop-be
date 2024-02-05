@@ -27,19 +27,19 @@ async def create(
     return new_basket_item
 
 
-async def get_existing_basket_item(basket: Basket, product_id: int, db: Session) -> Optional[BasketItem]:
+async def get_existing_basket_item(basket: Basket, product_id: int, price_id: int, db: Session) -> Optional[BasketItem]:
     return db.query(BasketItem).filter(
         BasketItem.basket_id == basket.id,
-        BasketItem.product_id == product_id
+        BasketItem.product_id == product_id,
+        BasketItem.price_id_by_the_user == price_id,
     ).first()
 
 
 async def update(body: BasketItemsModel, basket: Basket, db: Session):
-    existing_basket_item = await get_existing_basket_item(basket, body.product_id, db)
+    existing_basket_item = await get_existing_basket_item(basket, body.product_id, body.price_id_by_the_user, db)
 
     if existing_basket_item:
         existing_basket_item.quantity += body.quantity
-        existing_basket_item.price_id_by_the_user = body.price_id_by_the_user
         db.commit()
         db.refresh(existing_basket_item)
         return existing_basket_item
@@ -56,7 +56,7 @@ async def basket_items(current_user: User, db: Session) -> List[BasketItem] | No
 
 
 async def basket_item(
-        body: BasketItemsRemoveModel, current_user: User, db: Session, price_id_by_the_user: int = None
+        body: BasketItemsModel, current_user: User, db: Session, price_id_by_the_user: int = None
 ) -> Type[BasketItem] | None:
     query = db.query(BasketItem).join(Basket).filter(
         BasketItem.product_id == body.product_id,
