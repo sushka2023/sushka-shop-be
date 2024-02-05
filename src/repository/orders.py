@@ -99,7 +99,7 @@ async def get_anon_user_with_basket_and_items(
     anon_user = (
         db.query(AnonymousUser)
         .options(
-            joinedload(AnonymousUser.baskets)
+            joinedload(AnonymousUser.basket_anon_user)
             .joinedload(BasketAnonUser.basket_items_anon_user)
         )
         .filter(AnonymousUser.user_anon_id == user_anon_id)
@@ -158,15 +158,15 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
 
     anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
 
-    if not anon_user.baskets:
-        anon_user.baskets = BasketAnonUser()
+    if not anon_user.basket_anon_user:
+        anon_user.basket_anon_user = BasketAnonUser()
 
     total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
     )
 
     ordered_products = []
-    for basket_item in anon_user.baskets[0].basket_items_anon_user:
+    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
         ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
 
         selected_price = await repository_prices.price_by_product_id_and_price_id(
@@ -186,7 +186,7 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
 
     order_anonym_user = Order(
         anonymous_user_id=anon_user.id,
-        basket_number_id=anon_user.baskets[0].id,
+        basket_anon_user_id=anon_user.basket_anon_user[0].id,
         first_name_anon_user=order_data.first_name_anon_user,
         last_name_anon_user=order_data.last_name_anon_user,
         email_anon_user=order_data.email_anon_user,
@@ -206,7 +206,7 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
     db.commit()
     db.refresh(order_anonym_user)
 
-    await delete_basket_items_by_basket_number_id(anon_user.baskets[0].id, db)
+    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
 
     return order_anonym_user
 
@@ -218,15 +218,15 @@ async def create_order_anonym_user_with_nova_poshta_address(
 
     anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
 
-    if not anon_user.baskets:
-        anon_user.baskets = BasketAnonUser()
+    if not anon_user.basket_anon_user:
+        anon_user.basket_anon_user = BasketAnonUser()
 
     total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
     )
 
     ordered_products = []
-    for basket_item in anon_user.baskets[0].basket_items_anon_user:
+    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
         ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
 
         selected_price = await repository_prices.price_by_product_id_and_price_id(
@@ -246,7 +246,7 @@ async def create_order_anonym_user_with_nova_poshta_address(
 
     order_anonym_user = Order(
         anonymous_user_id=anon_user.id,
-        basket_number_id=anon_user.baskets[0].id,
+        basket_anon_user_id=anon_user.basket_anon_user[0].id,
         first_name_anon_user=order_data.first_name_anon_user,
         last_name_anon_user=order_data.last_name_anon_user,
         email_anon_user=order_data.email_anon_user,
@@ -271,7 +271,7 @@ async def create_order_anonym_user_with_nova_poshta_address(
     db.commit()
     db.refresh(order_anonym_user)
 
-    await delete_basket_items_by_basket_number_id(anon_user.baskets[0].id, db)
+    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
 
     return order_anonym_user
 
@@ -283,15 +283,15 @@ async def create_order_anonym_user_with_ukr_poshta(
 
     anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
 
-    if not anon_user.baskets:
-        anon_user.baskets = BasketAnonUser()
+    if not anon_user.basket_anon_user:
+        anon_user.basket_anon_user = BasketAnonUser()
 
     total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.baskets[0])
+        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
     )
 
     ordered_products = []
-    for basket_item in anon_user.baskets[0].basket_items_anon_user:
+    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
         ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
 
         selected_price = await repository_prices.price_by_product_id_and_price_id(
@@ -311,7 +311,7 @@ async def create_order_anonym_user_with_ukr_poshta(
 
     order_anonym_user = Order(
         anonymous_user_id=anon_user.id,
-        basket_number_id=anon_user.baskets[0].id,
+        basket_anon_user_id=anon_user.basket_anon_user[0].id,
         first_name_anon_user=order_data.first_name_anon_user,
         last_name_anon_user=order_data.last_name_anon_user,
         email_anon_user=order_data.email_anon_user,
@@ -337,7 +337,7 @@ async def create_order_anonym_user_with_ukr_poshta(
     db.commit()
     db.refresh(order_anonym_user)
 
-    await delete_basket_items_by_basket_number_id(anon_user.baskets[0].id, db)
+    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
 
     return order_anonym_user
 

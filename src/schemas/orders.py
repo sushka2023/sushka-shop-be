@@ -110,7 +110,7 @@ class OrderAnonymUserUkrPoshtaModel(BaseModel):
 class OrderAnonymUserNovaPoshtaWarehouseResponse(BaseModel):
     id: int
     anonymous_user_id: int
-    basket_number_id: int
+    basket_anon_user_id: int
     price_order: float
     first_name_anon_user: str
     last_name_anon_user: str
@@ -135,7 +135,7 @@ class OrderAnonymUserNovaPoshtaWarehouseResponse(BaseModel):
 class OrderAnonymUserNovaPoshtaAddressResponse(BaseModel):
     id: int
     anonymous_user_id: int
-    basket_number_id: int
+    basket_anon_user_id: int
     price_order: float
     first_name_anon_user: str
     last_name_anon_user: str
@@ -166,7 +166,7 @@ class OrderAnonymUserNovaPoshtaAddressResponse(BaseModel):
 class OrderAnonymUserUkrPoshtaResponse(BaseModel):
     id: int
     anonymous_user_id: int
-    basket_number_id: int
+    basket_anon_user_id: int
     price_order: float
     first_name_anon_user: str
     last_name_anon_user: str
@@ -198,7 +198,7 @@ class OrderAnonymUserUkrPoshtaResponse(BaseModel):
 class OrderAnonymUserResponse(BaseModel):
     id: int
     anonymous_user_id: int
-    basket_number_id: int
+    basket_anon_user_id: int
     price_order: float
     first_name_anon_user: str
     last_name_anon_user: str

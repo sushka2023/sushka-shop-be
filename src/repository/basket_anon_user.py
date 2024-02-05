@@ -56,10 +56,10 @@ async def get_basket_for_anonymous_user(db: Session, user_id: int):
 
 
 async def add_items_to_basket_anon_user(
-        db: Session, basket_number_id: int, product_id: int, price_id_by_anon_user: int, quantity: int
+        db: Session, basket_anon_user_id: int, product_id: int, price_id_by_anon_user: int, quantity: int
 ):
     new_basket_item_anon_user = BasketItemAnonUser(
-        basket_number_id=basket_number_id,
+        basket_anon_user_id=basket_anon_user_id,
         product_id=product_id,
         quantity=quantity,
         price_id_by_anon_user=price_id_by_anon_user

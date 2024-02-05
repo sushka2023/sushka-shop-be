@@ -30,7 +30,7 @@ class BasketItemAnonUserModel(BaseModel):
 
 class BasketItemAnonUserResponse(BaseModel):
     id: int
-    basket_number_id: int
+    basket_anon_user_id: int
     product_id: int
     product: ProductResponse
     price_id_by_anon_user: int

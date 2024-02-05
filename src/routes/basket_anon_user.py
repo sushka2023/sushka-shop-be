@@ -34,7 +34,7 @@ async def create_basket_for_anonymous_user(db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/add_items", response_model=BasketAnonUserResponse, status_code=status.HTTP_201_CREATED
+    "/add_items", response_model=BasketItemAnonUserResponse, status_code=status.HTTP_201_CREATED
 )
 async def add_items_to_basket_for_anon_user(
         body: BasketItemAnonUserModel, user_anon_id: str = Header(...), db: Session = Depends(get_db)
@@ -55,9 +55,9 @@ async def add_items_to_basket_for_anon_user(
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_number = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
+    basket_anon_user = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
 
-    if not basket_number:
+    if not basket_anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     product = await repository_products.product_by_id(body.product_id, db)
@@ -80,12 +80,12 @@ async def add_items_to_basket_for_anon_user(
     add_product_to_basket = None
 
     if basket_item_anon_user:
-        add_product_to_basket = await repository_basket_anon_user.update_basket_anon_user(body, basket_number, db)
+        add_product_to_basket = await repository_basket_anon_user.update_basket_anon_user(body, basket_anon_user, db)
     elif not basket_item_anon_user:
         add_product_to_basket = await repository_basket_anon_user.add_items_to_basket_anon_user(
             db=db,
             product_id=body.product_id,
-            basket_number_id=basket_number.id,
+            basket_anon_user_id=basket_anon_user.id,
             price_id_by_anon_user=body.price_id_by_anon_user,
             quantity=body.quantity,
         )
@@ -113,7 +113,7 @@ async def add_items_to_basket_for_anon_user(
                                         prices=[selected_price])
 
         add_product_to_basket = BasketItemAnonUserResponse(id=add_product_to_basket.id,
-                                                           basket_number_id=add_product_to_basket.basket_number_id,
+                                                           basket_anon_user_id=add_product_to_basket.basket_anon_user_id,
                                                            product_id=add_product_to_basket.product_id,
                                                            product=exist_product,
                                                            quantity=add_product_to_basket.quantity,
@@ -178,7 +178,7 @@ async def basket_items_anon_user(user_anon_id: str = Header(...), db: Session = 
                                         prices=[selected_price])
 
         basket_items_with_product.append(BasketItemAnonUserResponse(id=item.id,
-                                                                    basket_number_id=item.basket_number_id,
+                                                                    basket_anon_user_id=item.basket_anon_user_id,
                                                                     product_id=item.product_id,
                                                                     product=exist_product,
                                                                     quantity=item.quantity,
@@ -209,12 +209,12 @@ async def change_quantity_items_to_basket(
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_number = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
+    basket_anon_user = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
 
-    if not basket_number:
+    if not basket_anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_item = await repository_basket_anon_user.get_basket_item_by_id(basket_number.id, body.id, db)
+    basket_item = await repository_basket_anon_user.get_basket_item_by_id(basket_anon_user.id, body.id, db)
 
     if not basket_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -250,15 +250,15 @@ async def change_quantity_items_to_basket(
                                     prices=[selected_price])
 
     update_quantity_basket_item = BasketItemAnonUserResponse(id=update_quantity_basket_item.id,
-                                                         basket_number_id=(
-                                                             update_quantity_basket_item.basket_number_id
-                                                         ),
-                                                         product_id=update_quantity_basket_item.product_id,
-                                                         product=exist_product,
-                                                         quantity=update_quantity_basket_item.quantity,
-                                                         price_id_by_anon_user=(
-                                                             update_quantity_basket_item.price_id_by_anon_user)
-                                                         )
+                                                             basket_anon_user_id=(
+                                                                 update_quantity_basket_item.basket_anon_user_id
+                                                             ),
+                                                             product_id=update_quantity_basket_item.product_id,
+                                                             product=exist_product,
+                                                             quantity=update_quantity_basket_item.quantity,
+                                                             price_id_by_anon_user=(
+                                                                 update_quantity_basket_item.price_id_by_anon_user)
+                                                             )
 
     return update_quantity_basket_item
 
@@ -287,9 +287,9 @@ async def remove_product(
     if not anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    basket_number = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
+    basket_anon_user = await repository_basket_anon_user.get_basket_for_anonymous_user(db, anon_user.id)
 
-    if not basket_number:
+    if not basket_anon_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     product = await product_by_id(body.product_id, db)
@@ -304,7 +304,7 @@ async def remove_product(
 
     product_from_basket = (
         await repository_basket_anon_user.get_basket_item_by_product_id(
-            basket_number.id, body.product_id, db
+            basket_anon_user.id, body.product_id, db
         )
     )
 
