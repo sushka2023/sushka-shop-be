@@ -155,19 +155,6 @@ async def update_quantity(
     return None
 
 
-async def get_basket_item_by_product_id_and_price_id(basket_id: int, product_id: int, price_id: int, db: Session):
-    basket_item = (
-        db.query(BasketItemAnonUser)
-        .join(BasketAnonUser)
-        .filter(
-            BasketItemAnonUser.product_id == product_id,
-            BasketItemAnonUser.price_id_by_anon_user == price_id,
-            BasketAnonUser.id == basket_id
-        ).first()
-    )
-    return basket_item
-
-
 async def remove_item(basket_item: BasketItemAnonUser, db: Session):
     db.delete(basket_item)
     db.commit()
