@@ -241,7 +241,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "jinja2"
-version = "3.1.2"
+version = "3.1.3"
 description = "A very fast and expressive template engine."
 category = "main"
 optional = false
@@ -595,7 +595,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "5830db3ffadf6c0c7c54ee68af390718588486a9e1b3b4c869a6c0b141409703"
+content-hash = "4b606a62c6452a3f1ffa7e1b86fcc316e5ee9e488c5450d744ae0f92766d6886"
 
 [metadata.files]
 aiosmtplib = []
