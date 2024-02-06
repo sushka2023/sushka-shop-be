@@ -6,7 +6,8 @@ import re
 from pydantic import BaseModel, Field, validator
 
 from src.database.models import Role
-
+from src.schemas.nova_poshta import NovaPoshtaDataResponse
+from src.schemas.ukr_poshta import UkrPoshtaResponse
 
 password_pattern = re.compile(r"^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$")
 email_pattern = re.compile(r"^[a-zA-Z0-9_.+-]{5,}@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
@@ -49,6 +50,34 @@ class UserResponse(BaseModel):
     is_deleted: bool
     is_blocked: bool
     is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
+class PostResponseOrder(BaseModel):
+    id: int
+    user_id: int
+    ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
+    nova_poshta: Optional[list[NovaPoshtaDataResponse]] = []
+
+    class Config:
+        orm_mode = True
+
+
+class UserResponseForOrder(BaseModel):
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    role: Role
+    phone_number: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
+    is_blocked: bool
+    is_active: bool
+    posts: PostResponseOrder
 
     class Config:
         orm_mode = True

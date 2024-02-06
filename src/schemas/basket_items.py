@@ -12,7 +12,7 @@ class BasketItemsModel(BaseModel):
 
 
 class BasketItemsRemoveModel(BaseModel):
-    product_id: int
+    id: int
 
 
 class BasketItemsResponse(BaseModel):

@@ -1,7 +1,7 @@
 from typing import List, Type
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, asc
 
 from src.database.models import Price, Product
@@ -28,7 +28,7 @@ async def price_by_id(id_price: int, db: Session) -> Type[Price]:
 
 
 async def price_by_product_id_and_price_id(product_id: int, price_id: int, db: Session) -> Price:
-    return db.query(Price).filter(
+    return db.query(Price).options(joinedload(Price.ordered_products)).filter(
         Price.product_id == product_id, Price.id == price_id, Price.is_deleted == False
     ).first()
 
