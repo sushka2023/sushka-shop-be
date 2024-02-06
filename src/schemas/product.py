@@ -1,9 +1,8 @@
-from datetime import datetime
-from typing import Optional, List, Tuple, Type
+from typing import List
 
 from pydantic import BaseModel, Field
 
-from src.database.models import ProductCategory, Price, Image, ProductSubCategory, ProductStatus
+from src.database.models import ProductStatus
 from src.schemas.images import ImageResponse
 from src.schemas.price import PriceResponse
 from src.schemas.product_sub_category import ProductSubCategoryResponse
@@ -28,7 +27,7 @@ class ProductResponse(BaseModel):
     is_popular: bool
     is_favorite: bool
     product_status: ProductStatus
-    sub_categories: List[ProductSubCategoryResponse]
+    sub_categories: List[ProductSubCategoryResponse] = []
     images: List[ImageResponse]
     prices: List[PriceResponse]
 
@@ -43,3 +42,18 @@ class ProductArchiveModel(BaseModel):
 class ProductWithTotalResponse(BaseModel):
     products: List[ProductResponse]
     total_count: int
+
+
+class ProductResponseForOrder(BaseModel):
+    id: int
+    name: str
+    description: str
+    product_category_id: int
+    new_product: bool
+    is_popular: bool
+    is_favorite: bool
+    product_status: ProductStatus
+    images: List[ImageResponse]
+
+    class Config:
+        orm_mode = True
