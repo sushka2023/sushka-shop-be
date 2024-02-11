@@ -244,12 +244,8 @@ class Order(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", lazy="joined", back_populates="orders")
-    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
-    anonymous_user = relationship("AnonymousUser", lazy="joined", back_populates="orders")
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
-    basket_anon_user_id = Column(Integer, ForeignKey('basket_anon_users.id'))
-    basket_anon_user = relationship("BasketAnonUser", back_populates="order")
     price_order = Column(Float, unique=False, nullable=False)
     payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
     created_at = Column('created_at', DateTime, default=func.now())
@@ -292,7 +288,6 @@ class AnonymousUser(Base):
     __tablename__ = 'anonymous_users'
     id = Column(Integer, primary_key=True)
     user_anon_id = Column(String(255), unique=True, nullable=False)
-    orders = relationship("Order", back_populates="anonymous_user")
     basket_anon_user = relationship("BasketAnonUser", back_populates="anonymous_user")
 
 
@@ -302,7 +297,6 @@ class BasketAnonUser(Base):
     anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
     anonymous_user = relationship("AnonymousUser", back_populates="basket_anon_user")
     basket_items_anon_user = relationship("BasketItemAnonUser", uselist=True, back_populates="basket_anon_user")
-    order = relationship("Order", uselist=False, back_populates="basket_anon_user")
 
 
 class BasketItemAnonUser(Base):
