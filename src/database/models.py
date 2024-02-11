@@ -284,32 +284,6 @@ class OrderedProduct(Base):
     quantity = Column(Integer)
 
 
-class AnonymousUser(Base):
-    __tablename__ = 'anonymous_users'
-    id = Column(Integer, primary_key=True)
-    user_anon_id = Column(String(255), unique=True, nullable=False)
-    basket_anon_user = relationship("BasketAnonUser", back_populates="anonymous_user")
-
-
-class BasketAnonUser(Base):
-    __tablename__ = 'basket_anon_users'
-    id = Column(Integer, primary_key=True)
-    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
-    anonymous_user = relationship("AnonymousUser", back_populates="basket_anon_user")
-    basket_items_anon_user = relationship("BasketItemAnonUser", uselist=True, back_populates="basket_anon_user")
-
-
-class BasketItemAnonUser(Base):
-    __tablename__ = 'basket_item_anon_users'
-    id = Column(Integer, primary_key=True)
-    basket_anon_user_id = Column(Integer, ForeignKey('basket_anon_users.id'))
-    basket_anon_user = relationship("BasketAnonUser", back_populates="basket_items_anon_user")
-    product_id = Column(Integer, ForeignKey('products.id'))
-    product = relationship("Product")
-    quantity = Column(Integer, default=1)
-    price_id_by_anon_user = Column(Integer)
-
-
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
