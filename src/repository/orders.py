@@ -118,9 +118,10 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         price_order=total_cost,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
-        is_authenticated=order_data.is_authenticated,
         ordered_products=ordered_products
     )
+    order.is_authenticated = True
+    order.is_created = True
 
     db.add(order)
     db.commit()
