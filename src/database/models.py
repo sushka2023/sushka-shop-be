@@ -239,7 +239,7 @@ class BasketItem(Base):
     price_id_by_the_user = Column(Integer)
 
 
-class Order(Base):
+class Order(Base, UpdateFromDictMixin):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
