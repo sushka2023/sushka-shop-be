@@ -54,20 +54,6 @@ class OrderMessageResponse(BaseModel):
     message: str
 
 
-class OrderAnonymUserNovaPoshtaWarehouseModel(BaseModel):
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    country: Optional[str] = ""
-    city: str
-    address_warehouse: str
-    payment_type: PaymentsTypes
-    call_manager: bool
-    is_authenticated: Optional[bool] = False
-
-
 class OrderCreateResponse(BaseModel):
     id: int
     is_authenticated: bool
