@@ -19,7 +19,9 @@ from src.schemas.orders import (
     OrderAnonymUserModel,
     OrderedItemsResponse,
     OrderCreateResponse,
-    OrderItemsModel, ChangeQuantityOrderItemModel, OrderItemAnonUserRemoveModel
+    OrderItemsModel,
+    ChangeQuantityOrderItemModel,
+    OrderItemAnonUserRemoveModel
 )
 from src.schemas.product import ProductResponseForOrder
 from src.services.auth import auth_service
@@ -263,7 +265,7 @@ async def create_order_anonym_user(
             An order object
         """
 
-    order = await repository_orders.get_order_by_id(order_id=int(order_id), db=db)
+    order = await repository_orders.get_order_anon_user_by_id(order_id=int(order_id), db=db)
 
     new_order_anonym_user = (
         await repository_orders.create_order_anonym_user(order_data, str(order.id), db)
@@ -290,7 +292,7 @@ async def change_quantity_items_to_order(
         The Product with updated quantity of it in the order
     """
 
-    order = await repository_orders.get_order_by_id(order_id=int(order_id), db=db)
+    order = await repository_orders.get_order_anon_user_by_id(order_id=int(order_id), db=db)
 
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
@@ -364,7 +366,7 @@ async def remove_product(
     Returns:
         None
     """
-    order = await repository_orders.get_order_by_id(order_id=int(order_id), db=db)
+    order = await repository_orders.get_order_anon_user_by_id(order_id=int(order_id), db=db)
 
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
