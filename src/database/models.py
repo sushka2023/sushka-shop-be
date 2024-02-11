@@ -246,7 +246,7 @@ class Order(Base, UpdateFromDictMixin):
     user = relationship("User", lazy="joined", back_populates="orders")
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
-    price_order = Column(Float, unique=False, nullable=False)
+    price_order = Column(Float, unique=False, nullable=True)
     payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
     created_at = Column('created_at', DateTime, default=func.now())
     confirmation_manager = Column(Boolean, default=False)
