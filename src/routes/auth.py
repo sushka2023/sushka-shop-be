@@ -70,16 +70,11 @@ async def signup(body: UserModel, background_tasks: BackgroundTasks, request: Re
 @router.post("/login", response_model=TokenModel)
 async def login(body: OAuth2PasswordRequestForm = Depends(),
                 db: Session = Depends(get_db)):
-    with get_redis() as redis_cl:
-        user = redis_cl.get(f"user:{body.username}")
 
-    if user is None:
-        user = await repository_users.get_user_by_email(body.username, db)
-        with get_redis() as redis_cl:
-            redis_cl.set(f"user:{body.username}", pickle.dumps(user))
-            redis_cl.expire(f"user:{body.username}", 900)
-    else:
-        user = pickle.loads(user)
+    with get_redis() as redis_cl:
+        redis_cl.delete(f"user:{body.username}")
+
+    user = await repository_users.get_user_by_email(body.username, db)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=Ex.HTTP_403_FORBIDDEN)
@@ -93,8 +88,6 @@ async def login(body: OAuth2PasswordRequestForm = Depends(),
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     refresh_token_ = await auth_service.create_refresh_token(data={"sub": user.email})
     await repository_users.update_token(user, refresh_token_, db)
-
-    user = await repository_users.get_user_by_email(body.username, db)
 
     return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer", "user": user}
 
@@ -121,7 +114,7 @@ async def logout(credentials: HTTPAuthorizationCredentials = Security(security),
     return {"message": "USER_IS_LOGOUT"}
 
 
-@router.get('/refresh_token', response_model=TokenModel, dependencies=[Depends(allowed_operation_admin_moderator_user)])
+@router.get('/refresh_token', response_model=TokenModel)
 async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     """
     The refresh_token function is used to refresh the access token.
@@ -145,8 +138,15 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Security(sec
 
     access_token = await auth_service.create_access_token(data={"sub": email})
     refresh_token_ = await auth_service.create_refresh_token(data={"sub": email})
+
     await repository_users.update_token(user, refresh_token_, db)
-    return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer"}
+
+    user = await repository_users.get_user_by_email(email, db)
+
+    with get_redis() as redis_cl:
+        redis_cl.delete(f"user:{email}")
+
+    return {"access_token": access_token, "refresh_token": refresh_token_, "token_type": "bearer", "user": user}
 
 
 @router.get('/confirmed_email/{token}')
