@@ -1,5 +1,7 @@
 import logging
+from typing import Optional
 
+from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -11,25 +13,18 @@ from src.database.models import (
     OrdersStatus,
     OrderedProduct,
     Price,
-    AnonymousUser,
-    BasketAnonUser,
 )
-from src.schemas.orders import (
-    OrderModel,
-    OrderAnonymUserNovaPoshtaWarehouseModel,
-    OrderAnonymUserNovaPoshtaAddressModel,
-    OrderAnonymUserUkrPoshtaModel,
-)
+from src.schemas.orders import OrderModel, OrderAnonymUserModel, OrderItemsModel
+
 from src.services.orders import (
     delete_basket_items_by_basket_id,
-    delete_basket_items_by_basket_number_id,
     calculate_basket_total_cost,
     calculate_basket_total_cost_for_anonym_user,
     move_product_to_ordered,
-    move_product_to_ordered_for_anon_user,
 )
 from src.repository import prices as repository_prices
 from src.services.validation import validate_phone_number
+from src.services.exception_detail import ExDetail as Ex
 
 logger = logging.getLogger(__name__)
 
@@ -93,21 +88,6 @@ async def get_auth_user_with_basket_and_items(user_id: int, db: Session) -> User
     return user
 
 
-async def get_anon_user_with_basket_and_items(
-        user_anon_id: str, db: Session
-) -> AnonymousUser:
-    anon_user = (
-        db.query(AnonymousUser)
-        .options(
-            joinedload(AnonymousUser.basket_anon_user)
-            .joinedload(BasketAnonUser.basket_items_anon_user)
-        )
-        .filter(AnonymousUser.user_anon_id == user_anon_id)
-        .first()
-    )
-    return anon_user
-
-
 async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Session):
     """Create an order and clean the user’s shopping cart after creating an order"""
 
@@ -151,32 +131,101 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
     return order
 
 
-async def create_order_anonym_user_with_nova_poshta_warehouse(
-        order_data: OrderAnonymUserNovaPoshtaWarehouseModel, user_anon_id: str, db: Session
-):
-    """Create an order and clean the anonym user’s shopping cart after creating an order"""
+async def create_order_number_anon_user(db: Session) -> Order:
+    new_order = Order()
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    return new_order
 
-    anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
 
-    if not anon_user.basket_anon_user:
-        anon_user.basket_anon_user = BasketAnonUser()
+async def get_order_anon_user_by_id(order_id: int, db: Session) -> Order | None:
+    return db.query(Order).filter(
+        Order.id == order_id,
+        Order.is_authenticated == False,
+        Order.is_created == False
+    ).first()
 
-    total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
+
+async def add_items_to_order_anon_user(
+        order_id: int, product_id: int, price_id: int, quantity: int, db: Session
+) -> OrderedProduct:
+    order_anon_user = await get_order_anon_user_by_id(order_id=order_id, db=db)
+
+    new_order_item = OrderedProduct(
+        order_id=order_anon_user.id,
+        product_id=product_id,
+        price_id=price_id,
+        quantity=quantity,
+    )
+    db.add(new_order_item)
+    db.commit()
+    db.refresh(new_order_item)
+    return new_order_item
+
+
+async def get_existing_order_item(
+        order_id: int, product_id: int, price_id: int, db: Session
+) -> Optional[OrderedProduct]:
+    return db.query(OrderedProduct).filter(
+        OrderedProduct.order_id == order_id,
+        OrderedProduct.product_id == product_id,
+        OrderedProduct.price_id == price_id,
+    ).first()
+
+
+async def update_quantity_item(body: OrderItemsModel, order_id: int, db: Session):
+    existing_order_item = await get_existing_order_item(order_id, body.product_id, body.price_id, db)
+
+    if existing_order_item:
+        existing_order_item.quantity += body.quantity
+        db.commit()
+        db.refresh(existing_order_item)
+        return existing_order_item
+
+
+async def get_order_item(
+        order_id: int, product_id: int, price_id: int, db: Session
+) -> OrderedProduct | None:
+    query = db.query(OrderedProduct).filter(
+        OrderedProduct.order_id == order_id,
+        OrderedProduct.product_id == product_id,
+        OrderedProduct.price_id == price_id
     )
 
-    ordered_products = []
-    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
-        ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
+    return query.first()
 
+
+async def get_order_items(order_id: int, db: Session) -> list[OrderedProduct]:
+    return db.query(OrderedProduct).filter(OrderedProduct.order_id == order_id)
+
+
+async def create_order_anonym_user(
+        order_data: OrderAnonymUserModel, order_id: str, db: Session
+):
+    """Create an order the anonym user"""
+
+    order_anon_user = await get_order_anon_user_by_id(order_id=int(order_id), db=db)
+
+    if not order_anon_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    total_cost_order_anon_user = (
+        await calculate_basket_total_cost_for_anonym_user(order_id=order_anon_user.id, db=db)
+    )
+
+    order_items = await get_order_items(order_id=order_anon_user.id, db=db)
+
+    ordered_products = []
+    for order_item in order_items:
         selected_price = await repository_prices.price_by_product_id_and_price_id(
-            ordered_product.product_id, ordered_product.price_id, db
+            order_item.product_id, order_item.price_id, db
         )
 
         if selected_price:
-            ordered_product.prices = selected_price
+            order_item.prices = selected_price
 
-        ordered_products.append(ordered_product)
+        ordered_products.append(order_item)
 
     try:
         validate_phone_number(order_data.phone_number_anon_user)
@@ -184,162 +233,14 @@ async def create_order_anonym_user_with_nova_poshta_warehouse(
         logger.error(f"Validation error: {str(ve)}")
         return JSONResponse(content={"error": str(ve)}, status_code=422)
 
-    order_anonym_user = Order(
-        anonymous_user_id=anon_user.id,
-        basket_anon_user_id=anon_user.basket_anon_user[0].id,
-        first_name_anon_user=order_data.first_name_anon_user,
-        last_name_anon_user=order_data.last_name_anon_user,
-        email_anon_user=order_data.email_anon_user,
-        phone_number_anon_user=order_data.phone_number_anon_user,
-        post_type=order_data.post_type,
-        country=order_data.country,
-        city=order_data.city,
-        address_warehouse=order_data.address_warehouse,
-        price_order=total_cost_order_anon_user,
-        payment_type=order_data.payment_type,
-        call_manager=order_data.call_manager,
-        is_authenticated=order_data.is_authenticated,
-        ordered_products=ordered_products
-    )
+    order_anon_user.update_from_dict(order_data.dict())
+    order_anon_user.price_order = total_cost_order_anon_user
+    order_anon_user.ordered_products = ordered_products
+    order_anon_user.is_created = True
 
-    db.add(order_anonym_user)
     db.commit()
-    db.refresh(order_anonym_user)
 
-    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
-
-    return order_anonym_user
-
-
-async def create_order_anonym_user_with_nova_poshta_address(
-        order_data: OrderAnonymUserNovaPoshtaAddressModel, user_anon_id: str, db: Session
-):
-    """Create an order and clean the anonym user’s shopping cart after creating an order"""
-
-    anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
-
-    if not anon_user.basket_anon_user:
-        anon_user.basket_anon_user = BasketAnonUser()
-
-    total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
-    )
-
-    ordered_products = []
-    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
-        ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
-
-        selected_price = await repository_prices.price_by_product_id_and_price_id(
-            ordered_product.product_id, ordered_product.price_id, db
-        )
-
-        if selected_price:
-            ordered_product.prices = selected_price
-
-        ordered_products.append(ordered_product)
-
-    try:
-        validate_phone_number(order_data.phone_number_anon_user)
-    except ValueError as ve:
-        logger.error(f"Validation error: {str(ve)}")
-        return JSONResponse(content={"error": str(ve)}, status_code=422)
-
-    order_anonym_user = Order(
-        anonymous_user_id=anon_user.id,
-        basket_anon_user_id=anon_user.basket_anon_user[0].id,
-        first_name_anon_user=order_data.first_name_anon_user,
-        last_name_anon_user=order_data.last_name_anon_user,
-        email_anon_user=order_data.email_anon_user,
-        phone_number_anon_user=order_data.phone_number_anon_user,
-        post_type=order_data.post_type,
-        country=order_data.country,
-        city=order_data.city,
-        area=order_data.area,
-        region=order_data.region,
-        street=order_data.street,
-        house_number=order_data.house_number,
-        apartment_number=order_data.apartment_number,
-        floor=order_data.floor,
-        price_order=total_cost_order_anon_user,
-        payment_type=order_data.payment_type,
-        call_manager=order_data.call_manager,
-        is_authenticated=order_data.is_authenticated,
-        ordered_products=ordered_products
-    )
-
-    db.add(order_anonym_user)
-    db.commit()
-    db.refresh(order_anonym_user)
-
-    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
-
-    return order_anonym_user
-
-
-async def create_order_anonym_user_with_ukr_poshta(
-        order_data: OrderAnonymUserUkrPoshtaModel, user_anon_id: str, db: Session
-):
-    """Create an order and clean the anonym user’s shopping cart after creating an order"""
-
-    anon_user = await get_anon_user_with_basket_and_items(user_anon_id, db)
-
-    if not anon_user.basket_anon_user:
-        anon_user.basket_anon_user = BasketAnonUser()
-
-    total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(anon_user.basket_anon_user[0])
-    )
-
-    ordered_products = []
-    for basket_item in anon_user.basket_anon_user[0].basket_items_anon_user:
-        ordered_product = await move_product_to_ordered_for_anon_user(db, basket_item)
-
-        selected_price = await repository_prices.price_by_product_id_and_price_id(
-            ordered_product.product_id, ordered_product.price_id, db
-        )
-
-        if selected_price:
-            ordered_product.prices = selected_price
-
-        ordered_products.append(ordered_product)
-
-    try:
-        validate_phone_number(order_data.phone_number_anon_user)
-    except ValueError as ve:
-        logger.error(f"Validation error: {str(ve)}")
-        return JSONResponse(content={"error": str(ve)}, status_code=422)
-
-    order_anonym_user = Order(
-        anonymous_user_id=anon_user.id,
-        basket_anon_user_id=anon_user.basket_anon_user[0].id,
-        first_name_anon_user=order_data.first_name_anon_user,
-        last_name_anon_user=order_data.last_name_anon_user,
-        email_anon_user=order_data.email_anon_user,
-        phone_number_anon_user=order_data.phone_number_anon_user,
-        post_type=order_data.post_type,
-        country=order_data.country,
-        city=order_data.city,
-        area=order_data.area,
-        region=order_data.region,
-        street=order_data.street,
-        house_number=order_data.house_number,
-        apartment_number=order_data.apartment_number,
-        floor=order_data.floor,
-        post_code=order_data.post_code,
-        price_order=total_cost_order_anon_user,
-        payment_type=order_data.payment_type,
-        call_manager=order_data.call_manager,
-        is_authenticated=order_data.is_authenticated,
-        ordered_products=ordered_products
-    )
-
-    db.add(order_anonym_user)
-    db.commit()
-    db.refresh(order_anonym_user)
-
-    await delete_basket_items_by_basket_number_id(anon_user.basket_anon_user[0].id, db)
-
-    return order_anonym_user
+    return order_anon_user
 
 
 async def confirm_order(order_id: int, db: Session) -> Order | None:
