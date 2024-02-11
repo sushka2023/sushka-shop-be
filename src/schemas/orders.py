@@ -124,6 +124,7 @@ class OrderAnonymUserResponse(BaseModel):
     confirmation_pay: bool
     call_manager: bool
     is_authenticated: bool
+    is_created: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
