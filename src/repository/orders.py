@@ -204,7 +204,7 @@ async def get_order_items(order_id: int, db: Session) -> list[OrderedProduct]:
 async def create_order_anonym_user(
         order_data: OrderAnonymUserModel, order_id: str, db: Session
 ):
-    """Create an order the anonym user"""
+    """Create an order of the anonym user"""
 
     order_anon_user = await get_order_anon_user_by_id(order_id=int(order_id), db=db)
 
