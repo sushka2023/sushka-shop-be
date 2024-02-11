@@ -25,7 +25,6 @@ class OrderedProductResponse(BaseModel):
 class OrderModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
-    is_authenticated: bool
 
 
 class OrderResponse(BaseModel):
