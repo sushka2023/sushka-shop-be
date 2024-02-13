@@ -25,12 +25,18 @@ class OrderedProductResponse(BaseModel):
 class OrderModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
+    is_another_recipient: bool
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
 
 
 class OrderResponse(BaseModel):
     id: int
     user_id: int
     user: UserResponseForOrder
+    is_another_recipient: bool
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     basket_id: int
     price_order: float
     payment_type: PaymentsTypes
@@ -84,6 +90,9 @@ class OrderAnonymUserModel(BaseModel):
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: bool
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: str
@@ -106,6 +115,9 @@ class OrderAnonymUserResponse(BaseModel):
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: bool
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: str
@@ -145,6 +157,10 @@ class OrdersCRMResponse(BaseModel):
     last_name_anon_user: Optional[str] = ""
     email_anon_user: Optional[EmailStr] = ""
     phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: bool
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
+    comment: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: Optional[str] = ""
