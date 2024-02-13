@@ -39,6 +39,16 @@ async def get_order_by_id(order_id: int, db: Session) -> Order | None:
     return db.query(Order).filter(Order.id == order_id, Order.is_created == True).first()
 
 
+async def get_order_by_id_for_current_user(
+        order_id: int, user_id: int, db: Session
+) -> Order | None:
+    return db.query(Order).filter(
+        Order.id == order_id,
+        Order.is_authenticated,
+        Order.user_id == user_id
+    ).first()
+
+
 async def get_orders_by_auth_user(
         limit: int, offset: int, user: User, db: Session
 ) -> list[Order]:

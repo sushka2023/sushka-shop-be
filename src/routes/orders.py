@@ -128,6 +128,33 @@ async def get_orders_current_user(
     return orders
 
 
+@router.get(
+    "/{order_id}/for_current_user", response_model=OrderResponse,
+    dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def get_order_by_id_for_current_user(
+        order_id: int,
+        current_user: User = Depends(auth_service.get_current_user),
+        db: Session = Depends(get_db)
+):
+    """
+    The function returns an order in the database which was created by a current user.
+
+    Args:
+        order_id: Get the id of the order of current user
+        current_user (User): the current user who created the orders'
+        db: Session: Access the database
+
+    Returns:
+        An order
+    """
+    order = await repository_orders.get_order_by_id_for_current_user(order_id, current_user.id, db)
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return order
+
+
 @router.get("/all_auth_users_for_crm", response_model=list[OrderResponse],
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def get_orders_auth_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
