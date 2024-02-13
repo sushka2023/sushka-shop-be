@@ -259,22 +259,6 @@ async def get_order_item_by_id(
     return order_item
 
 
-async def update_quantity(
-        order_item: OrderedProduct, quantity: int, db: Session
-) -> OrderedProduct | None:
-    if order_item:
-        order_item.quantity = quantity
-        db.commit()
-        db.refresh(order_item)
-        return order_item
-    return None
-
-
-async def remove_item(order_item: OrderedProduct, db: Session):
-    db.delete(order_item)
-    db.commit()
-
-
 async def confirm_order(order_id: int, db: Session) -> Order | None:
     """Confirmation of user order by admin and changing order status"""
 
