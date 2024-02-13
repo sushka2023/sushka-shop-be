@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
-from src.database.models import Role, User
+from src.database.models import Role, User, OrdersStatus
 from src.repository import orders as repository_orders
 from src.repository import products as repository_products
 from src.repository import prices as repository_prices
@@ -19,7 +19,9 @@ from src.schemas.orders import (
     OrderAnonymUserModel,
     OrderedItemsResponse,
     OrderCreateResponse,
-    OrderItemsModel, UpdateOrderStatus,
+    OrderItemsModel,
+    UpdateOrderStatus,
+    OrdersCRMResponse,
 )
 from src.schemas.product import ProductResponseForOrder
 from src.services.auth import auth_service
@@ -35,6 +37,53 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
+
+
+@router.get("/all_for_crm",
+            response_model=list[OrdersCRMResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def orders_for_crm(
+        limit: int, offset: int, order_status: OrdersStatus = None, db: Session = Depends(get_db)
+):
+
+    """
+    The orders_for_crm function returns a list of orders for the CRM.
+
+    :param limit: int: Limit the number of orders returned
+    :param offset: int: Indicate the number of records to skip
+    :param order_status: OrdersStatus: Filter orders by status
+    :param db: Session: Pass the database connection to the function
+
+    :return: A list of orders
+    """
+    redis_client = get_redis()
+
+    key = f"orders:order_status_{order_status}_limit:{limit}_offset:{offset}"
+
+    cached_orders = None
+
+    if redis_client:
+        cached_orders = redis_client.get(key)
+
+    orders_ = None
+
+    if not cached_orders:
+        if not order_status:
+            orders_ = await repository_orders.get_orders_all_for_crm(limit, offset, db)
+        elif order_status:
+            orders_ = await repository_orders.get_orders_all_for_crm_with_status(limit, offset, order_status, db)
+
+        if redis_client:
+            redis_client.set(key, pickle.dumps(orders_))
+            redis_client.expire(key, 1800)
+
+    else:
+        orders_ = pickle.loads(cached_orders)
+
+    if not orders_:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return orders_
 
 
 @router.get(
@@ -154,6 +203,8 @@ async def create_order_number_anon_user(db: Session = Depends(get_db)):
     Returns:
         An order object
     """
+    await delete_cache_in_redis()
+
     return await repository_orders.create_order_number_anon_user(db=db)
 
 
@@ -268,6 +319,8 @@ async def create_order_anonym_user(
     new_order_anonym_user = (
         await repository_orders.create_order_anonym_user(order_data, str(order.id), db)
     )
+
+    await delete_cache_in_redis()
 
     return new_order_anonym_user
 
