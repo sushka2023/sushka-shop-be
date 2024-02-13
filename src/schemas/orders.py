@@ -34,7 +34,7 @@ class OrderResponse(BaseModel):
     id: int
     user_id: int
     user: UserResponseForOrder
-    is_another_recipient: bool
+    is_another_recipient: Optional[bool]
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
     basket_id: int
@@ -115,7 +115,7 @@ class OrderAnonymUserResponse(BaseModel):
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
-    is_another_recipient: bool
+    is_another_recipient: Optional[bool]
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
@@ -157,7 +157,7 @@ class OrdersCRMResponse(BaseModel):
     last_name_anon_user: Optional[str] = ""
     email_anon_user: Optional[EmailStr] = ""
     phone_number_anon_user: Optional[str] = ""
-    is_another_recipient: bool
+    is_another_recipient: Optional[bool]
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
     comment: Optional[str] = ""
