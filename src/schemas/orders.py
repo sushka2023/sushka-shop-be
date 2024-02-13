@@ -133,3 +133,38 @@ class OrderAnonymUserResponse(BaseModel):
 
 class UpdateOrderStatus(BaseModel):
     new_status: OrdersStatus
+
+
+class OrdersCRMResponse(BaseModel):
+    id: int
+    price_order: float
+    user_id: Optional[int] = None
+    user: Optional[UserResponseForOrder] = {}
+    basket_id: Optional[int] = None
+    first_name_anon_user: Optional[str] = ""
+    last_name_anon_user: Optional[str] = ""
+    email_anon_user: Optional[EmailStr] = ""
+    phone_number_anon_user: Optional[str] = ""
+    post_type: PostType
+    country: Optional[str] = ""
+    city: Optional[str] = ""
+    address_warehouse: Optional[str] = ""
+    area: Optional[str] = ""
+    region: Optional[str] = ""
+    street: Optional[str] = ""
+    house_number: Optional[str] = ""
+    apartment_number: Optional[str] = ""
+    floor: Optional[int] = None
+    post_code: Optional[str] = ""
+    payment_type: PaymentsTypes
+    created_at: datetime
+    confirmation_manager: bool
+    confirmation_pay: bool
+    call_manager: bool
+    is_authenticated: bool
+    is_created: bool
+    status_order: OrdersStatus
+    ordered_products: list[OrderedProductResponse] = []
+
+    class Config:
+        orm_mode = True
