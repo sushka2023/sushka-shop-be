@@ -75,7 +75,7 @@ async def get_orders_anonym_user_for_crm(
         limit: int, offset: int, db: Session
 ) -> list[Order]:
     return (
-        db.query(Order).filter(Order.is_authenticated == False)
+        db.query(Order).filter(Order.is_authenticated == False, Order.is_created == True)
         .order_by(desc(Order.created_at))
         .limit(limit).offset(offset).all()
     )
@@ -281,3 +281,27 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
         db.commit()
         return order
     return None
+
+
+async def get_orders_all_for_crm(limit: int, offset: int, db: Session) -> list[Order]:
+    return (
+        db.query(Order)
+        .filter(Order.is_created == True)
+        .order_by(Order.status_order, desc(Order.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+
+async def get_orders_all_for_crm_with_status(
+        limit: int, offset: int, order_status: OrdersStatus, db: Session
+) -> list[Order]:
+    return (
+        db.query(Order)
+        .filter(Order.is_created == True, Order.status_order == order_status)
+        .order_by(desc(Order.created_at))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
