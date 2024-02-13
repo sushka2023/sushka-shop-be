@@ -129,12 +129,3 @@ class OrderAnonymUserResponse(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class OrderItemAnonUserRemoveModel(BaseModel):
-    id: int
-
-
-class ChangeQuantityOrderItemModel(BaseModel):
-    id: int
-    quantity: int
