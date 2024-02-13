@@ -20,8 +20,6 @@ from src.schemas.orders import (
     OrderedItemsResponse,
     OrderCreateResponse,
     OrderItemsModel,
-    ChangeQuantityOrderItemModel,
-    OrderItemAnonUserRemoveModel
 )
 from src.schemas.product import ProductResponseForOrder
 from src.services.auth import auth_service
