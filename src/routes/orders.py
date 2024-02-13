@@ -86,6 +86,28 @@ async def orders_for_crm(
     return orders_
 
 
+@router.get("/{order_id}/for_crm",
+            response_model=OrdersCRMResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def get_order_by_id_for_crm(
+        order_id: int, db: Session = Depends(get_db)
+):
+    """
+    The get_order_by_id_for_crm function returns an order by id for the CRM.
+
+    :param order_id: Get the id of the order
+    :param db: Session: Pass the database connection to the function
+
+    :return: An order
+    """
+    order = await repository_orders.get_order_by_id(order_id, db)
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    return order
+
+
 @router.get(
     "/for_current_user", response_model=list[OrderResponse],
     dependencies=[Depends(allowed_operation_admin_moderator_user)])
