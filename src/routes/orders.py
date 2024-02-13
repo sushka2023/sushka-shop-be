@@ -21,7 +21,8 @@ from src.schemas.orders import (
     OrderCreateResponse,
     OrderItemsModel,
     UpdateOrderStatus,
-    OrdersCRMResponse, OrderCommentModel,
+    OrdersCRMResponse,
+    OrderCommentModel,
 )
 from src.schemas.product import ProductResponseForOrder
 from src.services.auth import auth_service
