@@ -184,3 +184,7 @@ class OrdersCRMResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class OrderCommentModel(BaseModel):
+    comment: str

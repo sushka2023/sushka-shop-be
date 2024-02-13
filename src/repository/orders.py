@@ -18,7 +18,8 @@ from src.schemas.orders import (
     OrderModel,
     OrderAnonymUserModel,
     OrderItemsModel,
-    UpdateOrderStatus
+    UpdateOrderStatus,
+    OrderCommentModel
 )
 
 from src.services.orders import (
@@ -315,3 +316,17 @@ async def get_orders_all_for_crm_with_status(
         .offset(offset)
         .all()
     )
+
+
+async def add_comment_to_order(order_id: int, body: OrderCommentModel, db: Session):
+    order = await get_order_by_id(order_id=order_id, db=db)
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    if order.comment:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+
+    order.comment = body.comment
+    db.commit()
+    return order
