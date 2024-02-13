@@ -25,7 +25,7 @@ class OrderedProductResponse(BaseModel):
 class OrderModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
-    is_another_recipient: bool
+    is_another_recipient: Optional[bool] = False
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
 
@@ -90,7 +90,7 @@ class OrderAnonymUserModel(BaseModel):
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
-    is_another_recipient: bool
+    is_another_recipient: Optional[bool] = False
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
