@@ -269,8 +269,12 @@ class Order(Base, UpdateFromDictMixin):
     last_name_anon_user = Column(String(255), nullable=True)
     email_anon_user = Column(String(150), unique=True, nullable=True)
     phone_number_anon_user = Column(String(50), nullable=True)
+    is_another_recipient = Column(Boolean, default=False)
+    full_name_another_recipient = Column(String(255), nullable=True)
+    phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
     is_created = Column(Boolean, default=False)
+    comment = Column(String(500), nullable=True)
 
 
 class OrderedProduct(Base):
