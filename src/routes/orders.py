@@ -299,3 +299,32 @@ async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db))
     await delete_cache_in_redis()
 
     return {"message": "Order confirmed successfully"}
+
+
+@router.put("/confirm_payment_of_order",
+            response_model=OrderMessageResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def confirm_payment_of_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
+    """
+    The confirm_payment_of_order function confirms a payment of order.
+
+    Args:
+        order: OrderConfirmModel: Get the id of the order to confirm the payment of the orders
+        db: Session: Access the database
+
+    Returns:
+        Message that the payment of the order was confirmed successfully
+    """
+    order = await repository_orders.get_order_by_id(order.id, db)
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    if order.confirmation_pay:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+
+    await repository_orders.confirm_payment_of_order(order.id, db)
+
+    await delete_cache_in_redis()
+
+    return {"message": "Payment of Order confirmed successfully"}

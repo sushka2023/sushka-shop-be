@@ -269,3 +269,14 @@ async def confirm_order(order_id: int, db: Session) -> Order | None:
         db.commit()
         return order
     return None
+
+
+async def confirm_payment_of_order(order_id: int, db: Session) -> Order | None:
+    """Confirmation of payment of order by admin or moderator"""
+
+    order = await get_order_by_id(order_id=order_id, db=db)
+    if order and order.confirmation_pay is False:
+        order.confirmation_pay = True
+        db.commit()
+        return order
+    return None
