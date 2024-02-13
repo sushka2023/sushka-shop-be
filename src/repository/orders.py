@@ -116,9 +116,18 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
 
         ordered_products.append(ordered_product)
 
+    try:
+        validate_phone_number(order_data.phone_number_another_recipient)
+    except ValueError as ve:
+        logger.error(f"Validation error: {str(ve)}")
+        return JSONResponse(content={"error": str(ve)}, status_code=422)
+
     order = Order(
         user_id=user.id,
         user=user,
+        is_another_recipient=order_data.is_another_recipient,
+        full_name_another_recipient=order_data.full_name_another_recipient,
+        phone_number_another_recipient=order_data.phone_number_another_recipient,
         basket_id=user.basket.id,
         price_order=total_cost,
         payment_type=order_data.payment_type,
@@ -235,6 +244,7 @@ async def create_order_anonym_user(
 
     try:
         validate_phone_number(order_data.phone_number_anon_user)
+        validate_phone_number(order_data.phone_number_another_recipient)
     except ValueError as ve:
         logger.error(f"Validation error: {str(ve)}")
         return JSONResponse(content={"error": str(ve)}, status_code=422)
