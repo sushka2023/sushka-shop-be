@@ -129,3 +129,7 @@ class OrderAnonymUserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UpdateOrderStatus(BaseModel):
+    new_status: OrdersStatus

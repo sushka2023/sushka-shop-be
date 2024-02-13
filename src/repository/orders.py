@@ -14,7 +14,12 @@ from src.database.models import (
     OrderedProduct,
     Price,
 )
-from src.schemas.orders import OrderModel, OrderAnonymUserModel, OrderItemsModel
+from src.schemas.orders import (
+    OrderModel,
+    OrderAnonymUserModel,
+    OrderItemsModel,
+    UpdateOrderStatus
+)
 
 from src.services.orders import (
     delete_basket_items_by_basket_id,
@@ -30,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_order_by_id(order_id: int, db: Session) -> Order | None:
-    return db.query(Order).filter_by(id=order_id).first()
+    return db.query(Order).filter(Order.id == order_id, Order.is_created == True).first()
 
 
 async def get_orders_by_auth_user(
@@ -244,21 +249,6 @@ async def create_order_anonym_user(
     return order_anon_user
 
 
-async def get_order_item_by_id(
-        order_id: int, order_item_id: int, db: Session
-) -> OrderedProduct | None:
-    order_item = (
-        db.query(OrderedProduct)
-        .join(Order)
-        .filter(
-            OrderedProduct.id == order_item_id,
-            Order.id == order_id,
-            Order.is_created == False
-        ).first()
-    )
-    return order_item
-
-
 async def confirm_order(order_id: int, db: Session) -> Order | None:
     """Confirmation of user order by admin and changing order status"""
 
@@ -277,6 +267,17 @@ async def confirm_payment_of_order(order_id: int, db: Session) -> Order | None:
     order = await get_order_by_id(order_id=order_id, db=db)
     if order and order.confirmation_pay is False:
         order.confirmation_pay = True
+        db.commit()
+        return order
+    return None
+
+
+async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db: Session) -> Order | None:
+    """Change status of order by admin or moderator"""
+
+    order = await get_order_by_id(order_id=order_id, db=db)
+    if order:
+        order.status_order = update_data.new_status
         db.commit()
         return order
     return None

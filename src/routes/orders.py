@@ -19,7 +19,7 @@ from src.schemas.orders import (
     OrderAnonymUserModel,
     OrderedItemsResponse,
     OrderCreateResponse,
-    OrderItemsModel,
+    OrderItemsModel, UpdateOrderStatus,
 )
 from src.schemas.product import ProductResponseForOrder
 from src.services.auth import auth_service
@@ -309,7 +309,7 @@ async def confirm_payment_of_order(order: OrderConfirmModel, db: Session = Depen
     The confirm_payment_of_order function confirms a payment of order.
 
     Args:
-        order: OrderConfirmModel: Get the id of the order to confirm the payment of the orders
+        order: OrderConfirmModel: Get the id of the order to confirm the payment of the orders'
         db: Session: Access the database
 
     Returns:
@@ -328,3 +328,30 @@ async def confirm_payment_of_order(order: OrderConfirmModel, db: Session = Depen
     await delete_cache_in_redis()
 
     return {"message": "Payment of Order confirmed successfully"}
+
+
+@router.put("/{order_id}/update_status",
+            response_model=OrderMessageResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
+async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db: Session = Depends(get_db)):
+    """
+    The change_order_status function changes an order status.
+
+    Args:
+        update_data: UpdateOrderStatus: the order status to be changed
+        order_id: Get the id of the order to change it status
+        db: Session: Access the database
+
+    Returns:
+        Message that the status of the order was changed successfully
+    """
+    order = await repository_orders.get_order_by_id(order_id, db)
+
+    if order is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    await repository_orders.change_order_status(order.id, update_data, db)
+
+    await delete_cache_in_redis()
+
+    return {"message": f"Status of the Order №{order_id} updated to '{update_data.new_status.value}'"}
