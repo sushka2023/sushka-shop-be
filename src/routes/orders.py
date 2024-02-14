@@ -341,35 +341,6 @@ async def create_order_anonym_user(
     return new_order_anonym_user
 
 
-@router.put("/confirm_order",
-            response_model=OrderMessageResponse,
-            dependencies=[Depends(allowed_operation_admin_moderator)])
-async def confirm_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
-    """
-    The confirm_order function confirms an order.
-
-    Args:
-        order: OrderConfirmModel: Get the id of the order to confirm and changed status of field confirmation_manager
-        db: Session: Access the database
-
-    Returns:
-        Message that the order was confirmed successfully
-    """
-    order = await repository_orders.get_order_by_id(order.id, db)
-
-    if order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    if order.confirmation_manager:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
-
-    await repository_orders.confirm_order(order.id, db)
-
-    await delete_cache_in_redis()
-
-    return {"message": "Order confirmed successfully"}
-
-
 @router.put("/confirm_payment_of_order",
             response_model=OrderMessageResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])

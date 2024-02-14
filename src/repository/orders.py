@@ -250,18 +250,6 @@ async def create_order_anonym_user(
     return order_anon_user
 
 
-async def confirm_order(order_id: int, db: Session) -> Order | None:
-    """Confirmation of user order by admin and changing order status"""
-
-    order = await get_order_by_id(order_id=order_id, db=db)
-    if order and order.confirmation_manager is False:
-        order.confirmation_manager = True
-        order.status_order = OrdersStatus.in_processing
-        db.commit()
-        return order
-    return None
-
-
 async def confirm_payment_of_order(order_id: int, db: Session) -> Order | None:
     """Confirmation of payment of order by admin or moderator"""
 
@@ -279,6 +267,7 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
     order = await get_order_by_id(order_id=order_id, db=db)
     if order:
         order.status_order = update_data.new_status
+        order.confirmation_manager = True
         db.commit()
         return order
     return None
