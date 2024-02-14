@@ -178,40 +178,6 @@ async def get_order_by_id_for_current_user(
     return order
 
 
-@router.get("/all_auth_users_for_crm", response_model=list[OrderResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator)])
-async def get_orders_auth_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
-    """
-    The function returns a list of all orders in the database.
-
-    Args:
-        limit: int: Limit the number of orders returned
-        offset: int: Specify the offset of the first order to be returned
-        db: Session: Access the database
-
-    Returns:
-        A list of orders
-    """
-    return await repository_orders.get_orders_auth_user_for_crm(limit, offset, db)
-
-
-@router.get("/all_anonym_users_for_crm", response_model=list[OrderAnonymUserResponse],
-            dependencies=[Depends(allowed_operation_admin_moderator)])
-async def get_orders_anonym_users_for_crm(limit: int, offset: int, db: Session = Depends(get_db)):
-    """
-    The function returns a list of all orders in the database.
-
-    Args:
-        limit: int: Limit the number of orders returned
-        offset: int: Specify the offset of the first order to be returned
-        db: Session: Access the database
-
-    Returns:
-        A list of orders
-    """
-    return await repository_orders.get_orders_anonym_user_for_crm(limit, offset, db)
-
-
 @router.post("/create_for_auth_user",
              response_model=OrderResponse,
              status_code=status.HTTP_201_CREATED,

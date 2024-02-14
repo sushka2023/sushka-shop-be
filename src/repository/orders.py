@@ -72,26 +72,6 @@ async def get_orders_by_auth_user(
     )
 
 
-async def get_orders_auth_user_for_crm(
-        limit: int, offset: int, db: Session
-) -> list[Order]:
-    return (
-        db.query(Order).filter(Order.is_authenticated)
-        .order_by(desc(Order.created_at))
-        .limit(limit).offset(offset).all()
-    )
-
-
-async def get_orders_anonym_user_for_crm(
-        limit: int, offset: int, db: Session
-) -> list[Order]:
-    return (
-        db.query(Order).filter(Order.is_authenticated == False, Order.is_created == True)
-        .order_by(desc(Order.created_at))
-        .limit(limit).offset(offset).all()
-    )
-
-
 async def get_auth_user_with_basket_and_items(user_id: int, db: Session) -> User:
     user = (
         db.query(User)
