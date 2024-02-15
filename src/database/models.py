@@ -273,7 +273,6 @@ class Order(Base, UpdateFromDictMixin):
     full_name_another_recipient = Column(String(255), nullable=True)
     phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
-    is_created = Column(Boolean, default=False)
     comment = Column(String(500), nullable=True)
 
 
