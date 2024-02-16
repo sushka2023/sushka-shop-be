@@ -1,5 +1,6 @@
 from typing import List, Optional, Type
 
+from fastapi import HTTPException, status
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 
@@ -15,6 +16,12 @@ async def create(
         quantity: int,
         price_id_by_the_user: int
 ):
+    if quantity <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid quantity. Product quantity must be greater than 0."
+        )
+
     new_basket_item = BasketItem(
         basket_id=basket_id,
         product_id=product_id,
