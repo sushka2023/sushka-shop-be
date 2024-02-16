@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
@@ -17,9 +16,8 @@ from src.database.models import (
 from src.schemas.orders import (
     OrderModel,
     OrderAnonymUserModel,
-    OrderItemsModel,
     UpdateOrderStatus,
-    OrderCommentModel
+    OrderCommentModel,
 )
 
 from src.services.orders import (
@@ -36,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_order_by_id(order_id: int, db: Session) -> Order | None:
-    return db.query(Order).filter(Order.id == order_id, Order.is_created == True).first()
+    return db.query(Order).filter(Order.id == order_id).first()
 
 
 async def get_order_by_id_for_current_user(
@@ -126,7 +124,6 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         ordered_products=ordered_products
     )
     order.is_authenticated = True
-    order.is_created = True
 
     db.add(order)
     db.commit()
@@ -137,117 +134,58 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
     return order
 
 
-async def create_order_number_anon_user(db: Session) -> Order:
-    new_order = Order()
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-    return new_order
-
-
-async def get_order_anon_user_by_id(order_id: int, db: Session) -> Order | None:
-    return db.query(Order).filter(
-        Order.id == order_id,
-        Order.is_authenticated == False,
-        Order.is_created == False
-    ).first()
-
-
-async def add_items_to_order_anon_user(
-        order_id: int, product_id: int, price_id: int, quantity: int, db: Session
-) -> OrderedProduct:
-    order_anon_user = await get_order_anon_user_by_id(order_id=order_id, db=db)
-
-    new_order_item = OrderedProduct(
-        order_id=order_anon_user.id,
-        product_id=product_id,
-        price_id=price_id,
-        quantity=quantity,
-    )
-    db.add(new_order_item)
-    db.commit()
-    db.refresh(new_order_item)
-    return new_order_item
-
-
-async def get_existing_order_item(
-        order_id: int, product_id: int, price_id: int, db: Session
-) -> Optional[OrderedProduct]:
-    return db.query(OrderedProduct).filter(
-        OrderedProduct.order_id == order_id,
-        OrderedProduct.product_id == product_id,
-        OrderedProduct.price_id == price_id,
-    ).first()
-
-
-async def update_quantity_item(body: OrderItemsModel, order_id: int, db: Session):
-    existing_order_item = await get_existing_order_item(order_id, body.product_id, body.price_id, db)
-
-    if existing_order_item:
-        existing_order_item.quantity += body.quantity
-        db.commit()
-        db.refresh(existing_order_item)
-        return existing_order_item
-
-
-async def get_order_item(
-        order_id: int, product_id: int, price_id: int, db: Session
-) -> OrderedProduct | None:
-    query = db.query(OrderedProduct).filter(
-        OrderedProduct.order_id == order_id,
-        OrderedProduct.product_id == product_id,
-        OrderedProduct.price_id == price_id
-    )
-
-    return query.first()
-
-
-async def get_order_items(order_id: int, db: Session) -> list[OrderedProduct]:
-    return db.query(OrderedProduct).filter(OrderedProduct.order_id == order_id)
-
-
-async def create_order_anonym_user(
-        order_data: OrderAnonymUserModel, order_id: str, db: Session
-):
+async def create_order_anonym_user(data: OrderAnonymUserModel, db: Session):
     """Create an order of the anonym user"""
 
-    order_anon_user = await get_order_anon_user_by_id(order_id=int(order_id), db=db)
-
-    if not order_anon_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    total_cost_order_anon_user = (
-        await calculate_basket_total_cost_for_anonym_user(order_id=order_anon_user.id, db=db)
-    )
-
-    order_items = await get_order_items(order_id=order_anon_user.id, db=db)
-
-    ordered_products = []
-    for order_item in order_items:
-        selected_price = await repository_prices.price_by_product_id_and_price_id(
-            order_item.product_id, order_item.price_id, db
-        )
-
-        if selected_price:
-            order_item.prices = selected_price
-
-        ordered_products.append(order_item)
-
     try:
-        validate_phone_number(order_data.phone_number_anon_user)
-        validate_phone_number(order_data.phone_number_another_recipient)
+        validate_phone_number(data.phone_number_anon_user)
+        validate_phone_number(data.phone_number_another_recipient)
     except ValueError as ve:
         logger.error(f"Validation error: {str(ve)}")
         return JSONResponse(content={"error": str(ve)}, status_code=422)
 
-    order_anon_user.update_from_dict(order_data.dict())
-    order_anon_user.price_order = total_cost_order_anon_user
-    order_anon_user.ordered_products = ordered_products
-    order_anon_user.is_created = True
+    order_data = data.dict()
+    ordered_products_data = order_data.pop("ordered_products", [])
+
+    for product_data in ordered_products_data:
+        product_id = product_data.get("product_id")
+        price_id = product_data.get("price_id")
+        quantity = product_data.get("quantity", 0)
+
+        prise = await repository_prices.price_by_product_id_and_price_id(product_id, price_id, db)
+
+        if not prise:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+        if quantity <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid quantity. Product quantity must be greater than 0"
+            )
+
+    order = Order(**order_data)
+
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+
+    for product_data in ordered_products_data:
+        product = OrderedProduct(
+            product_id=product_data.get("product_id"),
+            price_id=product_data.get("price_id"),
+            quantity=product_data.get("quantity"),
+            order_id=order.id
+        )
+        db.add(product)
 
     db.commit()
 
-    return order_anon_user
+    total_cost_order = await calculate_basket_total_cost_for_anonym_user(order.id, db)
+
+    order.price_order = total_cost_order
+    db.commit()
+
+    return order
 
 
 async def confirm_payment_of_order(order_id: int, db: Session) -> Order | None:
@@ -261,7 +199,9 @@ async def confirm_payment_of_order(order_id: int, db: Session) -> Order | None:
     return None
 
 
-async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db: Session) -> Order | None:
+async def change_order_status(
+        order_id: int, update_data: UpdateOrderStatus, db: Session
+) -> Order | None:
     """Change status of order by admin or moderator"""
 
     order = await get_order_by_id(order_id=order_id, db=db)
@@ -276,7 +216,6 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
 async def get_orders_all_for_crm(limit: int, offset: int, db: Session) -> list[Order]:
     return (
         db.query(Order)
-        .filter(Order.is_created == True)
         .order_by(Order.status_order, desc(Order.created_at))
         .limit(limit)
         .offset(offset)
@@ -289,7 +228,7 @@ async def get_orders_all_for_crm_with_status(
 ) -> list[Order]:
     return (
         db.query(Order)
-        .filter(Order.is_created == True, Order.status_order == order_status)
+        .filter(Order.status_order == order_status)
         .order_by(desc(Order.created_at))
         .limit(limit)
         .offset(offset)
@@ -302,9 +241,6 @@ async def add_comment_to_order(order_id: int, body: OrderCommentModel, db: Sessi
 
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    if order.comment:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
     order.comment = body.comment
     db.commit()
