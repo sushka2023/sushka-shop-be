@@ -1,15 +1,12 @@
 import pickle
 
-from fastapi import APIRouter, Depends, status, HTTPException, Header
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User, OrdersStatus
 from src.repository import orders as repository_orders
-from src.repository import products as repository_products
-from src.repository import prices as repository_prices
-from src.schemas.images import ImageResponse
 from src.schemas.orders import (
     OrderResponse,
     OrderModel,
@@ -17,17 +14,13 @@ from src.schemas.orders import (
     OrderAnonymUserResponse,
     OrderMessageResponse,
     OrderAnonymUserModel,
-    OrderedItemsResponse,
-    OrderCreateResponse,
-    OrderItemsModel,
     UpdateOrderStatus,
     OrdersCRMResponse,
     OrderCommentModel,
 )
-from src.schemas.product import ProductResponseForOrder
+
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
-from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 
@@ -40,10 +33,65 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
+@router.post("/create_for_auth_user",
+             response_model=OrderResponse,
+             status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def create_order_auth_user(
+        order_data: OrderModel,
+        current_user: User = Depends(auth_service.get_current_user),
+        db: Session = Depends(get_db),
+):
+    """
+    The create of order function creates a new order in the database.
+
+    Args:
+        order_data: OrderModel: Validate the request body
+        db: Session: Pass the database session to the repository layer
+        current_user (User): the current user attempting to create the order
+
+    Returns:
+        An order object
+    """
+
+    new_order = await repository_orders.create_order_auth_user(order_data, current_user.id, db)
+
+    await delete_cache_in_redis()
+
+    return new_order
+
+
+@router.post("/create_for_anonym_user",
+             response_model=OrderAnonymUserResponse,
+             status_code=status.HTTP_201_CREATED)
+async def create_order_anonym_user(
+        order_data: OrderAnonymUserModel,
+        db: Session = Depends(get_db),
+):
+    """
+    The create of order function creates a new order in the database.
+
+    Args:
+        order_data: OrderAnonymUserModel: Validate the request body
+        db: Session: Pass the database session to the repository layer
+
+    Returns:
+        An order object
+    """
+
+    new_order_anonym_user = (
+        await repository_orders.create_order_anonym_user(order_data, db)
+    )
+
+    await delete_cache_in_redis()
+
+    return new_order_anonym_user
+
+
 @router.get("/all_for_crm",
             response_model=list[OrdersCRMResponse],
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def orders_for_crm(
+async def get_orders_for_crm(
         limit: int, offset: int, order_status: OrdersStatus = None, db: Session = Depends(get_db)
 ):
 
@@ -109,9 +157,9 @@ async def get_order_by_id_for_crm(
     return order
 
 
-@router.get(
-    "/for_current_user", response_model=list[OrderResponse],
-    dependencies=[Depends(allowed_operation_admin_moderator_user)])
+@router.get("/for_current_user",
+            response_model=list[OrderResponse],
+            dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_orders_current_user(
         limit: int,
         offset: int,
@@ -151,9 +199,9 @@ async def get_orders_current_user(
     return orders
 
 
-@router.get(
-    "/{order_id}/for_current_user", response_model=OrderResponse,
-    dependencies=[Depends(allowed_operation_admin_moderator_user)])
+@router.get("/{order_id}/for_current_user",
+            response_model=OrderResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_order_by_id_for_current_user(
         order_id: int,
         current_user: User = Depends(auth_service.get_current_user),
@@ -178,184 +226,21 @@ async def get_order_by_id_for_current_user(
     return order
 
 
-@router.post("/create_for_auth_user",
-             response_model=OrderResponse,
-             status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(allowed_operation_admin_moderator_user)])
-async def create_order_auth_user(
-        order_data: OrderModel,
-        current_user: User = Depends(auth_service.get_current_user),
-        db: Session = Depends(get_db),
-):
-    """
-        The create of order function creates a new order in the database.
-
-        Args:
-            order_data: OrderModel: Validate the request body
-            db: Session: Pass the database session to the repository layer
-            current_user (User): the current user attempting to create the order
-
-        Returns:
-            An order object
-        """
-
-    new_order = await repository_orders.create_order_auth_user(order_data, current_user.id, db)
-
-    await delete_cache_in_redis()
-
-    return new_order
-
-
-@router.post("/create_order_number_anon_user",
-             response_model=OrderCreateResponse,
-             status_code=status.HTTP_201_CREATED)
-async def create_order_number_anon_user(db: Session = Depends(get_db)):
-    """
-    The create function creates a new order number for an anonym user.
-
-    Args:
-        db: Session: Access the database
-
-    Returns:
-        An order object
-    """
-    await delete_cache_in_redis()
-
-    return await repository_orders.create_order_number_anon_user(db=db)
-
-
-@router.post("/add_items_to_order_anon_user",
-             response_model=OrderedItemsResponse,
-             status_code=status.HTTP_201_CREATED)
-async def add_items_to_order_anon_user(
-        body: OrderItemsModel, order_id: str = Header(...),  db: Session = Depends(get_db)
-):
-    """
-    The add_items_to_order_anon_user function adds a product to the order of anonym user.
-
-    Args:
-        body: OrderItemsModel: Get the product_id from the request body
-        order_id: Order: unique identity order of anonym user
-        db: Session: Create a database session
-
-    Returns:
-        An ordered products object
-    """
-    order_anon_user = await repository_orders.get_order_anon_user_by_id(order_id=int(order_id), db=db)
-    if not order_anon_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    product = await repository_products.product_by_id(body.product_id, db)
-    if not product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-    selected_price = await repository_prices.price_by_product_id_and_price_id(
-        body.product_id, body.price_id, db
-    )
-
-    if not selected_price:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid price id")
-
-    order_item = await repository_orders.get_order_item(
-        order_id=order_anon_user.id, product_id=product.id, price_id=selected_price.id, db=db
-    )
-
-    add_product_to_order = None
-
-    if order_item:
-        add_product_to_order = await repository_orders.update_quantity_item(body, order_anon_user.id, db)
-    elif not order_item:
-        add_product_to_order = await repository_orders.add_items_to_order_anon_user(
-            db=db,
-            order_id=order_anon_user.id,
-            product_id=body.product_id,
-            quantity=body.quantity,
-            price_id=body.price_id,
-        )
-
-    if add_product_to_order:
-        product = await repository_products.product_by_id(add_product_to_order.product_id, db)
-
-        exist_product = ProductResponseForOrder(id=product.id,
-                                                name=product.name,
-                                                description=product.description,
-                                                product_category_id=product.product_category_id,
-                                                new_product=product.new_product,
-                                                is_popular=product.is_popular,
-                                                is_favorite=product.is_favorite,
-                                                product_status=product.product_status,
-                                                sub_categories=product.sub_categories,
-                                                images=[ImageResponse(id=item.id,
-                                                                      product_id=item.product_id,
-                                                                      image_url=CloudImage.get_transformation_image(
-                                                                       item.image_url, "product"
-                                                                      ),
-                                                                      description=item.description,
-                                                                      image_type=item.image_type,
-                                                                      main_image=item.main_image)
-                                                        for item in product.images],
-                                                )
-
-        add_product_to_order = OrderedItemsResponse(id=add_product_to_order.id,
-                                                    order_id=add_product_to_order.order_id,
-                                                    product_id=add_product_to_order.product_id,
-                                                    product=exist_product,
-                                                    price_id=add_product_to_order.price_id,
-                                                    prices=selected_price,
-                                                    quantity=add_product_to_order.quantity,)
-
-        return add_product_to_order
-
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-
-
-@router.post("/create_order_anonym_user",
-             response_model=OrderAnonymUserResponse,
-             status_code=status.HTTP_201_CREATED)
-async def create_order_anonym_user(
-        order_data: OrderAnonymUserModel,
-        order_id: str = Header(...),
-        db: Session = Depends(get_db),
-):
-    """
-        The create of order function creates a new order in the database.
-
-        Args:
-            order_data: OrderAnonymUserModel: Validate the request body
-            db: Session: Pass the database session to the repository layer
-            order_id: Order: unique identity order of anonym user
-
-        Returns:
-            An order object
-        """
-
-    order = await repository_orders.get_order_anon_user_by_id(order_id=int(order_id), db=db)
-
-    new_order_anonym_user = (
-        await repository_orders.create_order_anonym_user(order_data, str(order.id), db)
-    )
-
-    await delete_cache_in_redis()
-
-    return new_order_anonym_user
-
-
 @router.put("/confirm_payment_of_order",
             response_model=OrderMessageResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def confirm_payment_of_order(order: OrderConfirmModel, db: Session = Depends(get_db)):
+async def confirm_payment_of_order(order_data: OrderConfirmModel, db: Session = Depends(get_db)):
     """
     The confirm_payment_of_order function confirms a payment of order.
 
     Args:
-        order: OrderConfirmModel: Get the id of the order to confirm the payment of the orders'
+        order_data: OrderConfirmModel: Get the id of the order to confirm the payment of the orders'
         db: Session: Access the database
 
     Returns:
         Message that the payment of the order was confirmed successfully
     """
-    order = await repository_orders.get_order_by_id(order.id, db)
+    order = await repository_orders.get_order_by_id(order_data.id, db)
 
     if order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
