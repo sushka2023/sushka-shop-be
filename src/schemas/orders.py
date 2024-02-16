@@ -9,6 +9,12 @@ from src.schemas.product import ProductResponseForOrder
 from src.schemas.users import UserResponseForOrder
 
 
+class OrderedProductModel(BaseModel):
+    product_id: int
+    price_id: Optional[int]
+    quantity: int = 1
+
+
 class OrderedProductResponse(BaseModel):
     id: int
     product_id: int
@@ -59,32 +65,6 @@ class OrderMessageResponse(BaseModel):
     message: str
 
 
-class OrderCreateResponse(BaseModel):
-    id: int
-    is_authenticated: bool
-
-    class Config:
-        orm_mode = True
-
-
-class OrderItemsModel(BaseModel):
-    product_id: int
-    price_id: Optional[int]
-    quantity: int = 1
-
-
-class OrderedItemsResponse(BaseModel):
-    order_id: int
-    product_id: int
-    product: ProductResponseForOrder
-    price_id: int
-    prices: PriceResponse
-    quantity: int
-
-    class Config:
-        orm_mode = True
-
-
 class OrderAnonymUserModel(BaseModel):
     first_name_anon_user: str
     last_name_anon_user: str
@@ -106,6 +86,7 @@ class OrderAnonymUserModel(BaseModel):
     post_code: Optional[str] = ""
     payment_type: PaymentsTypes
     call_manager: bool
+    ordered_products: list[OrderedProductModel]
 
 
 class OrderAnonymUserResponse(BaseModel):
@@ -135,7 +116,6 @@ class OrderAnonymUserResponse(BaseModel):
     confirmation_pay: bool
     call_manager: bool
     is_authenticated: bool
-    is_created: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
@@ -178,7 +158,6 @@ class OrdersCRMResponse(BaseModel):
     confirmation_pay: bool
     call_manager: bool
     is_authenticated: bool
-    is_created: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
 
