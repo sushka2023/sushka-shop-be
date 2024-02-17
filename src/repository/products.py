@@ -4,7 +4,7 @@ from sqlalchemy import desc, asc, select, exists, and_, func
 from sqlalchemy.orm import Session, joinedload, aliased
 
 from src.database.models import Product, Price, ProductCategory, ProductStatus
-from src.schemas.product import ProductWithTotalResponse
+from src.schemas.product import ProductWithTotalResponse, ProductModel
 from src.services.products import product_with_prices_and_images
 
 
@@ -22,6 +22,13 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     except Exception as ex:
         return None
     return product_
+
+
+async def product_by_id_models_db(body: int, db: Session) -> Product | None:
+    product = db.query(Product).filter_by(id=body).first()
+    if not product:
+        return None
+    return product
 
 
 async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
@@ -906,3 +913,19 @@ async def unarchive_product(body: int, db: Session):
         db.commit()
         return product
     return None
+
+
+async def edit_product(body: ProductModel, product_id: int, db: Session) -> Product:
+
+    product = await product_by_id_models_db(product_id, db)
+
+    product.name = body.name
+    product.description = body.description
+    product.product_category_id = body.product_category_id
+    product.new_product = body.new_product
+    product.is_popular = body.is_popular
+    product.product_status = body.product_status
+    db.commit()
+    db.refresh(product)
+
+    return product

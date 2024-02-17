@@ -75,3 +75,17 @@ async def insert_sub_category_for_product(product_id: int, sub_categories_ids: L
             connection.execute(insert_query, {"product_id": product_id, "subcategory_id": sub_id})
             connection.commit()
     return None
+
+
+async def deleted_all_sub_category_for_product(product_id: int):
+    # SQL-запит для вставки даних
+    delete_query = text(
+        "DELETE FROM product_subcategory_association "
+        "WHERE product_id = :product_id"
+    )
+
+    with engine.connect() as connection:
+        connection.execute(delete_query, {"product_id": product_id})
+        connection.commit()
+
+    return None

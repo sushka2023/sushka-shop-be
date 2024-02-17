@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.database.caching import get_redis
-from src.database.models import Role, ProductStatus
+from src.database.models import Role, ProductStatus, Product
 from src.repository import products as repository_products
 from src.repository.prices import price_by_product
-from src.repository.product_sub_categories import insert_sub_category_for_product
+from src.repository.product_sub_categories import insert_sub_category_for_product, deleted_all_sub_category_for_product
 from src.repository.products import product_by_id, get_products_all_for_crm
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse
@@ -165,7 +165,6 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     :param body: ProductModel: Validate the request body
     :param db: Session: Get the database session
     :return: A productresponse object
-    :doc-author: Trelent
     """
     product = await repository_products.product_by_name(body.name, db)
     if product:
@@ -189,6 +188,7 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
                                   new_product=new_product.new_product,
                                   is_popular=new_product.is_popular,
                                   is_favorite=new_product.is_favorite,
+                                  is_deleted=new_product.is_deleted,
                                   product_status=new_product.product_status,
                                   sub_categories=new_product.subcategories,
                                   images=[ImageResponse(id=item.id,
@@ -203,6 +203,56 @@ async def create_product(body: ProductModel, db: Session = Depends(get_db)):
     await delete_cache_in_redis()
 
     return new_product
+
+
+@router.patch("/edit/{product_id}",
+              response_model=ProductResponse,
+              dependencies=[Depends(allowed_operation_admin_moderator)])
+async def edit_product(product_id: str, body: ProductModel, db: Session = Depends(get_db)):
+    try:
+        product_id = int(product_id)
+    except Exception as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"product_id is not int: {ex}")
+
+    product = await repository_products.product_by_id(product_id, db)
+
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    sub_categories_ids = body.sub_categories_id if body.sub_categories_id else []
+
+    edit_product_ = await repository_products.edit_product(body, product_id, db)
+
+    # deleted existing sub category product
+    await deleted_all_sub_category_for_product(product.id)
+
+    # add sub_categories for product
+    await insert_sub_category_for_product(edit_product_.id, sub_categories_ids, db)
+
+    db.refresh(edit_product_)
+
+    edit_product_ = ProductResponse(id=edit_product_.id,
+                                    name=edit_product_.name,
+                                    description=edit_product_.description,
+                                    product_category_id=edit_product_.product_category_id,
+                                    new_product=edit_product_.new_product,
+                                    is_popular=edit_product_.is_popular,
+                                    is_favorite=edit_product_.is_favorite,
+                                    is_deleted=edit_product_.is_deleted,
+                                    product_status=edit_product_.product_status,
+                                    sub_categories=edit_product_.subcategories,
+                                    images=[ImageResponse(id=item.id,
+                                                          product_id=item.product_id,
+                                                          image_url=CloudImage.get_transformation_image(item.image_url,
+                                                                                                      "product"),
+                                                          description=item.description,
+                                                          image_type=item.image_type,
+                                                          main_image=item.main_image) for item in edit_product_.images],
+                                    prices=await price_by_product(edit_product_, db))
+
+    await delete_cache_in_redis()
+
+    return edit_product_
 
 
 @router.put("/archive",
