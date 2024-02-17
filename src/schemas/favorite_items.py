@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from src.schemas.product import ProductResponse
+
 
 class FavoriteItemsModel(BaseModel):
     product_id: int
@@ -8,7 +10,7 @@ class FavoriteItemsModel(BaseModel):
 class FavoriteItemsResponse(BaseModel):
     id: int
     favorite_id: int
-    product_id: int
+    product: ProductResponse
 
     class Config:
         orm_mode = True
