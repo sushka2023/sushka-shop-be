@@ -12,7 +12,8 @@ from src.repository.prices import price_by_product
 from src.repository.product_sub_categories import insert_sub_category_for_product, deleted_all_sub_category_for_product
 from src.repository.products import product_by_id, get_products_all_for_crm
 from src.schemas.images import ImageResponse
-from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse
+from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse, \
+    ProductArchiveResponse
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.cloud_image import CloudImage
 from src.services.roles import RoleAccess
@@ -256,7 +257,7 @@ async def edit_product(product_id: str, body: ProductModel, db: Session = Depend
 
 
 @router.put("/archive",
-            response_model=ProductResponse,
+            response_model=ProductArchiveResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
     """
@@ -279,13 +280,19 @@ async def archive_product(body: ProductArchiveModel, db: Session = Depends(get_d
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     archive_prod = await repository_products.archive_product(body.id, db)
 
+    archive_prod = ProductArchiveResponse(
+        id=archive_prod.id,
+        is_deleted=archive_prod.is_deleted,
+        product_status=archive_prod.product_status
+    )
+
     await delete_cache_in_redis()
 
     return archive_prod
 
 
 @router.put("/unarchive",
-            response_model=ProductResponse,
+            response_model=ProductArchiveResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get_db)):
     """
@@ -305,6 +312,12 @@ async def unarchive_product(body: ProductArchiveModel, db: Session = Depends(get
     if product.is_deleted is False:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
     return_archive_prod = await repository_products.unarchive_product(body.id, db)
+
+    return_archive_prod = ProductArchiveResponse(
+        id=return_archive_prod.id,
+        is_deleted=return_archive_prod.is_deleted,
+        product_status=return_archive_prod.product_status
+    )
 
     await delete_cache_in_redis()
 

@@ -40,6 +40,15 @@ class ProductArchiveModel(BaseModel):
     id: int
 
 
+class ProductArchiveResponse(BaseModel):
+    id: int
+    is_deleted: bool
+    product_status: ProductStatus
+
+    class Config:
+        orm_mode = True
+
+
 class ProductWithTotalResponse(BaseModel):
     products: List[ProductResponse]
     total_count: int
