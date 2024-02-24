@@ -20,6 +20,8 @@ from src.schemas.orders import (
     OrderCommentModel,
     OrdersCRMWithTotalCountResponse,
     OrdersCRMResponse,
+    OrdersCurrentUserWithTotalCountResponse,
+    OrderResponse,
 )
 
 from src.services.orders import (
@@ -52,8 +54,8 @@ async def get_order_by_id_for_current_user(
 
 async def get_orders_by_auth_user(
         limit: int, offset: int, user: User, db: Session
-) -> list[Order]:
-    return (
+) -> OrdersCurrentUserWithTotalCountResponse | None:
+    subquery = (
         db.query(Order)
         .options(
             selectinload(Order.user),
@@ -68,9 +70,19 @@ async def get_orders_by_auth_user(
         .filter(Price.id == OrderedProduct.price_id)
         .filter(Order.user_id == user.id)
         .order_by(desc(Order.created_at))
-        .limit(limit).offset(offset)
-        .all()
     )
+    orders = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
+
+    orders_data = [OrderResponse(**order.__dict__) for order in orders]
+
+    response_data = OrdersCurrentUserWithTotalCountResponse(
+        orders=orders_data,
+        total_count=total_count
+    )
+
+    return response_data
 
 
 async def get_auth_user_with_basket_and_items(user_id: int, db: Session) -> User:
