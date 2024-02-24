@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
 
@@ -167,3 +167,13 @@ class OrdersCRMResponse(BaseModel):
 
 class OrderCommentModel(BaseModel):
     comment: str
+
+
+class OrdersCurrentUserWithTotalCountResponse(BaseModel):
+    orders: list[OrderResponse]
+    total_count: int
+
+
+class OrdersCRMWithTotalCountResponse(BaseModel):
+    orders: list[OrdersCRMResponse] = []
+    total_count: int
