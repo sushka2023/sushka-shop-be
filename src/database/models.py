@@ -267,7 +267,7 @@ class Order(Base, UpdateFromDictMixin):
     post_code = Column(String(255), nullable=True)
     first_name_anon_user = Column(String(255), nullable=True)
     last_name_anon_user = Column(String(255), nullable=True)
-    email_anon_user = Column(String(150), unique=True, nullable=True)
+    email_anon_user = Column(String(150), nullable=True)
     phone_number_anon_user = Column(String(50), nullable=True)
     is_another_recipient = Column(Boolean, default=False)
     full_name_another_recipient = Column(String(255), nullable=True)
