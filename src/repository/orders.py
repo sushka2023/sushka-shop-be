@@ -11,7 +11,7 @@ from src.database.models import (
     Order,
     OrdersStatus,
     OrderedProduct,
-    Price,
+    Price
 )
 from src.schemas.orders import (
     OrderModel,
@@ -27,6 +27,7 @@ from src.services.orders import (
     move_product_to_ordered,
 )
 from src.repository import prices as repository_prices
+from src.repository import products as repository_products
 from src.services.validation import validate_phone_number
 from src.services.exception_detail import ExDetail as Ex
 
@@ -105,6 +106,12 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
 
         ordered_products.append(ordered_product)
 
+    if len(ordered_products) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your shopping cart is still empty. Order cannot be without products"
+        )
+
     try:
         validate_phone_number(order_data.phone_number_another_recipient)
     except ValueError as ve:
@@ -151,6 +158,11 @@ async def create_order_anonym_user(data: OrderAnonymUserModel, db: Session):
         product_id = product_data.get("product_id")
         price_id = product_data.get("price_id")
         quantity = product_data.get("quantity", 0)
+
+        product = await repository_products.product_by_id_and_status(product_id=product_id, db=db)
+
+        if not product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
         prise = await repository_prices.price_by_product_id_and_price_id(product_id, price_id, db)
 
