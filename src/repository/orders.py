@@ -18,6 +18,8 @@ from src.schemas.orders import (
     OrderAnonymUserModel,
     UpdateOrderStatus,
     OrderCommentModel,
+    OrdersCRMWithTotalCountResponse,
+    OrdersCRMResponse,
 )
 
 from src.services.orders import (
@@ -225,27 +227,47 @@ async def change_order_status(
     return None
 
 
-async def get_orders_all_for_crm(limit: int, offset: int, db: Session) -> list[Order]:
-    return (
+async def get_orders_all_for_crm(
+        limit: int, offset: int, db: Session
+) -> OrdersCRMWithTotalCountResponse | None:
+    subquery = (
         db.query(Order)
         .order_by(Order.status_order, desc(Order.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+    orders = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
+
+    orders_data = [OrdersCRMResponse(**order.__dict__) for order in orders]
+
+    response_data = OrdersCRMWithTotalCountResponse(
+        orders=orders_data,
+        total_count=total_count
+    )
+
+    return response_data
 
 
 async def get_orders_all_for_crm_with_status(
         limit: int, offset: int, order_status: OrdersStatus, db: Session
-) -> list[Order]:
-    return (
+) -> OrdersCRMWithTotalCountResponse | None:
+    subquery = (
         db.query(Order)
         .filter(Order.status_order == order_status)
         .order_by(desc(Order.created_at))
-        .limit(limit)
-        .offset(offset)
-        .all()
     )
+    orders = subquery.limit(limit).offset(offset).all()
+
+    total_count = subquery.count()
+
+    orders_data = [OrdersCRMResponse(**order.__dict__) for order in orders]
+
+    response_data = OrdersCRMWithTotalCountResponse(
+        orders=orders_data,
+        total_count=total_count
+    )
+
+    return response_data
 
 
 async def add_comment_to_order(order_id: int, body: OrderCommentModel, db: Session):
