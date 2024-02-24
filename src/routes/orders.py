@@ -17,6 +17,7 @@ from src.schemas.orders import (
     UpdateOrderStatus,
     OrdersCRMResponse,
     OrderCommentModel,
+    OrdersCRMWithTotalCountResponse,
 )
 
 from src.services.auth import auth_service
@@ -89,7 +90,7 @@ async def create_order_anonym_user(
 
 
 @router.get("/all_for_crm",
-            response_model=list[OrdersCRMResponse],
+            response_model=OrdersCRMWithTotalCountResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
 async def get_orders_for_crm(
         limit: int, offset: int, order_status: OrdersStatus = None, db: Session = Depends(get_db)
