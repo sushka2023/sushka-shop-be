@@ -1,13 +1,16 @@
+import pickle
 from typing import List
 
-from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
+from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User
 from src.repository import favorite_items as repository_favorite_items
 from src.repository import favorites as repository_favorites
 from src.repository import products as repository_products
+from src.repository.products import product_by_id
 from src.schemas.favorite_items import FavoriteItemsResponse, FavoriteItemsModel
 from src.services.auth import auth_service
 from src.services.roles import RoleAccess
@@ -25,22 +28,48 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
             dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def favorite_items(current_user: User = Depends(auth_service.get_current_user),
                          db: Session = Depends(get_db)):
-    """
-    The favorite_items function returns a list of favorite items for the current user.
-        The function takes in a User object and Session object as parameters, which are used to query the database.
-        If no favorite items are found, an HTTP 404 error is raised.
 
-    Args:
-        current_user: User: Get the current user
-        db: Session: Get the database session
+    # Redis client
+    redis_client = get_redis()
 
-    Returns:
-        A list of favorite items
-    """
-    favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
-    if favorite_items_ is None:
+    # We collect the key for caching
+    key = f"favorite_items_current_user_id:{current_user.id}"
+
+    cached_items = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_items = redis_client.get(key)
+
+    if not cached_items:
+        # The data is not found in the cache, we get it from the database
+        favorite_items_ = await repository_favorite_items.favorite_items(current_user, db)
+
+        if favorite_items_ is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+        items = list()
+
+        for i in favorite_items_:
+            product = await product_by_id(i.product_id, db)
+            item = FavoriteItemsResponse(id=i.id,
+                                         favorite_id=i.favorite_id,
+                                         product=product)
+            items.append(item)
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(items))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        items = pickle.loads(cached_items)
+
+    if items is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
-    return favorite_items_
+
+    return items
 
 
 @router.post("/add",
@@ -77,6 +106,10 @@ async def add_to_favorites(body: FavoriteItemsModel,
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
 
     add_product_to_favorites = await repository_favorite_items.create(body, favorite, db)
+
+    with get_redis() as redis_cl:
+        redis_cl.delete(f"favorite_items_current_user_id:{current_user.id}")
+
     return add_product_to_favorites
 
 
@@ -109,4 +142,8 @@ async def remove_product(body: FavoriteItemsModel,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
     product_from_fav = await repository_favorite_items.get_f_item_from_product_id(body.product_id, db)  # get product from favorite
     await repository_favorite_items.remove(product_from_fav, db)  # Remove product from favorite
+
+    with get_redis() as redis_cl:
+        redis_cl.delete(f"favorite_items_current_user_id:{current_user.id}")
+
     return None
