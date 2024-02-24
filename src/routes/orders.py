@@ -18,6 +18,7 @@ from src.schemas.orders import (
     OrdersCRMResponse,
     OrderCommentModel,
     OrdersCRMWithTotalCountResponse,
+    OrdersCurrentUserWithTotalCountResponse,
 )
 
 from src.services.auth import auth_service
@@ -159,7 +160,7 @@ async def get_order_by_id_for_crm(
 
 
 @router.get("/for_current_user",
-            response_model=list[OrderResponse],
+            response_model=OrdersCurrentUserWithTotalCountResponse,
             dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def get_orders_current_user(
         limit: int,
