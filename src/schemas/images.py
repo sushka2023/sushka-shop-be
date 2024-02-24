@@ -12,6 +12,10 @@ class ImageModel(BaseModel):
     main_image: Optional[bool]
 
 
+class ImageDeletedModel(BaseModel):
+    id: int
+
+
 class ImageResponse(BaseModel):
     id: int
     product_id: Optional[int]

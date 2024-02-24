@@ -19,6 +19,11 @@ class CloudImage:
     )
 
     @staticmethod
+    def deleted_img_cloudinary(public_id: str):
+        r = cloudinary.uploader.destroy(public_id=public_id, invalidate=True)
+        return r
+
+    @staticmethod
     def generate_name_image():
         name = hashlib.sha256(str(uuid4()).encode('utf-8')).hexdigest()
         return f"sushka_store/{name}"

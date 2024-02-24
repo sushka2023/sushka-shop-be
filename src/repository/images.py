@@ -49,6 +49,11 @@ async def get_image_from_id(image_id: int, user: User, db: Session) -> Image | N
     return image
 
 
+async def get_image_by_id(image_id: int, db: Session) -> Image | None:
+    image = db.query(Image).filter(Image.id == image_id).first()
+    return image
+
+
 async def get_image_from_url(image_url: str, user: User, db: Session) -> Image | None:
     image = db.query(Image).filter(and_(Image.image_url == image_url,
                                         Image.user_id == user.id,
@@ -70,6 +75,12 @@ async def remove(image_id: int, user: User, db: Session) -> Image | None:
         image.is_deleted = True
         db.commit()
     return image
+
+
+async def remove_img(image: Image, db: Session) -> Image | None:
+    db.delete(image)
+    db.commit()
+    return None
 
 
 async def change_description(body: ImageModel, image_id: int, user: User, db: Session) -> Image | None:

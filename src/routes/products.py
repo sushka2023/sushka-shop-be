@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from src.database.db import get_db
 from src.database.caching import get_redis
-from src.database.models import Role, ProductStatus, Product
+from src.database.models import Role, ProductStatus
 from src.repository import products as repository_products
 from src.repository.prices import price_by_product
 from src.repository.product_sub_categories import insert_sub_category_for_product, deleted_all_sub_category_for_product
-from src.repository.products import product_by_id, get_products_all_for_crm
+from src.repository.products import product_by_id
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse, \
     ProductArchiveResponse
