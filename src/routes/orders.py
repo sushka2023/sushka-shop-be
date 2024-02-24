@@ -263,7 +263,7 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
     The change_order_status function changes an order status.
 
     Args:
-        update_data: UpdateOrderStatus: the order status to be changed
+        update_data: UpdateOrderStatus: the order status to be changed (permitted: "new", "in processing", "shipped", "delivered", "cancelled")
         order_id: Get the id of the order to change it status
         db: Session: Access the database
 
