@@ -24,6 +24,14 @@ async def product_by_id(body: int, db: Session) -> Product | None:
     return product_
 
 
+async def product_by_id_and_status(product_id: int, db: Session) -> Product | None:
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.product_status == ProductStatus.activated
+    ).first()
+    return product
+
+
 async def get_products_all_for_crm(limit: int, offset: int, db: Session) -> ProductWithTotalResponse | None:
     subquery = db.query(Product).\
         filter().\

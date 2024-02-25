@@ -239,18 +239,14 @@ class BasketItem(Base):
     price_id_by_the_user = Column(Integer)
 
 
-class Order(Base):
+class Order(Base, UpdateFromDictMixin):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", lazy="joined", back_populates="orders")
-    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
-    anonymous_user = relationship("AnonymousUser", lazy="joined", back_populates="orders")
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
-    basket_anon_user_id = Column(Integer, ForeignKey('basket_anon_users.id'))
-    basket_anon_user = relationship("BasketAnonUser", back_populates="order")
-    price_order = Column(Float, unique=False, nullable=False)
+    price_order = Column(Float, unique=False, nullable=True)
     payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
     created_at = Column('created_at', DateTime, default=func.now())
     confirmation_manager = Column(Boolean, default=False)
@@ -271,9 +267,13 @@ class Order(Base):
     post_code = Column(String(255), nullable=True)
     first_name_anon_user = Column(String(255), nullable=True)
     last_name_anon_user = Column(String(255), nullable=True)
-    email_anon_user = Column(String(150), unique=True, nullable=True)
+    email_anon_user = Column(String(150), nullable=True)
     phone_number_anon_user = Column(String(50), nullable=True)
+    is_another_recipient = Column(Boolean, default=False)
+    full_name_another_recipient = Column(String(255), nullable=True)
+    phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
+    comment = Column(String(500), nullable=True)
 
 
 class OrderedProduct(Base):
@@ -286,34 +286,6 @@ class OrderedProduct(Base):
     order_id = Column(Integer, ForeignKey('orders.id'))
     order = relationship("Order", back_populates="ordered_products")
     quantity = Column(Integer)
-
-
-class AnonymousUser(Base):
-    __tablename__ = 'anonymous_users'
-    id = Column(Integer, primary_key=True)
-    user_anon_id = Column(String(255), unique=True, nullable=False)
-    orders = relationship("Order", back_populates="anonymous_user")
-    basket_anon_user = relationship("BasketAnonUser", back_populates="anonymous_user")
-
-
-class BasketAnonUser(Base):
-    __tablename__ = 'basket_anon_users'
-    id = Column(Integer, primary_key=True)
-    anonymous_user_id = Column(Integer, ForeignKey('anonymous_users.id'))
-    anonymous_user = relationship("AnonymousUser", back_populates="basket_anon_user")
-    basket_items_anon_user = relationship("BasketItemAnonUser", uselist=True, back_populates="basket_anon_user")
-    order = relationship("Order", uselist=False, back_populates="basket_anon_user")
-
-
-class BasketItemAnonUser(Base):
-    __tablename__ = 'basket_item_anon_users'
-    id = Column(Integer, primary_key=True)
-    basket_anon_user_id = Column(Integer, ForeignKey('basket_anon_users.id'))
-    basket_anon_user = relationship("BasketAnonUser", back_populates="basket_items_anon_user")
-    product_id = Column(Integer, ForeignKey('products.id'))
-    product = relationship("Product")
-    quantity = Column(Integer, default=1)
-    price_id_by_anon_user = Column(Integer)
 
 
 class Post(Base):
