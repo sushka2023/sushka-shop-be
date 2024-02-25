@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
 
@@ -7,6 +7,12 @@ from src.database.models import PaymentsTypes, OrdersStatus, PostType
 from src.schemas.price import PriceResponse
 from src.schemas.product import ProductResponseForOrder
 from src.schemas.users import UserResponseForOrder
+
+
+class OrderedProductModel(BaseModel):
+    product_id: int
+    price_id: Optional[int]
+    quantity: int = 1
 
 
 class OrderedProductResponse(BaseModel):
@@ -25,13 +31,18 @@ class OrderedProductResponse(BaseModel):
 class OrderModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
-    is_authenticated: bool
+    is_another_recipient: Optional[bool] = False
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
 
 
 class OrderResponse(BaseModel):
     id: int
     user_id: int
     user: UserResponseForOrder
+    is_another_recipient: Optional[bool]
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     basket_id: int
     price_order: float
     payment_type: PaymentsTypes
@@ -54,156 +65,40 @@ class OrderMessageResponse(BaseModel):
     message: str
 
 
-class OrderAnonymUserNovaPoshtaWarehouseModel(BaseModel):
+class OrderAnonymUserModel(BaseModel):
     first_name_anon_user: str
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: Optional[bool] = False
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: str
-    address_warehouse: str
-    payment_type: PaymentsTypes
-    call_manager: bool
-    is_authenticated: Optional[bool] = False
-
-
-class OrderAnonymUserNovaPoshtaAddressModel(BaseModel):
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    country: Optional[str] = ""
-    city: str
+    address_warehouse: Optional[str] = ""
     area: Optional[str] = ""
     region: Optional[str] = ""
-    street: str
-    house_number: str
+    street: Optional[str] = ""
+    house_number: Optional[str] = ""
     apartment_number: Optional[str] = ""
     floor: Optional[int] = None
+    post_code: Optional[str] = ""
     payment_type: PaymentsTypes
     call_manager: bool
-    is_authenticated: Optional[bool] = False
-
-
-class OrderAnonymUserUkrPoshtaModel(BaseModel):
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    country: Optional[str] = ""
-    city: str
-    area: Optional[str] = ""
-    region: Optional[str] = ""
-    street: str
-    house_number: str
-    apartment_number: Optional[str] = ""
-    floor: Optional[int] = None
-    post_code: str
-    payment_type: PaymentsTypes
-    call_manager: bool
-    is_authenticated: Optional[bool] = False
-
-
-class OrderAnonymUserNovaPoshtaWarehouseResponse(BaseModel):
-    id: int
-    anonymous_user_id: int
-    basket_anon_user_id: int
-    price_order: float
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    city: str
-    address_warehouse: str
-    payment_type: PaymentsTypes
-    created_at: datetime
-    confirmation_manager: bool
-    confirmation_pay: bool
-    call_manager: bool
-    is_authenticated: bool
-    status_order: OrdersStatus
-    ordered_products: list[OrderedProductResponse] = []
-
-    class Config:
-        orm_mode = True
-
-
-class OrderAnonymUserNovaPoshtaAddressResponse(BaseModel):
-    id: int
-    anonymous_user_id: int
-    basket_anon_user_id: int
-    price_order: float
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    country: Optional[str] = ""
-    city: str
-    area: Optional[str] = ""
-    region: Optional[str] = ""
-    street: str
-    house_number: str
-    apartment_number: Optional[str] = ""
-    floor: Optional[int] = None
-    payment_type: PaymentsTypes
-    created_at: datetime
-    confirmation_manager: bool
-    confirmation_pay: bool
-    call_manager: bool
-    is_authenticated: bool
-    status_order: OrdersStatus
-    ordered_products: list[OrderedProductResponse] = []
-
-    class Config:
-        orm_mode = True
-
-
-class OrderAnonymUserUkrPoshtaResponse(BaseModel):
-    id: int
-    anonymous_user_id: int
-    basket_anon_user_id: int
-    price_order: float
-    first_name_anon_user: str
-    last_name_anon_user: str
-    email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
-    post_type: PostType
-    country: Optional[str] = ""
-    city: str
-    area: Optional[str] = ""
-    region: Optional[str] = ""
-    street: str
-    house_number: str
-    apartment_number: Optional[str] = ""
-    floor: Optional[int] = None
-    post_code: str
-    payment_type: PaymentsTypes
-    created_at: datetime
-    confirmation_manager: bool
-    confirmation_pay: bool
-    call_manager: bool
-    is_authenticated: bool
-    status_order: OrdersStatus
-    ordered_products: list[OrderedProductResponse] = []
-
-    class Config:
-        orm_mode = True
+    ordered_products: list[OrderedProductModel]
 
 
 class OrderAnonymUserResponse(BaseModel):
     id: int
-    anonymous_user_id: int
-    basket_anon_user_id: int
     price_order: float
     first_name_anon_user: str
     last_name_anon_user: str
     email_anon_user: EmailStr
     phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: Optional[bool]
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: str
@@ -226,3 +121,59 @@ class OrderAnonymUserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UpdateOrderStatus(BaseModel):
+    new_status: OrdersStatus
+
+
+class OrdersCRMResponse(BaseModel):
+    id: int
+    price_order: float
+    user_id: Optional[int] = None
+    user: Optional[UserResponseForOrder] = {}
+    basket_id: Optional[int] = None
+    first_name_anon_user: Optional[str] = ""
+    last_name_anon_user: Optional[str] = ""
+    email_anon_user: Optional[EmailStr] = ""
+    phone_number_anon_user: Optional[str] = ""
+    is_another_recipient: Optional[bool]
+    full_name_another_recipient: Optional[str] = ""
+    phone_number_another_recipient: Optional[str] = ""
+    comment: Optional[str] = ""
+    post_type: PostType
+    country: Optional[str] = ""
+    city: Optional[str] = ""
+    address_warehouse: Optional[str] = ""
+    area: Optional[str] = ""
+    region: Optional[str] = ""
+    street: Optional[str] = ""
+    house_number: Optional[str] = ""
+    apartment_number: Optional[str] = ""
+    floor: Optional[int] = None
+    post_code: Optional[str] = ""
+    payment_type: PaymentsTypes
+    created_at: datetime
+    confirmation_manager: bool
+    confirmation_pay: bool
+    call_manager: bool
+    is_authenticated: bool
+    status_order: OrdersStatus
+    ordered_products: list[OrderedProductResponse] = []
+
+    class Config:
+        orm_mode = True
+
+
+class OrderCommentModel(BaseModel):
+    comment: str
+
+
+class OrdersCurrentUserWithTotalCountResponse(BaseModel):
+    orders: list[OrderResponse]
+    total_count: int
+
+
+class OrdersCRMWithTotalCountResponse(BaseModel):
+    orders: list[OrdersCRMResponse] = []
+    total_count: int

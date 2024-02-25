@@ -114,7 +114,7 @@ async def add_items_to_basket(body: BasketItemsModel,
     if not basket:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    product = await repository_products.product_by_id(body.product_id, db)
+    product = await repository_products.product_by_id_and_status(body.product_id, db)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 

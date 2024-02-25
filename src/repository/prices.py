@@ -29,7 +29,7 @@ async def price_by_id(id_price: int, db: Session) -> Type[Price]:
 
 async def price_by_product_id_and_price_id(product_id: int, price_id: int, db: Session) -> Price:
     return db.query(Price).options(joinedload(Price.ordered_products)).filter(
-        Price.product_id == product_id, Price.id == price_id, Price.is_deleted == False
+        Price.product_id == product_id, Price.id == price_id, Price.is_deleted == False, Price.is_active == True
     ).first()
 
 
