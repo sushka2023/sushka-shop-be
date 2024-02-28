@@ -324,8 +324,34 @@ async def search_all_products_for_crm(
 
     Return: A list of products
     """
+    # Redis client
+    redis_client = get_redis()
 
-    return await repository_products.search_products_for_crm(search_query, db, offset, limit)
+    # We collect the key for caching
+    key = f"products_search_for_crm:search_data_'{search_query}'_limit:{limit}_offset:{offset}"
+
+    cached_products_search_crm = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products_search_crm = redis_client.get(key)
+
+    if not cached_products_search_crm:
+        # The data is not found in the cache, we get it from the database
+        filtered_products = (
+            await repository_products.search_products_for_crm(search_query, db, offset, limit)
+        )
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(filtered_products))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        filtered_products = pickle.loads(cached_products_search_crm)
+
+    return filtered_products
 
 
 @router.get("/search/", response_model=ProductWithTotalResponse)
@@ -345,5 +371,31 @@ async def search_all_products(
 
     Return: A list of products
     """
+    # Redis client
+    redis_client = get_redis()
 
-    return await repository_products.search_all_products(search_query, db, offset, limit)
+    # We collect the key for caching
+    key = f"products_search:search_data_'{search_query}'_limit:{limit}_offset:{offset}"
+
+    cached_products_search = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products_search = redis_client.get(key)
+
+    if not cached_products_search:
+        # The data is not found in the cache, we get it from the database
+        filtered_products = (
+            await repository_products.search_all_products(search_query, db, offset, limit)
+        )
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(filtered_products))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        filtered_products = pickle.loads(cached_products_search)
+
+    return filtered_products
