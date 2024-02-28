@@ -1,7 +1,8 @@
 import pickle
-from typing import List
+from typing import Union
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -300,3 +301,101 @@ async def get_one_product(product_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     return product
+
+
+@router.get(
+    "/search_for_crm/",
+    dependencies=[Depends(allowed_operation_admin_moderator)],
+    response_model=ProductWithTotalResponse
+)
+async def search_all_products_for_crm(
+        limit: int,
+        offset: int,
+        search_query: Union[int, str] = Query(..., min_length=3),
+        db: Session = Depends(get_db)
+):
+    """
+    The search_all_products_for_crm function returns a list of products for the CRM after search.
+
+        :param limit: int: Limit the number of products returned
+        :param offset: int: Indicate the number of records to skip
+        :param search_query: product search criterion (by name or id of the product)
+        :param db: Session: Pass the database connection to the function
+
+    Return: A list of products
+    """
+    # Redis client
+    redis_client = get_redis()
+
+    # We collect the key for caching
+    key = f"products_search_for_crm:search_data_'{search_query}'_limit:{limit}_offset:{offset}"
+
+    cached_products_search_crm = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products_search_crm = redis_client.get(key)
+
+    if not cached_products_search_crm:
+        # The data is not found in the cache, we get it from the database
+        filtered_products = (
+            await repository_products.search_products_for_crm(search_query, db, offset, limit)
+        )
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(filtered_products))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        filtered_products = pickle.loads(cached_products_search_crm)
+
+    return filtered_products
+
+
+@router.get("/search/", response_model=ProductWithTotalResponse)
+async def search_all_products(
+        limit: int,
+        offset: int,
+        search_query: Union[int, str] = Query(..., min_length=3),
+        db: Session = Depends(get_db)
+):
+    """
+    The search_all_products function returns a list of products after search.
+
+        :param limit: int: Limit the number of products returned
+        :param offset: int: Indicate the number of records to skip
+        :param search_query: product search criterion (by name or id of the product)
+        :param db: Session: Pass the database connection to the function
+
+    Return: A list of products
+    """
+    # Redis client
+    redis_client = get_redis()
+
+    # We collect the key for caching
+    key = f"products_search:search_data_'{search_query}'_limit:{limit}_offset:{offset}"
+
+    cached_products_search = None
+
+    if redis_client:
+        # We check whether the data is present in the Redis cache
+        cached_products_search = redis_client.get(key)
+
+    if not cached_products_search:
+        # The data is not found in the cache, we get it from the database
+        filtered_products = (
+            await repository_products.search_all_products(search_query, db, offset, limit)
+        )
+
+        # We store the data in the Redis cache and set the lifetime to 1800 seconds
+        if redis_client:
+            redis_client.set(key, pickle.dumps(filtered_products))
+            redis_client.expire(key, 1800)
+
+    else:
+        # The data is found in the Redis cache, we extract it from there
+        filtered_products = pickle.loads(cached_products_search)
+
+    return filtered_products
