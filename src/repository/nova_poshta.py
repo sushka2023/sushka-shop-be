@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.database.models import NovaPoshta
+from src.database.models import NovaPoshta, post_novaposhta_association, Post, User
 from src.schemas.nova_poshta import NovaPoshtaAddressDeliveryCreate, NovaPoshtaCreate
 from src.services.exception_detail import ExDetail as Ex
 
@@ -10,7 +10,8 @@ async def create_nova_poshta_address_delivery(
         nova_post_address_delivery: NovaPoshtaAddressDeliveryCreate,
         db: Session,
 ) -> NovaPoshta:
-    new_nova_poshta_address_delivery = NovaPoshta(**nova_post_address_delivery.model_dump())
+    new_nova_poshta_address_delivery = NovaPoshta(**nova_post_address_delivery.dict())
+    new_nova_poshta_address_delivery.is_delivery = True
     db.add(new_nova_poshta_address_delivery)
     db.commit()
     db.refresh(new_nova_poshta_address_delivery)
@@ -21,7 +22,7 @@ async def create_nova_poshta_warehouse(
         nova_post_warehouse: NovaPoshtaCreate,
         db: Session,
 ) -> NovaPoshta:
-    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.model_dump())
+    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.dict())
     db.add(new_nova_poshta_warehouse)
     db.commit()
     db.refresh(new_nova_poshta_warehouse)
@@ -50,3 +51,38 @@ async def update_nova_poshta_data(
     db.refresh(updated_data_nova_poshta)
 
     return updated_data_nova_poshta
+
+
+async def get_nova_poshta_warehouse(nova_poshta_id: int, user_id: int, db: Session):
+    nova_poshta_warehouse = (
+        db.query(NovaPoshta)
+        .join(post_novaposhta_association)
+        .join(Post)
+        .join(User)
+        .filter(
+            NovaPoshta.is_delivery == False,
+            NovaPoshta.id == nova_poshta_id,
+            post_novaposhta_association.c.post_id == Post.id,
+            Post.user_id == user_id
+        )
+        .first()
+    )
+
+    return nova_poshta_warehouse
+
+
+async def get_nova_poshta_address_delivery(nova_poshta_id: int, user_id: int, db: Session):
+    nova_poshta_address = (
+        db.query(NovaPoshta)
+        .join(post_novaposhta_association)
+        .join(Post)
+        .filter(
+            NovaPoshta.is_delivery == True,
+            NovaPoshta.id == nova_poshta_id,
+            post_novaposhta_association.c.post_id == Post.id,
+            Post.user_id == user_id
+        )
+        .first()
+    )
+
+    return nova_poshta_address
