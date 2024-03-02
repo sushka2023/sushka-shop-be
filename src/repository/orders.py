@@ -11,7 +11,7 @@ from src.database.models import (
     Order,
     OrdersStatus,
     OrderedProduct,
-    Price
+    Price, PostType
 )
 from src.schemas.orders import (
     OrderModel,
@@ -32,6 +32,8 @@ from src.services.orders import (
 )
 from src.repository import prices as repository_prices
 from src.repository import products as repository_products
+from src.repository import nova_poshta as repository_nova_poshta
+from src.repository import ukr_poshta as repository_ukr_poshta
 from src.services.validation import validate_phone_number
 from src.services.exception_detail import ExDetail as Ex
 
@@ -132,6 +134,32 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         logger.error(f"Validation error: {str(ve)}")
         return JSONResponse(content={"error": str(ve)}, status_code=422)
 
+    nova_poshta = (
+        await repository_nova_poshta.get_nova_poshta_by_id(order_data.selected_nova_poshta_id, db)
+    )
+    ukr_poshta = (
+        await repository_ukr_poshta.get_ukr_poshta_by_id(order_data.selected_ukr_poshta_id, db)
+    )
+
+    selected_nova_poshta = None
+    selected_ukr_poshta = None
+
+    if nova_poshta:
+        if nova_poshta.is_delivery:
+            selected_nova_poshta = (
+                await repository_nova_poshta.get_nova_poshta_address_delivery(nova_poshta.id, user.id, db)
+            )
+        else:
+            selected_nova_poshta = (
+                await repository_nova_poshta.get_nova_poshta_warehouse(nova_poshta.id, user.id, db)
+            )
+    elif ukr_poshta:
+        selected_ukr_poshta = (
+            await repository_ukr_poshta.get_ukr_poshta_address_delivery(ukr_poshta.id, user.id, db)
+        )
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
     order = Order(
         user_id=user.id,
         user=user,
@@ -142,8 +170,20 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         price_order=total_cost,
         payment_type=order_data.payment_type,
         call_manager=order_data.call_manager,
+        selected_nova_poshta_id=order_data.selected_nova_poshta_id,
+        selected_nova_poshta=selected_nova_poshta,
+        selected_ukr_poshta_id=order_data.selected_ukr_poshta_id,
+        selected_ukr_poshta=selected_ukr_poshta,
         ordered_products=ordered_products
     )
+
+    if nova_poshta and nova_poshta.is_delivery:
+        order.post_type = PostType.nova_poshta_address
+    elif nova_poshta and not nova_poshta.is_delivery:
+        order.post_type = PostType.nova_poshta_warehouse
+    elif ukr_poshta:
+        order.post_type = PostType.ukr_poshta
+
     order.is_authenticated = True
 
     db.add(order)
