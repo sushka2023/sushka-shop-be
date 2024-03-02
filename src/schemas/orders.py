@@ -168,6 +168,10 @@ class OrdersCRMResponse(BaseModel):
     call_manager: bool
     is_authenticated: bool
     status_order: OrdersStatus
+    selected_nova_poshta_id: int = None
+    selected_nova_poshta: Optional[NovaPoshtaDataResponse] = None
+    selected_ukr_poshta_id: int = None
+    selected_ukr_poshta: Optional[UkrPoshtaResponse] = None
     ordered_products: list[OrderedProductResponse] = []
 
     class Config:
