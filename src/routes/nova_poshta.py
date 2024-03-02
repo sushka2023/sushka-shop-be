@@ -94,7 +94,7 @@ async def update_nova_poshta_data(
     """
     update_data = {
         key: value
-        for key, value in nova_poshta_data.model_dump().items()
+        for key, value in nova_poshta_data.dict().items()
         if value is not None
     }
 
