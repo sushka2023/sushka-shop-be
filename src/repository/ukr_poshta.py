@@ -8,7 +8,7 @@ from src.services.exception_detail import ExDetail as Ex
 
 
 async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate, db: Session) -> UkrPoshta:
-    new_ukr_poshta_office = UkrPoshta(**ukr_postal_office.model_dump())
+    new_ukr_poshta_office = UkrPoshta(**ukr_postal_office.dict())
     db.add(new_ukr_poshta_office)
     db.commit()
     db.refresh(new_ukr_poshta_office)
