@@ -2,31 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.database.models import NovaPoshta, post_novaposhta_association, Post, User
-from src.schemas.nova_poshta import NovaPoshtaAddressDeliveryCreate, NovaPoshtaCreate
 from src.services.exception_detail import ExDetail as Ex
-
-
-async def create_nova_poshta_address_delivery(
-        nova_post_address_delivery: NovaPoshtaAddressDeliveryCreate,
-        db: Session,
-) -> NovaPoshta:
-    new_nova_poshta_address_delivery = NovaPoshta(**nova_post_address_delivery.dict())
-    new_nova_poshta_address_delivery.is_delivery = True
-    db.add(new_nova_poshta_address_delivery)
-    db.commit()
-    db.refresh(new_nova_poshta_address_delivery)
-    return new_nova_poshta_address_delivery
-
-
-async def create_nova_poshta_warehouse(
-        nova_post_warehouse: NovaPoshtaCreate,
-        db: Session,
-) -> NovaPoshta:
-    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.dict())
-    db.add(new_nova_poshta_warehouse)
-    db.commit()
-    db.refresh(new_nova_poshta_warehouse)
-    return new_nova_poshta_warehouse
 
 
 async def get_nova_poshta_by_id(nova_poshta_id: int, db: Session) -> NovaPoshta | None:
