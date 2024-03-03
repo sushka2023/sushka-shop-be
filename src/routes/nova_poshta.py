@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -6,9 +6,6 @@ from src.database.models import Role
 from src.repository import nova_poshta as repository_novaposhta
 from src.schemas.nova_poshta import (
     NovaPoshtaAddressDeliveryResponse,
-    NovaPoshtaAddressDeliveryCreate,
-    NovaPoshtaResponse,
-    NovaPoshtaCreate,
     NovaPoshtaAddressDeliveryPartialUpdate,
 )
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -21,56 +18,6 @@ router = APIRouter(prefix="/nova_poshta", tags=["novaposhta offices"])
 allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
-
-
-@router.post("/create_address_delivery",
-             response_model=NovaPoshtaAddressDeliveryResponse,
-             dependencies=[Depends(allowed_operation_admin_moderator_user)],
-             status_code=status.HTTP_201_CREATED)
-async def create_nova_poshta_address_delivery(nova_postal_address_delivery: NovaPoshtaAddressDeliveryCreate,
-                                              db: Session = Depends(get_db)):
-    """
-    The create function creates a new novaposhta with address delivery.
-
-    Args:
-        nova_postal_address_delivery: NovaPoshtaAddressDeliveryCreate: Validate the request body
-        db: Session: Access the database
-
-    Returns:
-        An novaposhta object
-    """
-    new_nova_poshta_address_delivery = (
-        await repository_novaposhta.create_nova_poshta_address_delivery(nova_postal_address_delivery, db)
-    )
-
-    await delete_cache_in_redis()
-
-    return new_nova_poshta_address_delivery
-
-
-@router.post("/create_warehouse",
-             response_model=NovaPoshtaResponse,
-             dependencies=[Depends(allowed_operation_admin_moderator_user)],
-             status_code=status.HTTP_201_CREATED)
-async def create_nova_poshta_warehouse(nova_postal_warehouse: NovaPoshtaCreate,
-                                       db: Session = Depends(get_db)):
-    """
-    The create function creates a new novaposhta warehouse.
-
-    Args:
-        nova_postal_warehouse: NovaPoshtaCreate: Validate the request body
-        db: Session: Access the database
-
-    Returns:
-        An novaposhta object
-    """
-    new_nova_poshta_warehouse = (
-        await repository_novaposhta.create_nova_poshta_warehouse(nova_postal_warehouse, db)
-    )
-
-    await delete_cache_in_redis()
-
-    return new_nova_poshta_warehouse
 
 
 @router.patch("/{nova_poshta_id}/partial-update",
