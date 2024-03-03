@@ -3,16 +3,7 @@ from sqlalchemy.orm import Session
 
 
 from src.database.models import UkrPoshta, post_ukrposhta_association, Post
-from src.schemas.ukr_poshta import UkrPoshtaCreate
 from src.services.exception_detail import ExDetail as Ex
-
-
-async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate, db: Session) -> UkrPoshta:
-    new_ukr_poshta_office = UkrPoshta(**ukr_postal_office.dict())
-    db.add(new_ukr_poshta_office)
-    db.commit()
-    db.refresh(new_ukr_poshta_office)
-    return new_ukr_poshta_office
 
 
 async def get_ukr_poshta_by_id(ukr_poshta_id: int, db: Session) -> UkrPoshta | None:
