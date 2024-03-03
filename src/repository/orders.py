@@ -75,9 +75,8 @@ async def get_orders_by_auth_user(
         .filter(Order.user_id == user.id)
         .order_by(desc(Order.created_at))
     )
-    logger.info(f"SQL Query: {subquery}")
+
     orders = subquery.limit(limit).offset(offset).all()
-    logger.info(f"Orders: {orders}")
 
     total_count = subquery.count()
 
