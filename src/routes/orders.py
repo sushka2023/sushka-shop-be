@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
-from src.database.models import Role, User, OrdersStatus
+from src.database.models import Role, User, OrdersStatus, PostType
 from src.repository import orders as repository_orders
 from src.repository import nova_poshta as repository_nova_poshta
 from src.repository import ukr_poshta as repository_ukr_poshta
@@ -138,6 +138,7 @@ async def create_order_auth_user(
              status_code=status.HTTP_201_CREATED)
 async def create_order_anonym_user(
         order_data: OrderAnonymUserModel,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
 ):
     """
@@ -145,8 +146,10 @@ async def create_order_anonym_user(
 
     Args:
         order_data: OrderAnonymUserModel: Validate the request body
-        db: Session: Pass the database session to the repository layer
+        (post_type: (permitted: "nova_poshta_warehouse", "nova_poshta_address", "ukr_poshta"))
 
+        background_tasks: BackgroundTasks: Add a task to the background tasks queue
+        db: Session: Pass the database session to the repository layer
     Returns:
         An order object
     """
@@ -154,6 +157,69 @@ async def create_order_anonym_user(
     new_order_anonym_user = (
         await repository_orders.create_order_anonym_user(order_data, db)
     )
+
+    if new_order_anonym_user.post_type == PostType.nova_poshta_warehouse:
+        delivery_address = (
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.address_warehouse}"
+        )
+        delivery_type = "Нова Пошта (відділення)"
+    elif new_order_anonym_user.post_type == PostType.nova_poshta_address:
+        delivery_address = (
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.street}, "
+            f"{new_order_anonym_user.house_number}, "
+            f"кв. {new_order_anonym_user.apartment_number}"
+        )
+        delivery_type = "Нова Пошта (адресна доставка)"
+    else:
+        delivery_address = (
+            f"{new_order_anonym_user.post_code}, "
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.street}, "
+            f"{new_order_anonym_user.house_number}, "
+            f"кв. {new_order_anonym_user.apartment_number}"
+
+        )
+        delivery_type = "УкрПошта (адресна доставка)"
+
+    if new_order_anonym_user.is_another_recipient:
+        recipient_name = new_order_anonym_user.full_name_another_recipient
+        recipient_phone = new_order_anonym_user.phone_number_another_recipient
+    else:
+        recipient_name = (
+            f"{new_order_anonym_user.first_name_anon_user} "
+            f"{new_order_anonym_user.last_name_anon_user}"
+        )
+        recipient_phone = new_order_anonym_user.phone_number_anon_user
+
+    customer_name = (
+        f"{new_order_anonym_user.first_name_anon_user} "
+        f"{new_order_anonym_user.last_name_anon_user}"
+    )
+
+    order_data = {
+        "order_id": new_order_anonym_user.id,
+        "total_price": new_order_anonym_user.price_order,
+        "customer": customer_name,
+        "phone_number_customer": new_order_anonym_user.phone_number_anon_user,
+        "email_customer": new_order_anonym_user.email_anon_user,
+        "full_name_another_recipient": recipient_name,
+        "phone_number_another_recipient": recipient_phone,
+        "delivery_mode": delivery_type,
+        "address_delivery": delivery_address,
+        "payment_mode": new_order_anonym_user.payment_type,
+        "ordered_products": [
+            {
+                "name": product.products.name,
+                "price": product.prices.price,
+                "quantity": product.quantity,
+            }
+            for product in new_order_anonym_user.ordered_products
+        ],
+    }
+
+    background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
 
     await delete_cache_in_redis()
 
