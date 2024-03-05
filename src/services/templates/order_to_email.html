@@ -80,6 +80,7 @@
         padding: 10px;
         text-align: center;
         border-radius: 5px;
+        width: 25%;
       }
 
       .product-table th {
@@ -190,6 +191,7 @@
           <thead>
             <tr>
               <th>Назва товару</th>
+              <th>Вага товару</th>
               <th>Ціна товару</th>
               <th>Кількість товару</th>
             </tr>
@@ -198,6 +200,7 @@
             {% for product in ordered_products %}
               <tr class="product">
                 <td>{{ product.name }}</td>
+                <td>{{ product.weight }} г</td>
                 <td>{{ product.price }}0 &#8372;</td>
                 <td>{{ product.quantity }}</td>
               </tr>
