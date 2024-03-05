@@ -119,6 +119,7 @@ async def create_order_auth_user(
         "ordered_products": [
             {
                 "name": product.products.name,
+                "weight": product.prices.weight,
                 "price": product.prices.price,
                 "quantity": product.quantity,
             }
@@ -212,6 +213,7 @@ async def create_order_anonym_user(
         "ordered_products": [
             {
                 "name": product.products.name,
+                "weight": product.prices.weight,
                 "price": product.prices.price,
                 "quantity": product.quantity,
             }
