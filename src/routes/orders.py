@@ -1,12 +1,14 @@
 import pickle
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
-from src.database.models import Role, User, OrdersStatus
+from src.database.models import Role, User, OrdersStatus, PostType
 from src.repository import orders as repository_orders
+from src.repository import nova_poshta as repository_nova_poshta
+from src.repository import ukr_poshta as repository_ukr_poshta
 from src.schemas.orders import (
     OrderResponse,
     OrderModel,
@@ -25,6 +27,7 @@ from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
+from src.services.order_to_email import email_service
 
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -41,6 +44,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def create_order_auth_user(
         order_data: OrderModel,
+        background_tasks: BackgroundTasks,
         current_user: User = Depends(auth_service.get_current_user),
         db: Session = Depends(get_db),
 ):
@@ -49,6 +53,7 @@ async def create_order_auth_user(
 
     Args:
         order_data: OrderModel: Validate the request body
+        background_tasks: BackgroundTasks: Add a task to the background tasks queue
         db: Session: Pass the database session to the repository layer
         current_user (User): the current user attempting to create the order
 
@@ -57,6 +62,72 @@ async def create_order_auth_user(
     """
 
     new_order = await repository_orders.create_order_auth_user(order_data, current_user.id, db)
+
+    nova_poshta = (
+        await repository_nova_poshta.get_nova_poshta_by_id(new_order.selected_nova_poshta_id, db)
+    )
+    ukr_poshta = (
+        await repository_ukr_poshta.get_ukr_poshta_by_id(new_order.selected_ukr_poshta_id, db)
+    )
+
+    if nova_poshta:
+        if nova_poshta.is_delivery:
+            delivery_address = (
+                f"{new_order.selected_nova_poshta.city}, "
+                f"{new_order.selected_nova_poshta.street}, "
+                f"{new_order.selected_nova_poshta.house_number}, "
+                f"кв. {new_order.selected_nova_poshta.apartment_number}"
+            )
+            delivery_type = "Нова Пошта (адресна доставка)"
+        else:
+            delivery_address = (
+                f"{new_order.selected_nova_poshta.city}, "
+                f"{new_order.selected_nova_poshta.address_warehouse}"
+            )
+            delivery_type = "Нова Пошта (відділення)"
+    elif ukr_poshta:
+        delivery_address = (
+            f"{new_order.selected_ukr_poshta.post_code}, "
+            f"{new_order.selected_ukr_poshta.city}, "
+            f"{new_order.selected_ukr_poshta.street}, "
+            f"{new_order.selected_ukr_poshta.house_number}, "
+            f"кв. {new_order.selected_ukr_poshta.apartment_number}"
+
+        )
+        delivery_type = "УкрПошта (адресна доставка)"
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
+    if new_order.is_another_recipient:
+        recipient_name = new_order.full_name_another_recipient
+        recipient_phone = new_order.phone_number_another_recipient
+    else:
+        recipient_name = f"{current_user.first_name} {current_user.last_name}"
+        recipient_phone = current_user.phone_number
+
+    order_data = {
+        "order_id": new_order.id,
+        "total_price": new_order.price_order,
+        "customer": f"{current_user.first_name} {current_user.last_name}",
+        "phone_number_customer": current_user.phone_number,
+        "email_customer": current_user.email,
+        "full_name_another_recipient": recipient_name,
+        "phone_number_another_recipient": recipient_phone,
+        "delivery_mode": delivery_type,
+        "address_delivery": delivery_address,
+        "payment_mode": new_order.payment_type,
+        "ordered_products": [
+            {
+                "name": product.products.name,
+                "weight": product.prices.weight,
+                "price": product.prices.price,
+                "quantity": product.quantity,
+            }
+            for product in new_order.ordered_products
+        ],
+    }
+
+    background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
 
     await delete_cache_in_redis()
 
@@ -68,6 +139,7 @@ async def create_order_auth_user(
              status_code=status.HTTP_201_CREATED)
 async def create_order_anonym_user(
         order_data: OrderAnonymUserModel,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
 ):
     """
@@ -75,8 +147,10 @@ async def create_order_anonym_user(
 
     Args:
         order_data: OrderAnonymUserModel: Validate the request body
-        db: Session: Pass the database session to the repository layer
+        (post_type: (permitted: "nova_poshta_warehouse", "nova_poshta_address", "ukr_poshta"))
 
+        background_tasks: BackgroundTasks: Add a task to the background tasks queue
+        db: Session: Pass the database session to the repository layer
     Returns:
         An order object
     """
@@ -84,6 +158,70 @@ async def create_order_anonym_user(
     new_order_anonym_user = (
         await repository_orders.create_order_anonym_user(order_data, db)
     )
+
+    if new_order_anonym_user.post_type == PostType.nova_poshta_warehouse:
+        delivery_address = (
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.address_warehouse}"
+        )
+        delivery_type = "Нова Пошта (відділення)"
+    elif new_order_anonym_user.post_type == PostType.nova_poshta_address:
+        delivery_address = (
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.street}, "
+            f"{new_order_anonym_user.house_number}, "
+            f"кв. {new_order_anonym_user.apartment_number}"
+        )
+        delivery_type = "Нова Пошта (адресна доставка)"
+    else:
+        delivery_address = (
+            f"{new_order_anonym_user.post_code}, "
+            f"{new_order_anonym_user.city}, "
+            f"{new_order_anonym_user.street}, "
+            f"{new_order_anonym_user.house_number}, "
+            f"кв. {new_order_anonym_user.apartment_number}"
+
+        )
+        delivery_type = "УкрПошта (адресна доставка)"
+
+    if new_order_anonym_user.is_another_recipient:
+        recipient_name = new_order_anonym_user.full_name_another_recipient
+        recipient_phone = new_order_anonym_user.phone_number_another_recipient
+    else:
+        recipient_name = (
+            f"{new_order_anonym_user.first_name_anon_user} "
+            f"{new_order_anonym_user.last_name_anon_user}"
+        )
+        recipient_phone = new_order_anonym_user.phone_number_anon_user
+
+    customer_name = (
+        f"{new_order_anonym_user.first_name_anon_user} "
+        f"{new_order_anonym_user.last_name_anon_user}"
+    )
+
+    order_data = {
+        "order_id": new_order_anonym_user.id,
+        "total_price": new_order_anonym_user.price_order,
+        "customer": customer_name,
+        "phone_number_customer": new_order_anonym_user.phone_number_anon_user,
+        "email_customer": new_order_anonym_user.email_anon_user,
+        "full_name_another_recipient": recipient_name,
+        "phone_number_another_recipient": recipient_phone,
+        "delivery_mode": delivery_type,
+        "address_delivery": delivery_address,
+        "payment_mode": new_order_anonym_user.payment_type,
+        "ordered_products": [
+            {
+                "name": product.products.name,
+                "weight": product.prices.weight,
+                "price": product.prices.price,
+                "quantity": product.quantity,
+            }
+            for product in new_order_anonym_user.ordered_products
+        ],
+    }
+
+    background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
 
     await delete_cache_in_redis()
 
@@ -265,7 +403,9 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
     The change_order_status function changes an order status.
 
     Args:
-        update_data: UpdateOrderStatus: the order status to be changed (permitted: "new", "in processing", "shipped", "delivered", "cancelled")
+        update_data: UpdateOrderStatus: the order status to be changed
+        (permitted: "new", "in processing", "shipped", "delivered", "cancelled")
+
         order_id: Get the id of the order to change it status
         db: Session: Access the database
 

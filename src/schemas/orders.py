@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from src.database.models import PaymentsTypes, OrdersStatus, PostType
+from src.schemas.nova_poshta import NovaPoshtaDataResponse
 from src.schemas.price import PriceResponse
 from src.schemas.product import ProductResponseForOrder
+from src.schemas.ukr_poshta import UkrPoshtaResponse
 from src.schemas.users import UserResponseForOrder
 
 
@@ -29,6 +31,8 @@ class OrderedProductResponse(BaseModel):
 
 
 class OrderModel(BaseModel):
+    selected_nova_poshta_id: Optional[int] = Field(default_factory=lambda: None)
+    selected_ukr_poshta_id: Optional[int] = Field(default_factory=lambda: None)
     payment_type: PaymentsTypes
     call_manager: bool
     is_another_recipient: Optional[bool] = False
@@ -51,6 +55,11 @@ class OrderResponse(BaseModel):
     confirmation_pay: bool
     call_manager: bool
     status_order: OrdersStatus
+    post_type: PostType
+    selected_nova_poshta_id: int = None
+    selected_nova_poshta: Optional[NovaPoshtaDataResponse] = None
+    selected_ukr_poshta_id: int = None
+    selected_ukr_poshta: Optional[UkrPoshtaResponse] = None
     ordered_products: list[OrderedProductResponse] = []
 
     class Config:
@@ -159,6 +168,10 @@ class OrdersCRMResponse(BaseModel):
     call_manager: bool
     is_authenticated: bool
     status_order: OrdersStatus
+    selected_nova_poshta_id: int = None
+    selected_nova_poshta: Optional[NovaPoshtaDataResponse] = None
+    selected_ukr_poshta_id: int = None
+    selected_ukr_poshta: Optional[UkrPoshtaResponse] = None
     ordered_products: list[OrderedProductResponse] = []
 
     class Config:

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8">
+    <title>Confirmation Order</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      .outer-container {
+          background-color: bisque;
+          padding: 100px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .inner-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #f4f4f4;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h2.title-info {
+        text-align: center;
+      }
+
+      .total-price-info {
+        font-size: 18px;
+      }
+
+      h3, h4 {
+        color: #FF7F50;
+      }
+
+      p {
+        margin: 10px 0;
+      }
+
+      .user-info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .user-info-table td {
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .user-info-table td:first-child {
+        width: 50%;
+      }
+
+      .user-info-table td:last-child {
+        width: 50%;
+      }
+
+      .user-info-table th {
+        background-color: #4CAF50;
+        color: white;
+      }
+
+      .product-table {
+        width: 100%;
+        border: none;
+        margin-top: 15px;
+      }
+
+      .product-table th, .product-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        border-radius: 5px;
+        width: 25%;
+      }
+
+      .product-table th {
+        background-color: #FF7F50;
+        color: white;
+      }
+
+      .product-table .product {
+        border-top: 1px solid #ccc;
+        padding-top: 10px;
+      }
+
+      .btn-order {
+        width: 40%;
+        margin: 0 auto;
+        padding: 10px 24px;
+        display: block;
+        box-shadow: 0 0 14px -7px #f09819;
+        background-image: linear-gradient(45deg, #FF512F 0%, #F09819  51%, #FF512F  100%);
+        border: none; 
+        border-radius: 5px;
+        color: white !important;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+      .btn-order:hover {
+        background-position: right center;
+        color: #fff;
+        text-decoration: none;
+      }
+      .btn-order:active {
+        transform: scale(0.95);
+      }
+
+      .button-shop {
+        margin: 0 20px;
+        padding: 15px 30px;
+        text-align: center;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
+        color: white;
+        border-radius: 10px;
+        display: block;
+        border: 0;
+        font-weight: 700;
+        box-shadow: 0 0 14px -7px #f09819;
+        background-image: linear-gradient(45deg, #FF512F 0%, #F09819  51%, #FF512F  100%);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      .button-shop:hover {
+        background-position: right center;
+        /* change the direction of the change here */
+        color: #fff;
+        text-decoration: none;
+      }
+
+      .button-shop:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="outer-container">
+      
+      <button class="button-shop" role="button">SUSHKA</button><br>
+
+
+      <div class="inner-container">
+        <h2 class="title-info">Ваше замовлення № {{ order_id }} успішно оформлене!</h2>
+        <p class="total-price-info">Сумма Вашого замовлення становить: {{ total_price }}0 &#8372;</p><br>
+        <h3>Деталі замовлення</h3>
+        <table class="user-info-table">
+          <tr>
+            <td>
+              <p><strong>Замовник:</strong> {{ customer }}</p>
+              <p><strong>Номер телефону:</strong> {{ phone_number_customer }}</p>
+              <p><strong>Email:</strong> {{ email_customer }}</p>
+              <p><strong>Отримувач:</strong> {{ full_name_another_recipient }}</p>
+              <p><strong>Телефон отримувача:</strong> {{ phone_number_another_recipient }}</p>
+            </td>
+            <td>
+              <p><strong>Спосіб доставки:</strong> {{ delivery_mode }}</p>
+              <p><strong>Адреса доставки:</strong> {{ address_delivery }}</p>
+              <p><strong>Спосіб оплати:</strong> {{ payment_mode.name }}</p>
+            </td>
+          </tr>
+        </table>
+        <br>
+        <hr>
+
+        <h4>Замовленні товари</h4>
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Назва товару</th>
+              <th>Вага товару</th>
+              <th>Ціна товару</th>
+              <th>Кількість товару</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in ordered_products %}
+              <tr class="product">
+                <td>{{ product.name }}</td>
+                <td>{{ product.weight }} г</td>
+                <td>{{ product.price }}0 &#8372;</td>
+                <td>{{ product.quantity }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table><br><hr><br>
+        <a href="#" class="btn btn-order">Переглянути деталі замовлення</a><br>
+      </div>
+    </div>
+
+  </body>
+</html>

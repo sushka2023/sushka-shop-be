@@ -2,9 +2,11 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.schemas.nova_poshta import NovaPoshtaDataResponse
+from src.schemas.nova_poshta import (
+    NovaPoshtaDataResponse, NovaPoshtaResponse, NovaPoshtaAddressDeliveryResponse
+)
 from src.schemas.ukr_poshta import UkrPoshtaResponse
-from src.schemas.users import UserResponseForCRM
+from src.schemas.users import UserResponseForOrder
 
 
 class PostModel(BaseModel):
@@ -14,7 +16,7 @@ class PostModel(BaseModel):
 class PostResponse(BaseModel):
     id: int
     user_id: int
-    user: Optional[UserResponseForCRM] = []
+    user: Optional[UserResponseForOrder] = []
     ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
     nova_poshta: Optional[list[NovaPoshtaDataResponse]] = []
 
@@ -23,14 +25,23 @@ class PostResponse(BaseModel):
 
 
 class PostUkrPostalOffice(BaseModel):
-    post_id: int
     ukr_poshta_id: Optional[int] = None
 
 
 class PostNovaPoshtaOffice(BaseModel):
-    post_id: int
     nova_poshta_id: Optional[int] = None
 
 
-class PostMessageResponse(BaseModel):
+class PostWarehouseResponse(BaseModel):
     message: str
+    nova_poshta_data: NovaPoshtaResponse
+
+
+class PostAddressDeliveryResponse(BaseModel):
+    message: str
+    nova_poshta_data: NovaPoshtaAddressDeliveryResponse
+
+
+class PostUkrPoshtaResponse(BaseModel):
+    message: str
+    ukr_poshta_data: UkrPoshtaResponse

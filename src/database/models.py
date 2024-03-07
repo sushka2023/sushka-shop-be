@@ -274,6 +274,10 @@ class Order(Base, UpdateFromDictMixin):
     phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
     comment = Column(String(500), nullable=True)
+    selected_nova_poshta_id = Column(Integer, ForeignKey('nova_poshta.id'))
+    selected_nova_poshta = relationship("NovaPoshta", back_populates="order")
+    selected_ukr_poshta_id = Column(Integer, ForeignKey('ukr_poshta.id'))
+    selected_ukr_poshta = relationship("UkrPoshta", back_populates="order")
 
 
 class OrderedProduct(Base):
@@ -313,10 +317,12 @@ class NovaPoshta(Base, UpdateFromDictMixin):
     house_number = Column(String(255), nullable=True)
     apartment_number = Column(String(255), nullable=True)
     floor = Column(Integer, nullable=True)
+    is_delivery = Column(Boolean, default=False)
 
     post = relationship(
         "Post", secondary=post_novaposhta_association, back_populates="nova_poshta"
     )
+    order = relationship("Order", back_populates="selected_nova_poshta")
 
 
 class UkrPoshta(Base, UpdateFromDictMixin):
@@ -333,6 +339,7 @@ class UkrPoshta(Base, UpdateFromDictMixin):
     post = relationship(
         "Post", secondary=post_ukrposhta_association, back_populates="ukr_poshta"
     )
+    order = relationship("Order", back_populates="selected_ukr_poshta")
 
 
 class Favorite(Base):
