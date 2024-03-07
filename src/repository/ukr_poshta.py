@@ -2,17 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 
-from src.database.models import UkrPoshta
-from src.schemas.ukr_poshta import UkrPoshtaCreate
+from src.database.models import UkrPoshta, post_ukrposhta_association, Post
 from src.services.exception_detail import ExDetail as Ex
-
-
-async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate, db: Session) -> UkrPoshta:
-    new_ukr_poshta_office = UkrPoshta(**ukr_postal_office.model_dump())
-    db.add(new_ukr_poshta_office)
-    db.commit()
-    db.refresh(new_ukr_poshta_office)
-    return new_ukr_poshta_office
 
 
 async def get_ukr_poshta_by_id(ukr_poshta_id: int, db: Session) -> UkrPoshta | None:
@@ -34,3 +25,19 @@ async def update_ukr_poshta_data(
     db.refresh(updated_data_ukr_poshta)
 
     return updated_data_ukr_poshta
+
+
+async def get_ukr_poshta_address_delivery(ukr_poshta_id: int, user_id: int, db: Session):
+    ukr_poshta_address = (
+        db.query(UkrPoshta)
+        .join(post_ukrposhta_association)
+        .join(Post)
+        .filter(
+            UkrPoshta.id == ukr_poshta_id,
+            post_ukrposhta_association.c.post_id == Post.id,
+            Post.user_id == user_id
+        )
+        .first()
+    )
+
+    return ukr_poshta_address

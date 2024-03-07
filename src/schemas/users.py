@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Type
+from typing import Optional
 import re
 
 
@@ -38,6 +38,16 @@ class UserModel(BaseModel):
         return email
 
 
+class PostResponseOrder(BaseModel):
+    id: int
+    user_id: int
+    ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
+    nova_poshta: Optional[list[NovaPoshtaDataResponse]] = []
+
+    class Config:
+        orm_mode = True
+
+
 class UserResponse(BaseModel):
     id: int
     email: str
@@ -50,16 +60,7 @@ class UserResponse(BaseModel):
     is_deleted: bool
     is_blocked: bool
     is_active: bool
-
-    class Config:
-        orm_mode = True
-
-
-class PostResponseOrder(BaseModel):
-    id: int
-    user_id: int
-    ukr_poshta: Optional[list[UkrPoshtaResponse]] = []
-    nova_poshta: Optional[list[NovaPoshtaDataResponse]] = []
+    posts: PostResponseOrder
 
     class Config:
         orm_mode = True
@@ -77,7 +78,6 @@ class UserResponseForOrder(BaseModel):
     is_deleted: bool
     is_blocked: bool
     is_active: bool
-    posts: PostResponseOrder
 
     class Config:
         orm_mode = True
@@ -128,6 +128,7 @@ class UserResponseForCRM(BaseModel):
     is_deleted: bool
     is_blocked: bool
     is_active: bool
+    posts: PostResponseOrder
 
     class Config:
         orm_mode = True

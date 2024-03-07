@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -6,7 +6,7 @@ from src.database.models import Role
 from src.repository import ukr_poshta as repository_ukrposhta
 from src.services.cache_in_redis import delete_cache_in_redis
 
-from src.schemas.ukr_poshta import UkrPoshtaResponse, UkrPoshtaCreate, UkrPoshtaPartialUpdate
+from src.schemas.ukr_poshta import UkrPoshtaResponse, UkrPoshtaPartialUpdate
 from src.services.roles import RoleAccess
 
 
@@ -16,31 +16,6 @@ router = APIRouter(prefix="/ukr_poshta", tags=["ukrposhta offices"])
 allowed_operation_admin = RoleAccess([Role.admin])
 allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
-
-
-@router.post("/create",
-             response_model=UkrPoshtaResponse,
-             dependencies=[Depends(allowed_operation_admin_moderator_user)],
-             status_code=status.HTTP_201_CREATED)
-async def create_ukr_poshta_office(ukr_postal_office: UkrPoshtaCreate,
-                                   db: Session = Depends(get_db)):
-    """
-    The create function creates a new ukrposhta office.
-
-    Args:
-        ukr_postal_office: UkrPoshtaCreate: Validate the request body
-        db: Session: Access the database
-
-    Returns:
-        An ukrposhta object
-    """
-    new_ukr_poshta_office = (
-        await repository_ukrposhta.create_ukr_poshta_office(ukr_postal_office, db)
-    )
-
-    await delete_cache_in_redis()
-
-    return new_ukr_poshta_office
 
 
 @router.patch("/{ukr_poshta_id}/partial-update",
