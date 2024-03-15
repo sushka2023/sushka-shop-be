@@ -156,3 +156,13 @@ class PasswordModel(BaseModel):
 
 class UserBlockOrRemoveModel(BaseModel):
     id: int
+
+
+class PasswordChangeModel(BaseModel):
+    old_password: str = Field(min_length=8, max_length=255)
+    new_password: str = Field(min_length=8, max_length=255)
+    new_password_confirm: str = Field(min_length=8, max_length=255)
+
+
+class UserMessageResponse(BaseModel):
+    message: str

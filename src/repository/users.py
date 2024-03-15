@@ -218,3 +218,9 @@ async def return_user(user_id: int, db: Session) -> User | None:
         db.commit()
         return user
     return None
+
+
+async def change_password(email: str, password: str, db: Session) -> None:
+    user = await get_user_by_email(email, db)
+    user.password_checksum = password
+    db.commit()
