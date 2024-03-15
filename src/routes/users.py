@@ -267,4 +267,6 @@ async def change_password(
     body.new_password = hash_password(body.new_password)
     await repository_users.change_password(user.email, body.new_password, db)
 
+    await delete_cache_in_redis()
+
     return {"message": "Your Password changed successfully!"}
