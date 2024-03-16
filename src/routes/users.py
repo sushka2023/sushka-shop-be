@@ -16,7 +16,9 @@ from src.schemas.users import (
     UserResponseForCRM,
     UserBlockOrRemoveModel,
     PasswordChangeModel,
-    UserMessageResponse
+    UserMessageResponse,
+    AdminEmailsResponse,
+    AdminEmailListInput
 )
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.password_utils import hash_password, verify_password
@@ -270,3 +272,64 @@ async def change_password(
     await delete_cache_in_redis()
 
     return {"message": "Your Password changed successfully!"}
+
+
+@router.post(
+    "/admin_addresses/add_email_addresses",
+    response_model=UserMessageResponse,
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def add_email_addresses(data: AdminEmailListInput, db: Session = Depends(get_db)):
+    """
+    Add email addresses by admin.
+
+    Args:
+        data: AdminEmailListInput: Get the email data from the request body
+        db: Session: Get the database session
+
+    Returns:
+        A message about successful adding of email addresses
+    """
+    await repository_users.add_email_addresses(
+        emails=data.emails, is_send_message=data.is_send_message, db=db
+    )
+
+    return {"message": "Email addresses added successfully!"}
+
+
+@router.get(
+    "/admin_addresses/obtain_all_addresses",
+    response_model=list[AdminEmailsResponse],
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def get_email_addresses(db: Session = Depends(get_db)):
+    """
+    Obtain email addresses by admin.
+
+    Args:
+        db: Session: Get the database session
+
+    Returns:
+        Email addresses object
+    """
+    return await repository_users.get_email_addresses(db=db)
+
+
+@router.put(
+    "/admin_addresses/change_send_status",
+    response_model=UserMessageResponse,
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def change_send_status(db: Session = Depends(get_db)):
+    """
+    Changes message sending status: obtains email addresses and changes message sending status by admin.
+
+    Args:
+        db: Session: Get the database session
+
+    Returns:
+        A message about successful changing message sending status
+    """
+    await repository_users.change_send_status(db=db)
+
+    return {"message": "Message sending status changed successfully"}

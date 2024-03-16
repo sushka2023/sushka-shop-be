@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.database.models import User, BlacklistToken
+from src.database.models import User, BlacklistToken, EmailAddress
 from src.schemas.users import UserModel, UserChangeRole, UserUpdateData
 
 from src.repository import baskets as repository_baskets
@@ -263,3 +263,45 @@ async def create_account_anonym_user(
     await repository_posts.create_postal_office(new_user, db)  # New post in user
 
     return new_user
+
+
+async def get_email_addresses(db: Session):
+    return db.query(EmailAddress).all()
+
+
+async def add_email_addresses(is_send_message: bool, emails: list[str], db: Session):
+    all_emails_data = await get_email_addresses(db=db)
+    existing_emails = set(email.address for email in all_emails_data)
+
+    if existing_emails:
+        new_emails = set(emails)
+        emails_to_remove = existing_emails - new_emails
+        if emails_to_remove:
+            db.query(EmailAddress).filter(
+                EmailAddress.address.in_(emails_to_remove)
+            ).delete(synchronize_session=False)
+
+        emails_to_add = new_emails - existing_emails
+        for email in emails_to_add:
+            db_email = EmailAddress(address=email, is_send_message=is_send_message)
+            db.add(db_email)
+    else:
+        for email in emails:
+            db_email = EmailAddress(address=email, is_send_message=is_send_message)
+            db.add(db_email)
+            db.commit()
+            db.refresh(db_email)
+
+    db.commit()
+
+
+async def change_send_status(db: Session):
+    emails = await get_email_addresses(db=db)
+
+    for email in emails:
+        if email.is_send_message:
+            email.is_send_message = False
+        else:
+            email.is_send_message = True
+
+    db.commit()
