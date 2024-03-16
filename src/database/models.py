@@ -367,3 +367,11 @@ class Cooperation(Base):
     description = Column(String(255), unique=False, nullable=False)
     check = Column(Boolean, default=False)
     created_at = Column('created_at', DateTime, default=func.now())
+
+
+class EmailAddress(Base):
+    __tablename__ = 'email_addresses'
+
+    id = Column(Integer, primary_key=True)
+    address = Column(String, unique=True, index=True, nullable=True)
+    is_send_message = Column(Boolean, default=False)
