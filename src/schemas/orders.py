@@ -190,3 +190,8 @@ class OrdersCurrentUserWithTotalCountResponse(BaseModel):
 class OrdersCRMWithTotalCountResponse(BaseModel):
     orders: list[OrdersCRMResponse] = []
     total_count: int
+
+
+class OrdersResponseWithMessage(BaseModel):
+    message: str
+    order_info: OrdersCRMResponse

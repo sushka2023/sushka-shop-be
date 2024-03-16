@@ -3,10 +3,13 @@ import pickle
 from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
+from faker import Faker
+
 from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User, OrdersStatus, PostType
 from src.repository import orders as repository_orders
+from src.repository import users as repository_users
 from src.repository import nova_poshta as repository_nova_poshta
 from src.repository import ukr_poshta as repository_ukr_poshta
 from src.schemas.orders import (
@@ -20,7 +23,7 @@ from src.schemas.orders import (
     OrdersCRMResponse,
     OrderCommentModel,
     OrdersCRMWithTotalCountResponse,
-    OrdersCurrentUserWithTotalCountResponse,
+    OrdersCurrentUserWithTotalCountResponse, OrdersResponseWithMessage,
 )
 
 from src.services.auth import auth_service
@@ -28,9 +31,13 @@ from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.order_to_email import email_service
+from src.services.account_anonym_user import email_account_service
+from src.services.password_utils import hash_password
 
 
 router = APIRouter(prefix="/orders", tags=["orders"])
+
+fake = Faker()
 
 
 allowed_operation_admin = RoleAccess([Role.admin])
@@ -135,7 +142,7 @@ async def create_order_auth_user(
 
 
 @router.post("/create_for_anonym_user",
-             response_model=OrderAnonymUserResponse,
+             response_model=OrdersResponseWithMessage,
              status_code=status.HTTP_201_CREATED)
 async def create_order_anonym_user(
         order_data: OrderAnonymUserModel,
@@ -221,11 +228,51 @@ async def create_order_anonym_user(
         ],
     }
 
+    email_anonym_user = new_order_anonym_user.email_anon_user
+    phone_number = new_order_anonym_user.phone_number_anon_user
+    first_name = new_order_anonym_user.first_name_anon_user
+    last_name = new_order_anonym_user.last_name_anon_user
+
+    temp_password = fake.password(length=12)
+
+    hashed_password = hash_password(temp_password)
+
+    exist_user = await repository_users.get_user_by_email(email_anonym_user, db)
+    if exist_user:
+        new_order_anonym_user.user_id = exist_user.id
+        new_order_anonym_user.basket_id = exist_user.basket.id
+        new_order_anonym_user.is_authenticated = True
+        if phone_number:
+            exist_user.phone_number = phone_number
+        elif exist_user.phone_number:
+            new_order_anonym_user.phone_number_anon_user = exist_user.phone_number
+            order_data["phone_number_customer"] = new_order_anonym_user.phone_number_anon_user
+            if not new_order_anonym_user.is_another_recipient:
+                order_data["phone_number_another_recipient"] = new_order_anonym_user.phone_number_anon_user
+    else:
+        new_user = await repository_users.create_account_anonym_user(
+            email=email_anonym_user, password=hashed_password, first_name=first_name, last_name=last_name, db=db
+        )
+        new_user.is_active = True
+        new_order_anonym_user.user_id = new_user.id
+        new_order_anonym_user.basket_id = new_user.basket.id
+        new_order_anonym_user.is_authenticated = True
+        if phone_number:
+            new_user.phone_number = phone_number
+
+        background_tasks.add_task(email_account_service.send_account_email, new_user.email, temp_password)
+
+    db.commit()
+
     background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
+
+    response_data = OrdersResponseWithMessage(
+        message="Email sent successfully!", order_info=new_order_anonym_user
+    )
 
     await delete_cache_in_redis()
 
-    return new_order_anonym_user
+    return response_data
 
 
 @router.get("/all_for_crm",

@@ -1,9 +1,16 @@
 from datetime import datetime
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.database.models import User, BlacklistToken
 from src.schemas.users import UserModel, UserChangeRole, UserUpdateData
+
+from src.repository import baskets as repository_baskets
+from src.repository import favorites as repository_favorites
+from src.repository import posts as repository_posts
+
+from src.services.exception_detail import ExDetail as Ex
 
 from src.services.password_utils import hash_password
 
@@ -224,3 +231,35 @@ async def change_password(email: str, password: str, db: Session) -> None:
     user = await get_user_by_email(email, db)
     user.password_checksum = password
     db.commit()
+
+
+async def create_account_anonym_user(
+        email: str, password: str, first_name: str, last_name: str, db: Session
+) -> User:
+    new_user = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password_checksum=password,
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    favorite = await repository_favorites.favorites(new_user, db)
+    if favorite:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_favorites.create(new_user, db)  # New favorite in user
+
+    basket = await repository_baskets.baskets(new_user, db)
+    if basket:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_baskets.create(new_user, db)  # New basket in user
+
+    post = await repository_posts.get_posts_by_user_id(new_user.id, db)
+    if post:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_posts.create_postal_office(new_user, db)  # New post in user
+
+    return new_user
