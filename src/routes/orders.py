@@ -28,6 +28,7 @@ from src.schemas.orders import (
 
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
+from src.services.email_admin import email_admin_service
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.order_to_email import email_service
@@ -135,6 +136,16 @@ async def create_order_auth_user(
     }
 
     background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
+
+    email_addresses = await repository_users.get_email_addresses(db=db)
+    for email in email_addresses:
+        if email.is_send_message:
+            background_tasks.add_task(
+                email_admin_service.send_admin_email,
+                email.address,
+                new_order.id,
+                new_order.comment
+            )
 
     await delete_cache_in_redis()
 
@@ -265,6 +276,16 @@ async def create_order_anonym_user(
     db.commit()
 
     background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
+
+    email_addresses = await repository_users.get_email_addresses(db=db)
+    for email in email_addresses:
+        if email.is_send_message:
+            background_tasks.add_task(
+                email_admin_service.send_admin_email,
+                email.address,
+                new_order_anonym_user.id,
+                new_order_anonym_user.comment
+            )
 
     response_data = OrdersResponseWithMessage(
         message="Email sent successfully!", order_info=new_order_anonym_user
