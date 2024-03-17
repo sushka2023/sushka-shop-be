@@ -23,7 +23,7 @@ from src.schemas.orders import (
     OrdersCRMResponse,
     OrderCommentModel,
     OrdersCRMWithTotalCountResponse,
-    OrdersCurrentUserWithTotalCountResponse, OrdersResponseWithMessage,
+    OrdersCurrentUserWithTotalCountResponse, OrdersResponseWithMessage, OrderAdminNotesModel,
 )
 
 from src.services.auth import auth_service
@@ -492,24 +492,24 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
     return {"message": f"Status of the Order №{order_id} updated to '{update_data.new_status.value}'"}
 
 
-@router.put("/{order_id}/add_comment",
+@router.put("/{order_id}/add_notes",
             response_model=OrderMessageResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def add_comment_to_order(order_id: int, data: OrderCommentModel, db: Session = Depends(get_db)):
+async def add_notes_to_order(order_id: int, data: OrderAdminNotesModel, db: Session = Depends(get_db)):
     """
-    The add_comment_to_order function adds comment to the order.
+    The add_notes_to_order function adds notes to the order.
 
     Args:
-        data: OrderCommentModel: adding comment to the order by admin or moderator
+        data: OrderAdminNotesModel: adding notes to the order by admin or moderator
         order_id: Get the id of the order to add comment
         db: Session: Access the database
 
     Returns:
-        Message that the comment to the order was added successfully
+        Message that the note to the order was added successfully
     """
 
-    await repository_orders.add_comment_to_order(order_id, data, db)
+    await repository_orders.add_notes_to_order(order_id, data, db)
 
     await delete_cache_in_redis()
 
-    return {"message": f"Comment to the Order №{order_id} added successfully"}
+    return {"message": f"Note to the Order №{order_id} added successfully"}

@@ -178,8 +178,8 @@ class OrdersCRMResponse(BaseModel):
         orm_mode = True
 
 
-class OrderCommentModel(BaseModel):
-    comment: str
+class OrderAdminNotesModel(BaseModel):
+    notes: str
 
 
 class OrdersCurrentUserWithTotalCountResponse(BaseModel):

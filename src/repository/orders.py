@@ -17,7 +17,7 @@ from src.schemas.orders import (
     OrderModel,
     OrderAnonymUserModel,
     UpdateOrderStatus,
-    OrderCommentModel,
+    OrderAdminNotesModel,
     OrdersCRMWithTotalCountResponse,
     OrdersCRMResponse,
     OrdersCurrentUserWithTotalCountResponse,
@@ -349,12 +349,12 @@ async def get_orders_all_for_crm_with_status(
     return response_data
 
 
-async def add_comment_to_order(order_id: int, body: OrderCommentModel, db: Session):
+async def add_notes_to_order(order_id: int, body: OrderAdminNotesModel, db: Session):
     order = await get_order_by_id(order_id=order_id, db=db)
 
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    order.comment = body.comment
+    order.notes_admin = body.notes
     db.commit()
     return order
