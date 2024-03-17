@@ -42,6 +42,18 @@
         text-align: center;
       }
 
+      .user-info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .user-info-table td {
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
       .btn-account {
         width: 40%;
         margin: 0 auto;
@@ -114,8 +126,14 @@
       <div class="inner-container">
         <h2 class="title-info">Ваш кабінет був автоматично створений!</h2>
         <br>
-        <h3>Ваш логін: <strong>{{ email }}</strong></h3>
-        <h4>Ваш пароль: <strong>{{ password }}</strong></h4>
+        <table class="user-info-table">
+          <tr>
+            <td>
+              <div><p><strong>Ваш логін: </strong> {{ email }}</p></div>
+              <div><p><strong>&#8195;Ваш пароль: </strong> {{ password }}</p></div>
+            </td>
+          </tr>
+        </table>
         <br><br>
         <a href="#" class="btn btn-account">Увійти</a><br>
         <p>З міркувань безпеки, змініть пароль в особистому кабінеті</p>
