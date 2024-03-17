@@ -322,13 +322,8 @@ async def get_orders_for_crm(
     if redis_client:
         cached_orders = redis_client.get(key)
 
-    orders_ = None
-
     if not cached_orders:
-        if not order_status:
-            orders_ = await repository_orders.get_orders_all_for_crm(limit, offset, db)
-        elif order_status:
-            orders_ = await repository_orders.get_orders_all_for_crm_with_status(limit, offset, order_status, db)
+        orders_ = await repository_orders.get_orders_all_for_crm(limit, offset, order_status, db)
 
         if redis_client:
             redis_client.set(key, pickle.dumps(orders_))
