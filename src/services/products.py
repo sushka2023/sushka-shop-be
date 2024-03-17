@@ -1,9 +1,10 @@
 from typing import List, Type
 
 from fastapi import HTTPException, status
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from src.database.models import Product, Price
+from src.database.models import Product, ProductStatus
 from src.repository import products as repository_products
 from src.repository import product_categories as repository_product_categories
 from src.repository.prices import price_by_product
@@ -108,3 +109,18 @@ async def product_with_prices_and_images(products: list, db: Session) -> list:
 
 async def parser_weight(weight: str) -> list:
     return weight.split(',')
+
+
+async def get_all_products_without_filter(db: Session):
+    return db.query(Product).order_by(desc(Product.created_at))
+
+
+async def get_all_products_with_filter(db: Session):
+    return (
+        db.query(Product)
+        .filter(
+            Product.product_status == ProductStatus.activated,
+            Product.is_deleted == False
+        )
+        .order_by(desc(Product.created_at))
+    )

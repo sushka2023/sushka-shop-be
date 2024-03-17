@@ -2,7 +2,6 @@ import pickle
 from typing import Union
 
 from fastapi import APIRouter, Depends, status, HTTPException, Query
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -11,7 +10,7 @@ from src.database.models import Role, ProductStatus
 from src.repository import products as repository_products
 from src.repository.prices import price_by_product
 from src.repository.product_sub_categories import insert_sub_category_for_product
-from src.repository.products import product_by_id, get_products_all_for_crm
+from src.repository.products import product_by_id
 from src.schemas.images import ImageResponse
 from src.schemas.product import ProductModel, ProductResponse, ProductArchiveModel, ProductWithTotalResponse
 from src.services.cache_in_redis import delete_cache_in_redis
@@ -29,7 +28,14 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.get("/all", response_model=ProductWithTotalResponse)
-async def products(limit: int, offset: int, weight: str = None, pr_category_id: int = None, sort: str = "low_price", db: Session = Depends(get_db)):
+async def products(
+        limit: int,
+        offset: int,
+        weight: str = None,
+        pr_category_id: int = None,
+        sort: str = "low_price",
+        db: Session = Depends(get_db)
+):
     """
     The products function returns a list of products.
         The function accepts the following parameters:
@@ -75,12 +81,16 @@ async def products(limit: int, offset: int, weight: str = None, pr_category_id: 
             if not pr_category_id:
                 products_ = await get_products_by_sort(limit=limit, offset=offset, sort=sort, db=db)
             elif pr_category_id:
-                products_ = await get_products_by_sort_and_category_id(limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, db=db)
+                products_ = await get_products_by_sort_and_category_id(
+                    limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, db=db
+                )
         elif weight:
             if not pr_category_id:
                 products_ = await get_products_by_sort(limit=limit, offset=offset, sort=sort, weight=weight, db=db)
             elif pr_category_id:
-                products_ = await get_products_by_sort_and_category_id(limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, weight=weight, db=db)
+                products_ = await get_products_by_sort_and_category_id(
+                    limit=limit, offset=offset, sort=sort, pr_category_id=pr_category_id, weight=weight, db=db
+                )
 
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
@@ -100,7 +110,14 @@ async def products(limit: int, offset: int, weight: str = None, pr_category_id: 
 @router.get("/all_for_crm",
             response_model=ProductWithTotalResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = None, pr_category_id: int = None, db: Session = Depends(get_db)):
+async def products_for_crm(
+        limit: int,
+        offset: int,
+        search_query: Union[int, str] = Query(None, min_length=3),
+        pr_status: ProductStatus = None,
+        pr_category_id: int = None,
+        db: Session = Depends(get_db)
+):
 
     """
     The products_for_crm function returns a list of products for the CRM.
@@ -109,13 +126,17 @@ async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = N
     :param offset: int: Indicate the number of records to skip
     :param pr_status: ProductStatus: Filter products by status
     :param pr_category_id: int: Filter the products by category
+    :param search_query: product search criterion (by name or id of the product)
     :param db: Session: Pass the database connection to the function
     :return: A list of products
     """
     # Redis client
     redis_client = get_redis()
 
-    key = f"limit_{limit}:offset_{offset}:pr_category_id_{pr_category_id}:pr_status_{pr_status}"
+    key = (
+        f"limit_{limit}:offset_{offset}:search_data_'{search_query}'"
+        f":pr_category_id_{pr_category_id}:pr_status_{pr_status}"
+    )
 
     cached_products = None
 
@@ -123,19 +144,10 @@ async def products_for_crm(limit: int, offset: int, pr_status: ProductStatus = N
         # We check whether the data is present in the Redis cache
         cached_products = redis_client.get(key)
 
-    products_ = None
-
     if not cached_products:
-        # The data is not found in the cache, we get it from the database
-        if not pr_category_id and not pr_status:
-            products_ = await repository_products.get_products_all_for_crm(limit, offset, db)
-        elif pr_category_id and not pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_category_id(limit, offset, pr_category_id, db)
-        elif not pr_category_id and pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_status(limit, offset, pr_status, db)
-        elif pr_category_id and pr_status:
-            products_ = await repository_products.get_products_all_for_crm_pr_status_and_pr_category_id(limit, offset, pr_category_id, pr_status, db)
-
+        products_ = await repository_products.get_products_all_for_crm(
+            limit, offset, db, search_query, pr_category_id, pr_status
+        )
         # We store the data in the Redis cache and set the lifetime to 1800 seconds
         if redis_client:
             redis_client.set(key, pickle.dumps(products_))
@@ -301,57 +313,6 @@ async def get_one_product(product_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     return product
-
-
-@router.get(
-    "/search_for_crm/",
-    dependencies=[Depends(allowed_operation_admin_moderator)],
-    response_model=ProductWithTotalResponse
-)
-async def search_all_products_for_crm(
-        limit: int,
-        offset: int,
-        search_query: Union[int, str] = Query(..., min_length=3),
-        db: Session = Depends(get_db)
-):
-    """
-    The search_all_products_for_crm function returns a list of products for the CRM after search.
-
-        :param limit: int: Limit the number of products returned
-        :param offset: int: Indicate the number of records to skip
-        :param search_query: product search criterion (by name or id of the product)
-        :param db: Session: Pass the database connection to the function
-
-    Return: A list of products
-    """
-    # Redis client
-    redis_client = get_redis()
-
-    # We collect the key for caching
-    key = f"products_search_for_crm:search_data_'{search_query}'_limit:{limit}_offset:{offset}"
-
-    cached_products_search_crm = None
-
-    if redis_client:
-        # We check whether the data is present in the Redis cache
-        cached_products_search_crm = redis_client.get(key)
-
-    if not cached_products_search_crm:
-        # The data is not found in the cache, we get it from the database
-        filtered_products = (
-            await repository_products.search_products_for_crm(search_query, db, offset, limit)
-        )
-
-        # We store the data in the Redis cache and set the lifetime to 1800 seconds
-        if redis_client:
-            redis_client.set(key, pickle.dumps(filtered_products))
-            redis_client.expire(key, 1800)
-
-    else:
-        # The data is found in the Redis cache, we extract it from there
-        filtered_products = pickle.loads(cached_products_search_crm)
-
-    return filtered_products
 
 
 @router.get("/search/", response_model=ProductWithTotalResponse)
