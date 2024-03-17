@@ -38,6 +38,7 @@ class OrderModel(BaseModel):
     is_another_recipient: Optional[bool] = False
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
+    comment: Optional[str] = ""
 
 
 class OrderResponse(BaseModel):
@@ -61,6 +62,7 @@ class OrderResponse(BaseModel):
     selected_ukr_poshta_id: int = None
     selected_ukr_poshta: Optional[UkrPoshtaResponse] = None
     ordered_products: list[OrderedProductResponse] = []
+    comment: Optional[str] = ""
 
     class Config:
         orm_mode = True
@@ -96,11 +98,15 @@ class OrderAnonymUserModel(BaseModel):
     payment_type: PaymentsTypes
     call_manager: bool
     ordered_products: list[OrderedProductModel]
+    comment: Optional[str] = ""
 
 
 class OrderAnonymUserResponse(BaseModel):
     id: int
     price_order: float
+    user_id: Optional[int] = None
+    user: Optional[UserResponseForOrder] = {}
+    basket_id: Optional[int] = None
     first_name_anon_user: str
     last_name_anon_user: str
     email_anon_user: EmailStr
@@ -127,6 +133,7 @@ class OrderAnonymUserResponse(BaseModel):
     is_authenticated: bool
     status_order: OrdersStatus
     ordered_products: list[OrderedProductResponse] = []
+    comment: Optional[str] = ""
 
     class Config:
         orm_mode = True
@@ -149,7 +156,6 @@ class OrdersCRMResponse(BaseModel):
     is_another_recipient: Optional[bool]
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
-    comment: Optional[str] = ""
     post_type: PostType
     country: Optional[str] = ""
     city: Optional[str] = ""
@@ -173,6 +179,8 @@ class OrdersCRMResponse(BaseModel):
     selected_ukr_poshta_id: int = None
     selected_ukr_poshta: Optional[UkrPoshtaResponse] = None
     ordered_products: list[OrderedProductResponse] = []
+    comment: Optional[str] = ""
+    notes_admin: Optional[str] = ""
 
     class Config:
         orm_mode = True
@@ -194,4 +202,4 @@ class OrdersCRMWithTotalCountResponse(BaseModel):
 
 class OrdersResponseWithMessage(BaseModel):
     message: str
-    order_info: OrdersCRMResponse
+    order_info: OrderAnonymUserResponse

@@ -177,7 +177,8 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         selected_nova_poshta=selected_nova_poshta,
         selected_ukr_poshta_id=order_data.selected_ukr_poshta_id,
         selected_ukr_poshta=selected_ukr_poshta,
-        ordered_products=ordered_products
+        ordered_products=ordered_products,
+        comment=order_data.comment
     )
 
     if nova_poshta and nova_poshta.is_delivery:
