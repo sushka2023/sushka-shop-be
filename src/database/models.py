@@ -274,6 +274,7 @@ class Order(Base, UpdateFromDictMixin):
     phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
     comment = Column(String(500), nullable=True)
+    notes_admin = Column(String(500), nullable=True)
     selected_nova_poshta_id = Column(Integer, ForeignKey('nova_poshta.id'))
     selected_nova_poshta = relationship("NovaPoshta", back_populates="order")
     selected_ukr_poshta_id = Column(Integer, ForeignKey('ukr_poshta.id'))
