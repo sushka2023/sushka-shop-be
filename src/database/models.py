@@ -121,7 +121,7 @@ class User(Base, UpdateFromDictMixin):
     is_active = Column(Boolean, default=False)
     basket = relationship("Basket", uselist=False, back_populates="user")
     orders = relationship("Order", back_populates="user")
-    posts = relationship("Post", uselist=False, back_populates="user")
+    posts = relationship("Post", uselist=False, lazy="subquery", back_populates="user")
     favorite = relationship("Favorite", uselist=False, back_populates="user")
     cooperation = relationship("Cooperation", uselist=False, back_populates="user")
 
@@ -300,10 +300,10 @@ class Post(Base):
     user = relationship("User", back_populates="posts")
 
     ukr_poshta = relationship(
-        "UkrPoshta", secondary=post_ukrposhta_association, back_populates="post"
+        "UkrPoshta", secondary=post_ukrposhta_association, lazy="subquery", back_populates="post"
     )
     nova_poshta = relationship(
-        "NovaPoshta", secondary=post_novaposhta_association, back_populates="post"
+        "NovaPoshta", secondary=post_novaposhta_association, lazy="subquery", back_populates="post"
     )
 
 
