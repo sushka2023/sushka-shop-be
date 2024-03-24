@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8">
+    <title>Order Confirmation</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      .outer-container {
+          background-color: bisque;
+          padding: 100px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .inner-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #f4f4f4;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h2.title-info {
+        text-align: center;
+      }
+
+      h3, h4 {
+        color: #333333;
+        text-align: center;
+      }
+
+      p {
+        margin: 10px 0;
+        text-align: center;
+      }
+
+      .btn-account {
+        width: 40%;
+        margin: 0 auto;
+        padding: 10px 24px;
+        display: block;
+        box-shadow: 0 0 14px -7px #f09819;
+        background-image: linear-gradient(45deg, #FF512F 0%, #F09819  51%, #FF512F  100%);
+        border: none;
+        border-radius: 5px;
+        color: white !important;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+      .btn-account:hover {
+        background-position: right center;
+        color: #fff;
+        text-decoration: none;
+      }
+      .btn-account:active {
+        transform: scale(0.95);
+      }
+
+      .button-shop {
+        margin: 0 20px;
+        padding: 15px 30px;
+        text-align: center;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
+        color: white;
+        border-radius: 10px;
+        display: block;
+        border: 0;
+        font-weight: 700;
+        box-shadow: 0 0 14px -7px #f09819;
+        background-image: linear-gradient(45deg, #FF512F 0%, #F09819  51%, #FF512F  100%);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      .button-shop:hover {
+        background-position: right center;
+        /* change the direction of the change here */
+        color: #fff;
+        text-decoration: none;
+      }
+
+      .button-shop:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="outer-container">
+
+      <button class="button-shop" role="button">SUSHKA</button><br>
+
+      <div class="inner-container">
+        <h2 class="title-info">У вас нове замовлення №{{ order_id }}! Перевірте вашу CRM</h2>
+        <br>
+        <h4><strong>Коментар до замовлення: </strong>{% if message %}{{ message }}{% else %}NAN{% endif %}</h4>
+        <br><br>
+        <a href="#" class="btn btn-account">Увійти</a><br>
+
+      </div>
+    </div>
+
+  </body>
+</html>

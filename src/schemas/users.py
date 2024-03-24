@@ -3,7 +3,7 @@ from typing import Optional
 import re
 
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, EmailStr
 
 from src.database.models import Role
 from src.schemas.nova_poshta import NovaPoshtaDataResponse
@@ -156,3 +156,26 @@ class PasswordModel(BaseModel):
 
 class UserBlockOrRemoveModel(BaseModel):
     id: int
+
+
+class PasswordChangeModel(BaseModel):
+    old_password: str = Field(min_length=8, max_length=255)
+    new_password: str = Field(min_length=8, max_length=255)
+    new_password_confirm: str = Field(min_length=8, max_length=255)
+
+
+class UserMessageResponse(BaseModel):
+    message: str
+
+
+class AdminEmailListInput(BaseModel):
+    is_send_message: bool = True
+    emails: list[EmailStr]
+
+
+class AdminEmailsResponse(BaseModel):
+    address: EmailStr
+    is_send_message: bool
+
+    class Config:
+        orm_mode = True

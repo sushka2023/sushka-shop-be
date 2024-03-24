@@ -1,9 +1,16 @@
 from datetime import datetime
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.database.models import User, BlacklistToken
+from src.database.models import User, BlacklistToken, EmailAddress
 from src.schemas.users import UserModel, UserChangeRole, UserUpdateData
+
+from src.repository import baskets as repository_baskets
+from src.repository import favorites as repository_favorites
+from src.repository import posts as repository_posts
+
+from src.services.exception_detail import ExDetail as Ex
 
 from src.services.password_utils import hash_password
 
@@ -218,3 +225,83 @@ async def return_user(user_id: int, db: Session) -> User | None:
         db.commit()
         return user
     return None
+
+
+async def change_password(email: str, password: str, db: Session) -> None:
+    user = await get_user_by_email(email, db)
+    user.password_checksum = password
+    db.commit()
+
+
+async def create_account_anonym_user(
+        email: str, password: str, first_name: str, last_name: str, db: Session
+) -> User:
+    new_user = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password_checksum=password,
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    favorite = await repository_favorites.favorites(new_user, db)
+    if favorite:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_favorites.create(new_user, db)  # New favorite in user
+
+    basket = await repository_baskets.baskets(new_user, db)
+    if basket:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_baskets.create(new_user, db)  # New basket in user
+
+    post = await repository_posts.get_posts_by_user_id(new_user.id, db)
+    if post:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=Ex.HTTP_409_CONFLICT)
+    await repository_posts.create_postal_office(new_user, db)  # New post in user
+
+    return new_user
+
+
+async def get_email_addresses(db: Session):
+    return db.query(EmailAddress).all()
+
+
+async def add_email_addresses(is_send_message: bool, emails: list[str], db: Session):
+    all_emails_data = await get_email_addresses(db=db)
+    existing_emails = set(email.address for email in all_emails_data)
+
+    if existing_emails:
+        new_emails = set(emails)
+        emails_to_remove = existing_emails - new_emails
+        if emails_to_remove:
+            db.query(EmailAddress).filter(
+                EmailAddress.address.in_(emails_to_remove)
+            ).delete(synchronize_session=False)
+
+        emails_to_add = new_emails - existing_emails
+        for email in emails_to_add:
+            db_email = EmailAddress(address=email, is_send_message=is_send_message)
+            db.add(db_email)
+    else:
+        for email in emails:
+            db_email = EmailAddress(address=email, is_send_message=is_send_message)
+            db.add(db_email)
+            db.commit()
+            db.refresh(db_email)
+
+    db.commit()
+
+
+async def change_send_status(db: Session):
+    emails = await get_email_addresses(db=db)
+
+    for email in emails:
+        if email.is_send_message:
+            email.is_send_message = False
+        else:
+            email.is_send_message = True
+
+    db.commit()

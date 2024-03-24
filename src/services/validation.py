@@ -1,6 +1,7 @@
 import re
 
 phone_pattern = re.compile(r'^(?:\+380|380|0)\d{9}$')
+password_pattern = re.compile(r"^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$")
 
 
 def validate_phone_number(phone_number: str):
@@ -12,3 +13,11 @@ def validate_phone_number(phone_number: str):
             )
         return phone_number
     return ""
+
+
+def validate_password(password):
+    if not password_pattern.match(password):
+        raise ValueError(
+            "Password is not valid! The password must consist of at least one lowercase, "
+            "uppercase letter, number and symbols."
+        )
