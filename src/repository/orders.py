@@ -17,7 +17,7 @@ from src.schemas.orders import (
     OrderModel,
     OrderAnonymUserModel,
     UpdateOrderStatus,
-    OrderCommentModel,
+    OrderAdminNotesModel,
     OrdersCRMWithTotalCountResponse,
     OrdersCRMResponse,
     OrdersCurrentUserWithTotalCountResponse,
@@ -177,7 +177,8 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
         selected_nova_poshta=selected_nova_poshta,
         selected_ukr_poshta_id=order_data.selected_ukr_poshta_id,
         selected_ukr_poshta=selected_ukr_poshta,
-        ordered_products=ordered_products
+        ordered_products=ordered_products,
+        comment=order_data.comment
     )
 
     if nova_poshta and nova_poshta.is_delivery:
@@ -283,7 +284,7 @@ async def change_order_status(
 
 
 async def get_orders_all_for_crm(
-        limit: int, offset: int, db: Session
+        limit: int, offset: int, order_status: OrdersStatus,  db: Session
 ) -> OrdersCRMWithTotalCountResponse | None:
     subquery = (
         db.query(Order)
@@ -301,6 +302,10 @@ async def get_orders_all_for_crm(
         .filter(Price.id == OrderedProduct.price_id)
         .order_by(Order.status_order, desc(Order.created_at))
     )
+
+    if order_status:
+        subquery = subquery.filter(Order.status_order == order_status)
+
     orders = subquery.limit(limit).offset(offset).all()
 
     total_count = subquery.count()
@@ -315,46 +320,12 @@ async def get_orders_all_for_crm(
     return response_data
 
 
-async def get_orders_all_for_crm_with_status(
-        limit: int, offset: int, order_status: OrdersStatus, db: Session
-) -> OrdersCRMWithTotalCountResponse | None:
-    subquery = (
-        db.query(Order)
-        .options(
-            selectinload(Order.ordered_products)
-            .selectinload(OrderedProduct.prices)
-            .options(
-                joinedload(Price.product),
-                joinedload(Price.ordered_products)
-            ),
-            selectinload(Order.selected_nova_poshta),
-            selectinload(Order.selected_ukr_poshta)
-        )
-        .filter(OrderedProduct.order_id == Order.id)
-        .filter(Price.id == OrderedProduct.price_id)
-        .filter(Order.status_order == order_status)
-        .order_by(desc(Order.created_at))
-    )
-    orders = subquery.limit(limit).offset(offset).all()
-
-    total_count = subquery.count()
-
-    orders_data = [OrdersCRMResponse(**order.__dict__) for order in orders]
-
-    response_data = OrdersCRMWithTotalCountResponse(
-        orders=orders_data,
-        total_count=total_count
-    )
-
-    return response_data
-
-
-async def add_comment_to_order(order_id: int, body: OrderCommentModel, db: Session):
+async def add_notes_to_order(order_id: int, body: OrderAdminNotesModel, db: Session):
     order = await get_order_by_id(order_id=order_id, db=db)
 
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
-    order.comment = body.comment
+    order.notes_admin = body.notes
     db.commit()
     return order

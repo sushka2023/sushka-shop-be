@@ -121,7 +121,7 @@ class User(Base, UpdateFromDictMixin):
     is_active = Column(Boolean, default=False)
     basket = relationship("Basket", uselist=False, back_populates="user")
     orders = relationship("Order", back_populates="user")
-    posts = relationship("Post", uselist=False, back_populates="user")
+    posts = relationship("Post", uselist=False, lazy="subquery", back_populates="user")
     favorite = relationship("Favorite", uselist=False, back_populates="user")
     cooperation = relationship("Cooperation", uselist=False, back_populates="user")
 
@@ -274,6 +274,7 @@ class Order(Base, UpdateFromDictMixin):
     phone_number_another_recipient = Column(String(255), nullable=True)
     is_authenticated = Column(Boolean, default=False)
     comment = Column(String(500), nullable=True)
+    notes_admin = Column(String(500), nullable=True)
     selected_nova_poshta_id = Column(Integer, ForeignKey('nova_poshta.id'))
     selected_nova_poshta = relationship("NovaPoshta", back_populates="order")
     selected_ukr_poshta_id = Column(Integer, ForeignKey('ukr_poshta.id'))
@@ -299,10 +300,10 @@ class Post(Base):
     user = relationship("User", back_populates="posts")
 
     ukr_poshta = relationship(
-        "UkrPoshta", secondary=post_ukrposhta_association, back_populates="post"
+        "UkrPoshta", secondary=post_ukrposhta_association, lazy="subquery", back_populates="post"
     )
     nova_poshta = relationship(
-        "NovaPoshta", secondary=post_novaposhta_association, back_populates="post"
+        "NovaPoshta", secondary=post_novaposhta_association, lazy="subquery", back_populates="post"
     )
 
 
@@ -367,3 +368,11 @@ class Cooperation(Base):
     description = Column(String(255), unique=False, nullable=False)
     check = Column(Boolean, default=False)
     created_at = Column('created_at', DateTime, default=func.now())
+
+
+class EmailAddress(Base):
+    __tablename__ = 'email_addresses'
+
+    id = Column(Integer, primary_key=True)
+    address = Column(String, unique=True, index=True, nullable=True)
+    is_send_message = Column(Boolean, default=False)

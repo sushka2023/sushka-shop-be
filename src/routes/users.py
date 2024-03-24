@@ -1,4 +1,7 @@
+import logging
+
 from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from src.database.db import get_db
@@ -6,11 +9,24 @@ from src.database.models import User, Role
 from src.repository import users as repository_users
 from src.services.auth import auth_service
 from src.schemas.users import (
-    UserResponse, UserChangeRole, UserUpdateData, UserResponseAfterUpdate, UserResponseForCRM, UserBlockOrRemoveModel
+    UserResponse,
+    UserChangeRole,
+    UserUpdateData,
+    UserResponseAfterUpdate,
+    UserResponseForCRM,
+    UserBlockOrRemoveModel,
+    PasswordChangeModel,
+    UserMessageResponse,
+    AdminEmailsResponse,
+    AdminEmailListInput
 )
 from src.services.cache_in_redis import delete_cache_in_redis
+from src.services.password_utils import hash_password, verify_password
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
+from src.services.validation import validate_password
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -207,3 +223,113 @@ async def return_user(user: UserBlockOrRemoveModel, db: Session = Depends(get_db
     await delete_cache_in_redis()
 
     return return_user_
+
+
+@router.post("/me/change_password", response_model=UserMessageResponse)
+async def change_password(
+    body: PasswordChangeModel,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+):
+    """
+    The change_password function takes a body as input.
+    The body contains the new password for that user, which is hashed using pwd_context.hash() before being stored in
+    the database.
+
+    Args:
+        body: PasswordChangeModel: Get the password from the request body
+        db: Session: Get the database session
+        current_user (User): the current user
+
+    Returns:
+        A message to the user
+    """
+    user = await repository_users.get_user_by_email(current_user.email, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST
+        )
+
+    if not verify_password(body.old_password, user.password_checksum):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect old password"
+        )
+
+    try:
+        validate_password(body.new_password)
+    except ValueError as ve:
+        logger.error(f"Validation error: {str(ve)}")
+        return JSONResponse(content={"error": str(ve)}, status_code=422)
+
+    if body.new_password != body.new_password_confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="The new password and new password confirm must be equal!"
+        )
+
+    body.new_password = hash_password(body.new_password)
+    await repository_users.change_password(user.email, body.new_password, db)
+
+    await delete_cache_in_redis()
+
+    return {"message": "Your Password changed successfully!"}
+
+
+@router.post(
+    "/admin_addresses/add_email_addresses",
+    response_model=UserMessageResponse,
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def add_email_addresses(data: AdminEmailListInput, db: Session = Depends(get_db)):
+    """
+    Add email addresses by admin.
+
+    Args:
+        data: AdminEmailListInput: Get the email data from the request body
+        db: Session: Get the database session
+
+    Returns:
+        A message about successful adding of email addresses
+    """
+    await repository_users.add_email_addresses(
+        emails=data.emails, is_send_message=data.is_send_message, db=db
+    )
+
+    return {"message": "Email addresses added successfully!"}
+
+
+@router.get(
+    "/admin_addresses/obtain_all_addresses",
+    response_model=list[AdminEmailsResponse],
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def get_email_addresses(db: Session = Depends(get_db)):
+    """
+    Obtain email addresses by admin.
+
+    Args:
+        db: Session: Get the database session
+
+    Returns:
+        Email addresses object
+    """
+    return await repository_users.get_email_addresses(db=db)
+
+
+@router.put(
+    "/admin_addresses/change_send_status",
+    response_model=UserMessageResponse,
+    dependencies=[Depends(allowed_operation_admin)]
+)
+async def change_send_status(db: Session = Depends(get_db)):
+    """
+    Changes message sending status: obtains email addresses and changes message sending status by admin.
+
+    Args:
+        db: Session: Get the database session
+
+    Returns:
+        A message about successful changing message sending status
+    """
+    await repository_users.change_send_status(db=db)
+
+    return {"message": "Message sending status changed successfully"}

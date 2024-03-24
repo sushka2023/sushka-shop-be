@@ -3,34 +3,42 @@ import pickle
 from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
+from faker import Faker
+
 from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User, OrdersStatus, PostType
 from src.repository import orders as repository_orders
+from src.repository import users as repository_users
 from src.repository import nova_poshta as repository_nova_poshta
 from src.repository import ukr_poshta as repository_ukr_poshta
 from src.schemas.orders import (
     OrderResponse,
     OrderModel,
     OrderConfirmModel,
-    OrderAnonymUserResponse,
     OrderMessageResponse,
     OrderAnonymUserModel,
     UpdateOrderStatus,
     OrdersCRMResponse,
-    OrderCommentModel,
     OrdersCRMWithTotalCountResponse,
     OrdersCurrentUserWithTotalCountResponse,
+    OrdersResponseWithMessage,
+    OrderAdminNotesModel,
 )
 
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
+from src.services.email_admin import email_admin_service
 from src.services.roles import RoleAccess
 from src.services.exception_detail import ExDetail as Ex
 from src.services.order_to_email import email_service
+from src.services.account_anonym_user import email_account_service
+from src.services.password_utils import hash_password
 
 
 router = APIRouter(prefix="/orders", tags=["orders"])
+
+fake = Faker()
 
 
 allowed_operation_admin = RoleAccess([Role.admin])
@@ -129,13 +137,23 @@ async def create_order_auth_user(
 
     background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
 
+    email_addresses = await repository_users.get_email_addresses(db=db)
+    for email in email_addresses:
+        if email.is_send_message:
+            background_tasks.add_task(
+                email_admin_service.send_admin_email,
+                email.address,
+                new_order.id,
+                new_order.comment
+            )
+
     await delete_cache_in_redis()
 
     return new_order
 
 
 @router.post("/create_for_anonym_user",
-             response_model=OrderAnonymUserResponse,
+             response_model=OrdersResponseWithMessage,
              status_code=status.HTTP_201_CREATED)
 async def create_order_anonym_user(
         order_data: OrderAnonymUserModel,
@@ -221,11 +239,61 @@ async def create_order_anonym_user(
         ],
     }
 
+    email_anonym_user = new_order_anonym_user.email_anon_user
+    phone_number = new_order_anonym_user.phone_number_anon_user
+    first_name = new_order_anonym_user.first_name_anon_user
+    last_name = new_order_anonym_user.last_name_anon_user
+
+    temp_password = fake.password(length=12)
+
+    hashed_password = hash_password(temp_password)
+
+    exist_user = await repository_users.get_user_by_email(email_anonym_user, db)
+    if exist_user:
+        new_order_anonym_user.user_id = exist_user.id
+        new_order_anonym_user.basket_id = exist_user.basket.id
+        new_order_anonym_user.is_authenticated = True
+        if phone_number:
+            exist_user.phone_number = phone_number
+        elif exist_user.phone_number:
+            new_order_anonym_user.phone_number_anon_user = exist_user.phone_number
+            order_data["phone_number_customer"] = new_order_anonym_user.phone_number_anon_user
+            if not new_order_anonym_user.is_another_recipient:
+                order_data["phone_number_another_recipient"] = new_order_anonym_user.phone_number_anon_user
+    else:
+        new_user = await repository_users.create_account_anonym_user(
+            email=email_anonym_user, password=hashed_password, first_name=first_name, last_name=last_name, db=db
+        )
+        new_user.is_active = True
+        new_order_anonym_user.user_id = new_user.id
+        new_order_anonym_user.basket_id = new_user.basket.id
+        new_order_anonym_user.is_authenticated = True
+        if phone_number:
+            new_user.phone_number = phone_number
+
+        background_tasks.add_task(email_account_service.send_account_email, new_user.email, temp_password)
+
+    db.commit()
+
     background_tasks.add_task(email_service.send_order_confirmation_email, order_data)
+
+    email_addresses = await repository_users.get_email_addresses(db=db)
+    for email in email_addresses:
+        if email.is_send_message:
+            background_tasks.add_task(
+                email_admin_service.send_admin_email,
+                email.address,
+                new_order_anonym_user.id,
+                new_order_anonym_user.comment
+            )
+
+    response_data = OrdersResponseWithMessage(
+        message="Email sent successfully!", order_info=new_order_anonym_user
+    )
 
     await delete_cache_in_redis()
 
-    return new_order_anonym_user
+    return response_data
 
 
 @router.get("/all_for_crm",
@@ -254,13 +322,8 @@ async def get_orders_for_crm(
     if redis_client:
         cached_orders = redis_client.get(key)
 
-    orders_ = None
-
     if not cached_orders:
-        if not order_status:
-            orders_ = await repository_orders.get_orders_all_for_crm(limit, offset, db)
-        elif order_status:
-            orders_ = await repository_orders.get_orders_all_for_crm_with_status(limit, offset, order_status, db)
+        orders_ = await repository_orders.get_orders_all_for_crm(limit, offset, order_status, db)
 
         if redis_client:
             redis_client.set(key, pickle.dumps(orders_))
@@ -424,24 +487,24 @@ async def change_order_status(order_id: int, update_data: UpdateOrderStatus, db:
     return {"message": f"Status of the Order №{order_id} updated to '{update_data.new_status.value}'"}
 
 
-@router.put("/{order_id}/add_comment",
+@router.put("/{order_id}/add_notes",
             response_model=OrderMessageResponse,
             dependencies=[Depends(allowed_operation_admin_moderator)])
-async def add_comment_to_order(order_id: int, data: OrderCommentModel, db: Session = Depends(get_db)):
+async def add_notes_to_order(order_id: int, data: OrderAdminNotesModel, db: Session = Depends(get_db)):
     """
-    The add_comment_to_order function adds comment to the order.
+    The add_notes_to_order function adds notes to the order.
 
     Args:
-        data: OrderCommentModel: adding comment to the order by admin or moderator
+        data: OrderAdminNotesModel: adding notes to the order by admin or moderator
         order_id: Get the id of the order to add comment
         db: Session: Access the database
 
     Returns:
-        Message that the comment to the order was added successfully
+        Message that the note to the order was added successfully
     """
 
-    await repository_orders.add_comment_to_order(order_id, data, db)
+    await repository_orders.add_notes_to_order(order_id, data, db)
 
     await delete_cache_in_redis()
 
-    return {"message": f"Comment to the Order №{order_id} added successfully"}
+    return {"message": f"Note to the Order №{order_id} added successfully"}
