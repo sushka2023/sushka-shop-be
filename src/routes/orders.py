@@ -24,6 +24,7 @@ from src.schemas.orders import (
     OrdersCurrentUserWithTotalCountResponse,
     OrdersResponseWithMessage,
     OrderAdminNotesModel,
+    OrdersWithMessage
 )
 
 from src.services.auth import auth_service
@@ -47,7 +48,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.post("/create_for_auth_user",
-             response_model=OrderResponse,
+             response_model=OrdersWithMessage,
              status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def create_order_auth_user(
@@ -147,9 +148,13 @@ async def create_order_auth_user(
                 new_order.comment
             )
 
+    response_data = OrdersWithMessage(
+        message="Email sent successfully!", order_info=new_order
+    )
+
     await delete_cache_in_redis()
 
-    return new_order
+    return response_data
 
 
 @router.post("/create_for_anonym_user",

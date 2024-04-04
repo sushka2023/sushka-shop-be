@@ -203,3 +203,8 @@ class OrdersCRMWithTotalCountResponse(BaseModel):
 class OrdersResponseWithMessage(BaseModel):
     message: str
     order_info: OrderAnonymUserResponse
+
+
+class OrdersWithMessage(BaseModel):
+    message: str
+    order_info: OrderResponse
