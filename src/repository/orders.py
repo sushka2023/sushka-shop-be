@@ -110,6 +110,12 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
     if not user.basket:
         user.basket = Basket()
 
+    if not user.phone_number:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You need to add a phone number in your account!"
+        )
+
     total_cost = await calculate_basket_total_cost(user.basket)
 
     ordered_products = []
