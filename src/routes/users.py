@@ -107,6 +107,8 @@ async def update_current_user(
     Returns:
         User: object after the change operation
     """
+    await delete_cache_in_redis()
+
     return await repository_users.update_user_data(db, user_data, current_user)
 
 

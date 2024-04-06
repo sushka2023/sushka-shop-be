@@ -54,6 +54,7 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     role: Role
+    phone_number: Optional[str]
     created_at: datetime
     updated_at: Optional[datetime]
     refresh_token: Optional[str]
@@ -95,16 +96,17 @@ class UserChangeRole(BaseModel):
 class UserUpdateData(BaseModel):
     first_name: str = Field(min_length=3, max_length=150)
     last_name: str = Field(min_length=3, max_length=150)
-    phone_number: str = Field(min_length=10, max_length=13)
+    phone_number: Optional[str] = Field(min_length=10, max_length=13)
 
     @validator("phone_number", pre=True)
     def validate_phone_number(cls, phone_number):
-        if not phone_pattern.match(phone_number):
-            raise ValueError(
-                'Phone number is not valid! The phone number must first consist of the symbols "+380" '
-                'or "380" or "0" and than followed by nine digits.'
-            )
-        return phone_number
+        if phone_number:
+            if not phone_pattern.match(phone_number):
+                raise ValueError(
+                    'Phone number is not valid! The phone number must first consist of the symbols "+380" '
+                    'or "380" or "0" and than followed by nine digits.'
+                )
+            return phone_number
 
 
 class UserResponseAfterUpdate(UserUpdateData):

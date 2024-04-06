@@ -54,12 +54,15 @@ async def create_nova_poshta_warehouse_and_associate_with_post(
         Message about successfully adding novaposhta data
         A novaposhta object
     """
+
     nova_poshta = await repository_posts.create_nova_poshta_warehouse_and_associate_with_post(
         nova_post_warehouse=nova_post_warehouse,
         user_id=current_user.id,
         post_id=current_user.posts.id,
         db=db,
     )
+
+    await delete_cache_in_redis()
 
     return {
         "message": "NovaPoshta created and associated with Post successfully",
@@ -90,12 +93,15 @@ async def create_nova_poshta_address_delivery_and_associate_with_post(
         Message about successfully adding novaposhta data
         A novaposhta object
     """
+
     nova_poshta = await repository_posts.create_nova_poshta_address_delivery_and_associate_with_post(
         nova_post_address_delivery=nova_post_address_delivery,
         user_id=current_user.id,
         post_id=current_user.posts.id,
         db=db,
     )
+
+    await delete_cache_in_redis()
 
     return {
         "message": "NovaPoshta created and associated with Post successfully",
@@ -126,12 +132,15 @@ async def create_ukr_poshta_and_associate_with_post(
         Message about successfully adding novaposhta data
         An ukrposhta object
     """
+
     ukr_poshta = await repository_posts.create_ukr_poshta_and_associate_with_post(
         ukr_postal_office=ukr_post_address,
         user_id=current_user.id,
         post_id=current_user.posts.id,
         db=db,
     )
+
+    await delete_cache_in_redis()
 
     return {
         "message": "UkrPoshta created and associated with Post successfully",

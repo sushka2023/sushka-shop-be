@@ -80,7 +80,7 @@ class OrderAnonymUserModel(BaseModel):
     first_name_anon_user: str
     last_name_anon_user: str
     email_anon_user: EmailStr
-    phone_number_anon_user: Optional[str] = ""
+    phone_number_anon_user: str
     is_another_recipient: Optional[bool] = False
     full_name_another_recipient: Optional[str] = ""
     phone_number_another_recipient: Optional[str] = ""
@@ -203,3 +203,8 @@ class OrdersCRMWithTotalCountResponse(BaseModel):
 class OrdersResponseWithMessage(BaseModel):
     message: str
     order_info: OrderAnonymUserResponse
+
+
+class OrdersWithMessage(BaseModel):
+    message: str
+    order_info: OrderResponse
