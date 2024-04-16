@@ -53,6 +53,7 @@ async def get_reviews(limit: int, offset: int, db: Session = Depends(get_db)):
             reviews_result.append(ReviewResponse(
                 id=review.id,
                 user_id=review.user_id,
+                user=review.user,
                 product_id=review.product_id,
                 rating=review.rating,
                 description=review.description,
@@ -142,7 +143,7 @@ async def create_review(
             status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND
         )
 
-    new_review = await repository_reviews.create_review(review, db, current_user)
+    new_review = await repository_reviews.create_review(review, db, current_user.id)
 
     await delete_cache_in_redis()
 
