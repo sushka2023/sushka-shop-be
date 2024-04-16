@@ -181,3 +181,15 @@ class AdminEmailsResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UserReviewResponse(BaseModel):
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    role: Role
+    is_active: bool
+
+    class Config:
+        orm_mode = True

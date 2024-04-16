@@ -9,14 +9,21 @@ from src.schemas.reviews import ReviewModel
 
 async def get_reviews(limit: int, offset: int, db: Session) -> list[Type[Review]]:
     return (
-        db.query(Review).options(joinedload(Review.images))  # Завантажує всі картинки разом із відгуками
+        db.query(Review)
+        .options(joinedload(Review.user))
+        .options(joinedload(Review.images))  # Завантажує всі картинки разом із відгуками
         .filter(and_(Review.is_checked == True, Review.is_deleted == False))
         .order_by(desc(Review.rating), desc(Review.created_at)).limit(limit).offset(offset).all()
     )
 
 
 async def get_reviews_for_crm(limit: int, offset: int, db: Session) -> list[Type[Review]]:
-    return db.query(Review).order_by(Review.is_deleted, desc(Review.created_at)).limit(limit).offset(offset).all()
+    return (
+        db.query(Review)
+        .options(joinedload(Review.user))
+        .order_by(Review.is_deleted, desc(Review.created_at))
+        .limit(limit).offset(offset).all()
+    )
 
 
 async def get_review_for_product_by_user(db: Session, product_id: int, user_id: int) -> Review:
@@ -32,9 +39,14 @@ async def get_review_for_product_by_user(db: Session, product_id: int, user_id: 
     Returns:
         Review which created to the product by current user
     """
-    review = db.query(Review).filter(
-        Review.product_id == product_id, Review.user_id == user_id
-    ).first()
+    review = (
+        db.query(Review)
+        .options(joinedload(Review.user))
+        .filter(
+            Review.product_id == product_id,
+            Review.user_id == user_id
+        ).first()
+    )
     return review
 
 
@@ -42,13 +54,13 @@ async def get_review_by_id(review_id: int, db: Session) -> Review | None:
     return db.query(Review).filter_by(id=review_id).first()
 
 
-async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
+async def create_review(review: ReviewModel, db: Session, user_id: int) -> Review:
     """
        Function creates a new review.
 
        Arguments:
            review (ReviewModel): object with review data
-           user (User): the current user
+           user_id (User): the current user
            db (Session): SQLAlchemy session object for accessing the database
 
        Returns:
@@ -57,7 +69,7 @@ async def create_review(review: ReviewModel, db: Session, user: User) -> Review:
 
     new_review = Review(
         product_id=review.product_id,
-        user_id=user.id,
+        user_id=user_id,
         rating=review.rating,
         description=review.description,
     )
