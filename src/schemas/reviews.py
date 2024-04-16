@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from src.database.models import Rating, Image
 from src.schemas.images import ImageResponseReview
+from src.schemas.users import UserReviewResponse
 from src.services.cloud_image import CloudImage
 
 
@@ -17,6 +18,7 @@ class ReviewModel(BaseModel):
 class ReviewResponse(BaseModel):
     id: int
     user_id: int
+    user: UserReviewResponse
     product_id: int
     rating: Rating
     description: str
