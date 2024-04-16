@@ -124,6 +124,7 @@ class User(Base, UpdateFromDictMixin):
     posts = relationship("Post", uselist=False, lazy="subquery", back_populates="user")
     favorite = relationship("Favorite", uselist=False, back_populates="user")
     cooperation = relationship("Cooperation", uselist=False, back_populates="user")
+    reviews = relationship("Review", back_populates="user")
 
 
 class BlacklistToken(Base):
@@ -211,6 +212,7 @@ class Review(Base):
     product_id = Column('product_id', ForeignKey('products.id', ondelete='CASCADE'), default=None)
     product = relationship("Product", back_populates="reviews")
     user_id = Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), default=None)
+    user = relationship("User", back_populates="reviews")
     images = relationship("Image", back_populates="review")
     rating = Column('rating', Enum(Rating), default=Rating.five_stars)
     description = Column(String(255), unique=False, nullable=False)
