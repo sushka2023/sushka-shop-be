@@ -1,4 +1,5 @@
 import pickle
+from datetime import datetime
 
 from fastapi import Depends, HTTPException, status, APIRouter, Security, Request, BackgroundTasks
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
@@ -15,6 +16,7 @@ from src.repository import users as repository_users
 from src.repository import posts as repository_posts
 from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
+from src.services.email_tokens import get_email_token, add_email_token
 from src.services.exception_detail import ExDetail as Ex
 from src.services.password_utils import hash_password, verify_password
 from src.services.roles import RoleAccess
@@ -245,12 +247,25 @@ async def reset_password(token: str, body: PasswordModel, db: Session = Depends(
     Returns:
         A message to the user
     """
+    email_token = await get_email_token(email_token=token, db=db)
+    if email_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token already has used")
+
+    token_info = auth_service.token_decode(token)
+    expiration_time = datetime.fromtimestamp(token_info["exp"])
+    if datetime.now() > expiration_time:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token has expired")
+
     email = await auth_service.get_email_from_token(token)
     user = await repository_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=Ex.HTTP_400_BAD_REQUEST)
     if not user.is_active:
         return {"message": "Your email is not confirmed"}
+
     body.password_checksum = hash_password(body.password_checksum)
     await repository_users.reset_password(email, body.password_checksum, db)
+
+    await add_email_token(email_token=token, db=db)
+
     return {"message": "Password changed"}
