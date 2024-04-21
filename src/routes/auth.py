@@ -1,4 +1,3 @@
-import pickle
 from datetime import datetime
 
 from fastapi import Depends, HTTPException, status, APIRouter, Security, Request, BackgroundTasks
@@ -14,9 +13,9 @@ from src.repository import baskets as repository_baskets
 from src.repository import favorites as repository_favorites
 from src.repository import users as repository_users
 from src.repository import posts as repository_posts
+from src.repository import email_tokens as repository_email
 from src.services.auth import auth_service
 from src.services.email import send_email, send_reset_email
-from src.services.email_tokens import get_email_token, add_email_token
 from src.services.exception_detail import ExDetail as Ex
 from src.services.password_utils import hash_password, verify_password
 from src.services.roles import RoleAccess
@@ -247,7 +246,7 @@ async def reset_password(token: str, body: PasswordModel, db: Session = Depends(
     Returns:
         A message to the user
     """
-    email_token = await get_email_token(email_token=token, db=db)
+    email_token = await repository_email.get_email_token(email_token=token, db=db)
     if email_token:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token already has used")
 
@@ -266,6 +265,6 @@ async def reset_password(token: str, body: PasswordModel, db: Session = Depends(
     body.password_checksum = hash_password(body.password_checksum)
     await repository_users.reset_password(email, body.password_checksum, db)
 
-    await add_email_token(email_token=token, db=db)
+    await repository_email.add_email_token(email_token=token, db=db)
 
     return {"message": "Password changed"}
