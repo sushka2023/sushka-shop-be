@@ -378,3 +378,11 @@ class EmailAddress(Base):
     id = Column(Integer, primary_key=True)
     address = Column(String, unique=True, index=True, nullable=True)
     is_send_message = Column(Boolean, default=False)
+
+
+class UsedEmailToken(Base):
+    __tablename__ = 'used_email_tokens'
+
+    id = Column(Integer, primary_key=True)
+    email_token = Column(String(255), unique=True, nullable=False)
+    added_at = Column(DateTime, default=func.now())
