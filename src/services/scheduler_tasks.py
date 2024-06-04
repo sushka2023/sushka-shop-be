@@ -12,7 +12,7 @@ async def scheduled_update():
 
 
 def start_scheduler():
-    scheduler.add_job(scheduled_update, "cron", hour=22, minute=0)
+    scheduler.add_job(scheduled_update, "cron", hour=0, minute=0)
     scheduler.start()
 
 
