@@ -63,3 +63,7 @@ class NovaPoshtaDataResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class NovaPoshtaMessageResponse(BaseModel):
+    message: str
