@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload, subqueryload
 
@@ -10,11 +11,14 @@ from src.database.models import (
     post_ukrposhta_association,
     post_novaposhta_association,
 )
+
 from src.repository.nova_poshta import get_nova_poshta_by_id
 from src.repository.ukr_poshta import get_ukr_poshta_by_id
-from src.schemas.nova_poshta import NovaPoshtaCreate, NovaPoshtaAddressDeliveryCreate
+
+from src.schemas.nova_poshta import NovaPoshtaAddressDeliveryCreate
 from src.schemas.posts import PostUkrPostalOffice, PostNovaPoshtaOffice
 from src.schemas.ukr_poshta import UkrPoshtaCreate
+
 from src.services.exception_detail import ExDetail as Ex
 
 
@@ -48,29 +52,27 @@ async def get_posts_by_id_and_user_id(post_id: int, user_id: int, db: Session) -
     return post
 
 
-async def create_nova_poshta_warehouse_and_associate_with_post(
-    nova_post_warehouse: NovaPoshtaCreate, user_id: int, post_id: int, db: Session,
-) -> NovaPoshta:
-    new_nova_poshta_warehouse = NovaPoshta(**nova_post_warehouse.dict())
-    db.add(new_nova_poshta_warehouse)
-    db.commit()
-    db.refresh(new_nova_poshta_warehouse)
-
+async def add_nova_poshta_warehouse_to_post_for_current_user(
+    db: Session, nova_poshta_in: PostNovaPoshtaOffice, user_id: int,
+) -> None:
     post = await get_posts_by_id_and_user_id(
-        db=db, post_id=post_id, user_id=user_id
+        db=db, post_id=nova_poshta_in.post_id, user_id=user_id
     )
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
+    nova_poshta_data = await get_nova_poshta_by_id(db=db, nova_poshta_id=nova_poshta_in.nova_poshta_id)
+
+    if not nova_poshta_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
+
     post_nova_post_association = post_novaposhta_association.insert().values(
-        post_id=post.id, nova_poshta_id=new_nova_poshta_warehouse.id
+        **nova_poshta_in.dict()
     )
     db.execute(post_nova_post_association)
 
     db.commit()
-
-    return new_nova_poshta_warehouse
 
 
 async def create_nova_poshta_address_delivery_and_associate_with_post(
@@ -174,11 +176,11 @@ async def remove_ukr_postal_office_from_post(
 
 
 async def remove_nova_postal_data_from_post(
-    db: Session, nova_poshta_in: PostNovaPoshtaOffice, user_id: int, post_id: int
+    db: Session, nova_poshta_in: PostNovaPoshtaOffice, user_id: int
 ) -> None:
 
     post = await get_posts_by_id_and_user_id(
-        db=db, post_id=post_id, user_id=user_id
+        db=db, post_id=nova_poshta_in.post_id, user_id=user_id
     )
 
     if not post:
@@ -217,6 +219,6 @@ async def remove_nova_postal_data_from_post(
         .all()
     )
 
-    if not other_associations:
+    if not other_associations and nova_poshta_data.is_delivery == True:
         db.delete(nova_poshta_data)
         db.commit()
