@@ -23,11 +23,32 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 @router.get("/warehouses/{city}", response_model=list[str])
 async def get_warehouses_for_city(city: str, db: Session = Depends(get_db)) -> list[str]:
+    """
+    Obtain the novaposhta data from API Nova Poshta and add received data to database
+
+        Arguments:
+            city: str: parameter to receive all warehouses for the specific city
+            db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        List of all warehouses for the specific city
+    """
     return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, city_name=city)
 
 
-@router.put("/update_warehouses", response_model=NovaPoshtaMessageResponse)
+@router.put("/update_warehouses",
+            response_model=NovaPoshtaMessageResponse,
+            dependencies=[Depends(allowed_operation_admin_moderator)])
 async def update_warehouses_data(db: Session = Depends(get_db)) -> dict[str, str]:
+    """
+    Update the novaposhta data from API Nova Poshta in database
+
+        Arguments:
+            db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        Message about successfully updating novaposhta data
+    """
     warehouses = await repository_novaposhta.get_all_warehouses(db=db)
     if not warehouses:
         raise HTTPException(
@@ -39,8 +60,19 @@ async def update_warehouses_data(db: Session = Depends(get_db)) -> dict[str, str
     return {"message": "Warehouses data updated successfully."}
 
 
-@router.delete("/delete_warehouses", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/delete_warehouses",
+               status_code=status.HTTP_204_NO_CONTENT,
+               dependencies=[Depends(allowed_operation_admin)])
 async def remove_warehouses_data(db: Session = Depends(get_db)) -> None:
+    """
+    Remove novaposhta data from database.
+
+        Args:
+            db: Session: Access the database
+
+    Returns:
+        None
+    """
     await repository_novaposhta.delete_all_warehouses(db=db)
 
 
