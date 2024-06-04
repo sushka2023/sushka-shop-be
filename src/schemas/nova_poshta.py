@@ -53,6 +53,7 @@ class NovaPoshtaResponse(NovaPoshtaModel):
 class NovaPoshtaDataResponse(BaseModel):
     id: int
     address_warehouse: Optional[str] = ""
+    category_warehouse: Optional[str] = ""
     city: str
     region: Optional[str] = ""
     area: Optional[str] = ""
