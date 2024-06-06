@@ -313,6 +313,7 @@ class NovaPoshta(Base, UpdateFromDictMixin):
     __tablename__ = 'nova_poshta'
     id = Column(Integer, primary_key=True)
     address_warehouse = Column(String(255), nullable=True)
+    category_warehouse = Column(String(255), nullable=True)
     city = Column(String(255), nullable=False)
     region = Column(String(255), nullable=True)
     area = Column(String(255), nullable=True)

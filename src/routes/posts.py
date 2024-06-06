@@ -1,23 +1,26 @@
 import pickle
 
 from fastapi import APIRouter, Depends, status, HTTPException
+
 from sqlalchemy.orm import Session
 
 from src.database.caching import get_redis
 from src.database.db import get_db
 from src.database.models import Role, User
-from src.repository import posts as repository_posts
-from src.schemas.nova_poshta import NovaPoshtaCreate, NovaPoshtaAddressDeliveryCreate
 
+from src.repository import posts as repository_posts
+
+from src.schemas.nova_poshta import NovaPoshtaAddressDeliveryCreate
 from src.schemas.posts import (
     PostResponse,
     PostUkrPostalOffice,
     PostNovaPoshtaOffice,
-    PostWarehouseResponse,
     PostAddressDeliveryResponse,
-    PostUkrPoshtaResponse
+    PostUkrPoshtaResponse,
+    PostMessageResponse
 )
 from src.schemas.ukr_poshta import UkrPoshtaCreate
+
 from src.services.auth import auth_service
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -31,43 +34,30 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.post(
-    "/create_nova_poshta_warehouse_and_associate_with_post",
-    response_model=PostWarehouseResponse,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(allowed_operation_admin_moderator_user)]
-)
-async def create_nova_poshta_warehouse_and_associate_with_post(
-    nova_post_warehouse: NovaPoshtaCreate,
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
+@router.post("/add_nova_poshta_warehouse",
+             response_model=PostMessageResponse,
+             dependencies=[Depends(allowed_operation_admin_moderator_user)])
+async def add_nova_poshta_warehouse(nova_poshta_data: PostNovaPoshtaOffice,
+                                    current_user: User = Depends(auth_service.get_current_user),
+                                    db: Session = Depends(get_db)):
     """
-    The function creates novaposhta data and adds to an exists post for the current user.
+    The add_nova_poshta_warehouse function adds novaposhta warehouse to an exists post for the current user.
 
-    Args:
-        nova_post_warehouse: NovaPoshtaCreate: Validate the request body
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            nova_poshta_data: PostNovaPoshtaOffice: Validate the request body
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         Message about successfully adding novaposhta data
-        A novaposhta object
     """
 
-    nova_poshta = await repository_posts.create_nova_poshta_warehouse_and_associate_with_post(
-        nova_post_warehouse=nova_post_warehouse,
-        user_id=current_user.id,
-        post_id=current_user.posts.id,
-        db=db,
+    await repository_posts.add_nova_poshta_warehouse_to_post_for_current_user(
+        db=db, user_id=current_user.id, nova_poshta_in=nova_poshta_data
     )
-
     await delete_cache_in_redis()
 
-    return {
-        "message": "NovaPoshta created and associated with Post successfully",
-        "nova_poshta_data": nova_poshta
-    }
+    return {"message": "The nova poshta warehouse added successfully"}
 
 
 @router.post(
@@ -84,10 +74,10 @@ async def create_nova_poshta_address_delivery_and_associate_with_post(
     """
     The function creates novaposhta data and adds to an exists post for the current user.
 
-    Args:
-        nova_post_address_delivery: NovaPoshtaAddressDeliveryCreate: Validate the request body
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            nova_post_address_delivery: NovaPoshtaAddressDeliveryCreate: Validate the request body
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         Message about successfully adding novaposhta data
@@ -123,10 +113,10 @@ async def create_ukr_poshta_and_associate_with_post(
     """
     The function creates ukrposhta data and adds to an exists post for the current user.
 
-    Args:
-        ukr_post_address: UkrPoshtaCreate: Validate the request body
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            ukr_post_address: UkrPoshtaCreate: Validate the request body
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         Message about successfully adding novaposhta data
@@ -156,9 +146,9 @@ async def get_my_post_offices(current_user: User = Depends(auth_service.get_curr
     """
     The function returns all post offices for current user in the database.
 
-    Args:
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         A post object
@@ -200,17 +190,17 @@ async def remove_nova_poshta_data(nova_poshta_data: PostNovaPoshtaOffice,
     """
     The remove_nova_poshta_data function deleted an exists post with novaposhta data for the current user.
 
-    Args:
-        nova_poshta_data: PostNovaPoshtaOffice: Validate the request body
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            nova_poshta_data: PostNovaPoshtaOffice: Validate the request body
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         None
     """
 
     await repository_posts.remove_nova_postal_data_from_post(
-        db=db, user_id=current_user.id, post_id=current_user.posts.id, nova_poshta_in=nova_poshta_data
+        db=db, user_id=current_user.id, nova_poshta_in=nova_poshta_data
     )
     await delete_cache_in_redis()
 
@@ -224,10 +214,10 @@ async def remove_ukr_postal_office(ukr_poshta_data: PostUkrPostalOffice,
     """
     The remove_ukr_postal_office function deleted an exists post with address for the current user.
 
-    Args:
-        ukr_poshta_data: PostUkrPostalOffice: Validate the request body
-        current_user: User: Get the current user
-        db: Session: Access the database
+        Args:
+            ukr_poshta_data: PostUkrPostalOffice: Validate the request body
+            current_user: User: Get the current user
+            db: Session: Access the database
 
     Returns:
         None

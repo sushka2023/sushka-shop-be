@@ -29,6 +29,7 @@ class PostUkrPostalOffice(BaseModel):
 
 
 class PostNovaPoshtaOffice(BaseModel):
+    post_id: int
     nova_poshta_id: Optional[int] = None
 
 
@@ -45,3 +46,7 @@ class PostAddressDeliveryResponse(BaseModel):
 class PostUkrPoshtaResponse(BaseModel):
     message: str
     ukr_poshta_data: UkrPoshtaResponse
+
+
+class PostMessageResponse(BaseModel):
+    message: str

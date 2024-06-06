@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     redis_password: str = 'password'
     sentry_url: str = 'sentry_url'
 
+    api_key_nova_poshta: str = ""
+    api_url_nova_poshta: str = "https://api.novaposhta.ua/v2.0/json/"
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
