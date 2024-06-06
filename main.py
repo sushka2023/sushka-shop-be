@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -10,6 +12,7 @@ from src.routes import users, auth, product_category, prices, products, favorite
 import logging
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from src.conf.logging_config import setup_logging
+from src.services.scheduler_tasks import start_scheduler, stop_scheduler
 from src.services.sentry import sentry_sdk
 
 setup_logging()
@@ -17,7 +20,17 @@ setup_logging()
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    try:
+        yield
+    finally:
+        stop_scheduler()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(SentryAsgiMiddleware)
 
