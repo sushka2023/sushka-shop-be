@@ -22,18 +22,19 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
 
 
 @router.get("/warehouses/{city}", response_model=list[str])
-async def get_warehouses_for_city(city: str, db: Session = Depends(get_db)) -> list[str]:
+async def get_warehouses_for_city(city_with_area: str, db: Session = Depends(get_db)) -> list[str]:
     """
     Obtain the novaposhta data from API Nova Poshta and add received data to database
 
         Arguments:
-            city: str: parameter to receive all warehouses for the specific city
+            city_with_area: str: parameter to receive all warehouses for the specific data
+            (the city or (the city and the area))
             db (Session): SQLAlchemy session object for accessing the database
 
     Returns:
         List of all warehouses for the specific city
     """
-    return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, city_name=city)
+    return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, city_with_area=city_with_area)
 
 
 @router.put("/update_warehouses",
