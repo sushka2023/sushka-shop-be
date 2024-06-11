@@ -322,6 +322,7 @@ class NovaPoshta(Base, UpdateFromDictMixin):
     apartment_number = Column(String(255), nullable=True)
     floor = Column(Integer, nullable=True)
     is_delivery = Column(Boolean, default=False)
+    settlement_ref = Column(String(500), nullable=True)
 
     post = relationship(
         "Post", secondary=post_novaposhta_association, back_populates="nova_poshta"
