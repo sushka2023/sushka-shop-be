@@ -1,3 +1,6 @@
+import asyncio
+from typing import Any
+
 import httpx
 import logging
 from fastapi import HTTPException, status
@@ -5,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.conf.config import settings
 from src.database.models import NovaPoshta, post_novaposhta_association, Post, User
+from src.schemas.nova_poshta import NovaPoshtaWarehouseResponse
 from src.services.exception_detail import ExDetail as Ex
 from src.services.nova_poshta import parse_input
 
@@ -15,14 +19,14 @@ API_URL = settings.api_url_nova_poshta
 
 
 async def create_nova_poshta_warehouse(
-    city: str, address_warehouse: str, category_warehouse: str, area: str, region: str, db: Session,
+    city: str, address_warehouse: str, settle_ref: str, area: str, region: str, db: Session,
 ) -> NovaPoshta:
     db_warehouse = NovaPoshta(
         city=city,
         address_warehouse=address_warehouse,
-        category_warehouse=category_warehouse,
         area=area,
         region=region,
+        settlement_ref=settle_ref,
     )
 
     db.add(db_warehouse)
@@ -36,21 +40,14 @@ async def get_all_warehouses(db: Session) -> list[NovaPoshta]:
     return db.query(NovaPoshta).all()
 
 
-async def get_warehouses_data_for_specific_city(db: Session, city_with_area: str) -> list[str]:
-    city_name, area_name = parse_input(input_str=city_with_area)
-
-    existing_warehouses = db.query(NovaPoshta).filter_by(city=city_name).all()
-    existing_addresses = {
-        (warehouse.city, warehouse.area, warehouse.address_warehouse) for warehouse in existing_warehouses
-    }
-
+async def get_warehouses_data_for_specific_city(db: Session, settle_ref: str) -> list:
     url = f"{API_URL}"
     payload = {
         "apiKey": API_KEY,
         "modelName": "Address",
         "calledMethod": "getWarehouses",
         "methodProperties": {
-            "CityName": city_name
+            "SettlementRef": settle_ref
         },
     }
 
@@ -61,85 +58,114 @@ async def get_warehouses_data_for_specific_city(db: Session, city_with_area: str
     data = response.json()
 
     if not data.get("success"):
-        logger.error(f"Error: Request for city {city_name} was not successful.")
-        return sorted([addr for _, _, addr in existing_addresses])
+        logger.error(f"Error: Query for reference {settle_ref} was not successful.")
 
-    warehouses_data = data.get("data", [])
+    warehouse_data = data.get("data", [])
 
-    for item in warehouses_data:
+    all_warehouses = []
+    for item in warehouse_data:
         address_warehouse = item.get("Description", "")
-        item_area = item.get("SettlementAreaDescription", "")
+        city_name = item.get("SettlementDescription", "").split(" (")[0]
+        area_name = item.get("SettlementAreaDescription", "")
+        region_name = item.get("SettlementRegionsDescription", "")
 
-        if area_name and area_name.lower() not in item_area.lower():
-            continue
-
-        if (city_name, item_area, address_warehouse) not in existing_addresses:
-            db_warehouse = await create_nova_poshta_warehouse(
+        existing_warehouses = (
+            db.query(NovaPoshta)
+            .filter_by(
                 city=city_name,
+                area=area_name,
+                region=region_name,
                 address_warehouse=address_warehouse,
-                category_warehouse=item.get("CategoryOfWarehouse", ""),
-                area=item_area,
-                region=item.get("SettlementRegionsDescription", ""),
-                db=db
             )
+            .first()
+        )
 
-            existing_addresses.add((city_name, item_area, db_warehouse.address_warehouse))
+        if not existing_warehouses:
+            new_warehouse = await create_nova_poshta_warehouse(
+                city=city_name,
+                area=area_name,
+                region=region_name,
+                address_warehouse=address_warehouse,
+                settle_ref=settle_ref,
+                db=db,
+            )
+            all_warehouses.append({"id": new_warehouse.id, "address_warehouse": address_warehouse})
+        else:
+            all_warehouses.append({"id": existing_warehouses.id, "address_warehouse": address_warehouse})
 
-    all_warehouses = db.query(NovaPoshta).filter_by(city=city_name).order_by(NovaPoshta.id).all()
-    filtered_warehouses = [warehouse.address_warehouse for warehouse in all_warehouses if
-                           not area_name or area_name.lower() in warehouse.area.lower()]
-
-    return filtered_warehouses
+    return all_warehouses
 
 
 async def update_warehouses_data(db: Session) -> None:
-    existing_cities = db.query(NovaPoshta.city).distinct().all()
-    existing_cities = {city[0] for city in existing_cities}
+    unique_refs = [
+        ref[0] for ref in db.query(NovaPoshta.settlement_ref).distinct().all()
+    ]
 
-    existing_areas = db.query(NovaPoshta.area).filter(NovaPoshta.city.in_(existing_cities)).distinct().all()
-    existing_areas = {area[0] for area in existing_areas}
+    for ref in unique_refs:
+        warehouses_in_database = (
+            db.query(NovaPoshta).filter_by(settlement_ref=ref).all()
+        )
 
-    url = f"{API_URL}"
-    payload = {
-        "apiKey": API_KEY,
-        "modelName": "Address",
-        "calledMethod": "getWarehouses",
-        "methodProperties": {
-            "Limit": "",
-            "Page": ""
-        },
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url=url, json=payload)
+        url = f"{API_URL}"
+        payload = {
+            "apiKey": API_KEY,
+            "modelName": "Address",
+            "calledMethod": "getWarehouses",
+            "methodProperties": {
+                "SettlementRef": ref
+            },
+        }
 
-    response.raise_for_status()
-    data = response.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url=url, json=payload)
 
-    if not data.get("success"):
-        logger.error("Error: Request was not successful.")
-        return
+        response.raise_for_status()
+        data = response.json()
 
-    warehouses_data = data.get("data", [])
+        if not data.get("success"):
+            logger.error(f"Error: Query for reference {ref} was not successful.")
+            continue
 
-    for item in warehouses_data:
-        city = item.get("CityDescription", "")
-        area = item.get("SettlementAreaDescription", "")
+        warehouse_data = data.get("data", [])
 
-        if city in existing_cities and area in existing_areas:
-            update_warehouse = db.query(NovaPoshta).filter_by(address_warehouse=item.get("Description", "")).first()
+        warehouses_from_api = []
+        for item in warehouse_data:
+            warehouses_from_api.append(
+                {
+                    "address_warehouse": item.get("Description", ""),
+                    "city": item.get("SettlementDescription", "").split(" (")[0],
+                    "area": item.get("SettlementAreaDescription", ""),
+                    "region": item.get("SettlementRegionsDescription", ""),
+                    "settlement_ref": ref
+                }
+            )
 
-            if update_warehouse:
-                update_warehouse.category_warehouse = item.get("CategoryOfWarehouse", "")
-                update_warehouse.region = item.get("SettlementRegionsDescription", "")
-            else:
-                await create_nova_poshta_warehouse(
+        for warehouse_db in warehouses_in_database:
+            if not any(
+                    warehouse_db.address_warehouse == warehouse_api["address_warehouse"] and
+                    warehouse_db.settlement_ref == warehouse_api["settlement_ref"]
+                    for warehouse_api in warehouses_from_api
+            ):
+                db.delete(warehouse_db)
+                logger.info(f"Removed the warehouse from database: {warehouse_db}")
+
+        for warehouse_api in warehouses_from_api:
+            if not any(
+                    warehouse_db.address_warehouse == warehouse_api["address_warehouse"] and
+                    warehouse_db.settlement_ref == warehouse_api["settlement_ref"]
+                    for warehouse_db in warehouses_in_database
+            ):
+                new_warehouse = await create_nova_poshta_warehouse(
+                    city=warehouse_api["city"],
+                    area=warehouse_api["area"],
+                    region=warehouse_api["region"],
+                    address_warehouse=warehouse_api["address_warehouse"],
+                    settle_ref=warehouse_api["settlement_ref"],
                     db=db,
-                    city=city,
-                    address_warehouse=item.get("Description", ""),
-                    category_warehouse=item.get("CategoryOfWarehouse", ""),
-                    area=area,
-                    region=item.get("SettlementRegionsDescription", "")
                 )
+                logger.info(f"Added a new warehouse into database: {new_warehouse}")
+
+        await asyncio.sleep(2)
     db.commit()
 
 

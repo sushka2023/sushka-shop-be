@@ -7,7 +7,7 @@ from src.repository import nova_poshta as repository_novaposhta
 from src.schemas.nova_poshta import (
     NovaPoshtaAddressDeliveryResponse,
     NovaPoshtaAddressDeliveryPartialUpdate,
-    NovaPoshtaMessageResponse,
+    NovaPoshtaMessageResponse, NovaPoshtaWarehouseResponse,
 )
 from src.services.cache_in_redis import delete_cache_in_redis
 from src.services.roles import RoleAccess
@@ -21,20 +21,20 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/warehouses/{city}", response_model=list[str])
-async def get_warehouses_for_city(city_with_area: str, db: Session = Depends(get_db)) -> list[str]:
+@router.get("/warehouses/{settle_ref}", response_model=list[NovaPoshtaWarehouseResponse])
+async def get_warehouses_for_city(settle_ref: str, db: Session = Depends(get_db)) -> list[NovaPoshtaWarehouseResponse]:
     """
     Obtain the novaposhta data from API Nova Poshta and add received data to database
 
         Arguments:
-            city_with_area: str: parameter to receive all warehouses for the specific data
-            (the city or (the city and the area))
+            settle_ref: str: parameter to receive all warehouses for the specific data
+            (the reference of the specific city)
             db (Session): SQLAlchemy session object for accessing the database
 
     Returns:
         List of all warehouses for the specific city
     """
-    return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, city_with_area=city_with_area)
+    return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, settle_ref=settle_ref)
 
 
 @router.put("/update_warehouses",
