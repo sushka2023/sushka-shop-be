@@ -1,5 +1,4 @@
 import asyncio
-from typing import Any
 
 import httpx
 import logging
@@ -8,9 +7,7 @@ from sqlalchemy.orm import Session
 
 from src.conf.config import settings
 from src.database.models import NovaPoshta, post_novaposhta_association, Post, User
-from src.schemas.nova_poshta import NovaPoshtaWarehouseResponse
 from src.services.exception_detail import ExDetail as Ex
-from src.services.nova_poshta import parse_input
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +16,18 @@ API_URL = settings.api_url_nova_poshta
 
 
 async def create_nova_poshta_warehouse(
-    city: str, address_warehouse: str, settle_ref: str, area: str, region: str, db: Session,
+    city: str,
+    address_warehouse: str,
+    category_warehouse: str,
+    settle_ref: str,
+    area: str,
+    region: str,
+    db: Session,
 ) -> NovaPoshta:
     db_warehouse = NovaPoshta(
         city=city,
         address_warehouse=address_warehouse,
+        category_warehouse=category_warehouse,
         area=area,
         region=region,
         settlement_ref=settle_ref,
@@ -40,7 +44,17 @@ async def get_all_warehouses(db: Session) -> list[NovaPoshta]:
     return db.query(NovaPoshta).all()
 
 
-async def get_warehouses_data_for_specific_city(db: Session, settle_ref: str) -> list:
+async def get_warehouse_by_ref_and_address_warehouse(
+    address_warehouse: str, settle_ref: str, db: Session
+) -> NovaPoshta:
+    warehouse = db.query(NovaPoshta).filter_by(
+        settlement_ref=settle_ref, address_warehouse=address_warehouse
+    ).first()
+
+    return warehouse
+
+
+async def get_warehouses_specific_city(settle_ref: str) -> list:
     url = f"{API_URL}"
     payload = {
         "apiKey": API_KEY,
@@ -59,41 +73,80 @@ async def get_warehouses_data_for_specific_city(db: Session, settle_ref: str) ->
 
     if not data.get("success"):
         logger.error(f"Error: Query for reference {settle_ref} was not successful.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Failed to fetch warehouses from Nova Poshta")
 
-    warehouse_data = data.get("data", [])
+    return data.get("data", [])
 
-    all_warehouses = []
+
+async def get_postomats(db: Session, settle_ref: str, search_term: str = None) -> list:
+    warehouse_data = await get_warehouses_specific_city(settle_ref=settle_ref)
+
+    postomats = []
     for item in warehouse_data:
         address_warehouse = item.get("Description", "")
-        city_name = item.get("SettlementDescription", "").split(" (")[0]
+        city_name = item.get("SettlementDescription", "")
         area_name = item.get("SettlementAreaDescription", "")
         region_name = item.get("SettlementRegionsDescription", "")
 
-        existing_warehouses = (
-            db.query(NovaPoshta)
-            .filter_by(
-                city=city_name,
-                area=area_name,
-                region=region_name,
-                address_warehouse=address_warehouse,
-            )
-            .first()
-        )
+        if search_term and search_term.lower() not in address_warehouse.lower():
+            continue
 
-        if not existing_warehouses:
-            new_warehouse = await create_nova_poshta_warehouse(
-                city=city_name,
-                area=area_name,
-                region=region_name,
-                address_warehouse=address_warehouse,
-                settle_ref=settle_ref,
-                db=db,
+        if "поштомат" in address_warehouse.lower():
+            existing_warehouse = await get_warehouse_by_ref_and_address_warehouse(
+                settle_ref=settle_ref, address_warehouse=address_warehouse, db=db
             )
-            all_warehouses.append({"id": new_warehouse.id, "address_warehouse": address_warehouse})
-        else:
-            all_warehouses.append({"id": existing_warehouses.id, "address_warehouse": address_warehouse})
 
-    return all_warehouses
+            if not existing_warehouse:
+                new_warehouse = await create_nova_poshta_warehouse(
+                    city=city_name,
+                    area=area_name,
+                    region=region_name,
+                    address_warehouse=address_warehouse,
+                    category_warehouse="Поштомат",
+                    settle_ref=settle_ref,
+                    db=db,
+                )
+                postomats.append({"id": new_warehouse.id, "address_warehouse": address_warehouse})
+            else:
+                postomats.append({"id": existing_warehouse.id, "address_warehouse": address_warehouse})
+
+    return postomats
+
+
+async def get_branches(db: Session, settle_ref: str, search_term: str = None) -> list:
+    warehouse_data = await get_warehouses_specific_city(settle_ref=settle_ref)
+
+    branches = []
+    for item in warehouse_data:
+        address_warehouse = item.get("Description", "")
+        city_name = item.get("SettlementDescription", "")
+        area_name = item.get("SettlementAreaDescription", "")
+        region_name = item.get("SettlementRegionsDescription", "")
+
+        if search_term and search_term.lower() not in address_warehouse.lower():
+            continue
+
+        if "поштомат" not in address_warehouse.lower():
+            existing_warehouse = await get_warehouse_by_ref_and_address_warehouse(
+                settle_ref=settle_ref, address_warehouse=address_warehouse, db=db
+            )
+
+            if not existing_warehouse:
+                new_warehouse = await create_nova_poshta_warehouse(
+                    city=city_name,
+                    area=area_name,
+                    region=region_name,
+                    address_warehouse=address_warehouse,
+                    category_warehouse="Відділення",
+                    settle_ref=settle_ref,
+                    db=db,
+                )
+                branches.append({"id": new_warehouse.id, "address_warehouse": address_warehouse})
+            else:
+                branches.append({"id": existing_warehouse.id, "address_warehouse": address_warehouse})
+
+    return branches
 
 
 async def update_warehouses_data(db: Session) -> None:
@@ -130,12 +183,22 @@ async def update_warehouses_data(db: Session) -> None:
 
         warehouses_from_api = []
         for item in warehouse_data:
+            address_warehouse = item.get("Description", "")
+            city_name = item.get("SettlementDescription", "").split(" (")[0]
+            area_name = item.get("SettlementAreaDescription", "")
+            region_name = item.get("SettlementRegionsDescription", "")
+            if "поштомат" in address_warehouse.lower():
+                category_warehouse = "Поштомат"
+            else:
+                category_warehouse = "Відділення"
+
             warehouses_from_api.append(
                 {
-                    "address_warehouse": item.get("Description", ""),
-                    "city": item.get("SettlementDescription", "").split(" (")[0],
-                    "area": item.get("SettlementAreaDescription", ""),
-                    "region": item.get("SettlementRegionsDescription", ""),
+                    "address_warehouse": address_warehouse,
+                    "category_warehouse": category_warehouse,
+                    "city": city_name,
+                    "area": area_name,
+                    "region": region_name,
                     "settlement_ref": ref
                 }
             )
@@ -160,6 +223,7 @@ async def update_warehouses_data(db: Session) -> None:
                     area=warehouse_api["area"],
                     region=warehouse_api["region"],
                     address_warehouse=warehouse_api["address_warehouse"],
+                    category_warehouse=warehouse_api["category_warehouse"],
                     settle_ref=warehouse_api["settlement_ref"],
                     db=db,
                 )

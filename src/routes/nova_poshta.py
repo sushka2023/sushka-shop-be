@@ -22,20 +22,42 @@ allowed_operation_admin_moderator = RoleAccess([Role.admin, Role.moderator])
 allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator, Role.user])
 
 
-@router.get("/warehouses/{settle_ref}", response_model=list[NovaPoshtaWarehouseResponse])
-async def get_warehouses_for_city(settle_ref: str, db: Session = Depends(get_db)) -> list[NovaPoshtaWarehouseResponse]:
+@router.get("/warehouses/branches/", response_model=list[NovaPoshtaWarehouseResponse])
+async def get_branches_route(
+    settle_ref: str, search_term: str = None, db: Session = Depends(get_db)
+) -> list[NovaPoshtaWarehouseResponse]:
     """
-    Obtain the novaposhta data from API Nova Poshta and add received data to database
+    Obtain the novaposhta data from API Nova Poshta and add received branches to database
 
         Arguments:
-            settle_ref: str: parameter to receive all warehouses for the specific data
+            settle_ref: str: parameter to receive all branches for the specific data
             (the reference of the specific city)
+            search_term: str: search parameter
             db (Session): SQLAlchemy session object for accessing the database
 
     Returns:
-        List of all warehouses for the specific city
+        List of all branches for the specific city
     """
-    return await repository_novaposhta.get_warehouses_data_for_specific_city(db=db, settle_ref=settle_ref)
+    return await repository_novaposhta.get_branches(db=db, settle_ref=settle_ref, search_term=search_term)
+
+
+@router.get("/warehouses/postomats/", response_model=list[NovaPoshtaWarehouseResponse])
+async def get_postomats_route(
+    settle_ref: str, search_term: str = None, db: Session = Depends(get_db)
+) -> list[NovaPoshtaWarehouseResponse]:
+    """
+    Obtain the novaposhta data from API Nova Poshta and add received postomats to database
+
+        Arguments:
+            settle_ref: str: parameter to receive all postomats for the specific data
+            (the reference of the specific city)
+            search_term: str: search parameter
+            db (Session): SQLAlchemy session object for accessing the database
+
+    Returns:
+        List of all postomats for the specific city
+    """
+    return await repository_novaposhta.get_postomats(db=db, settle_ref=settle_ref, search_term=search_term)
 
 
 @router.put("/update_warehouses",
