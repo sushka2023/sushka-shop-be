@@ -1,6 +1,7 @@
 import pickle
 
 from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from faker import Faker
@@ -52,7 +53,7 @@ allowed_operation_admin_moderator_user = RoleAccess([Role.admin, Role.moderator,
              status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(allowed_operation_admin_moderator_user)])
 async def create_order_auth_user(
-        order_data: OrderModel,
+        order_info: OrderModel,
         background_tasks: BackgroundTasks,
         current_user: User = Depends(auth_service.get_current_user),
         db: Session = Depends(get_db),
@@ -61,7 +62,7 @@ async def create_order_auth_user(
     The create of order function creates a new order in the database.
 
     Args:
-        order_data: OrderModel: Validate the request body
+        order_info: OrderModel: Validate the request body
         background_tasks: BackgroundTasks: Add a task to the background tasks queue
         db: Session: Pass the database session to the repository layer
         current_user (User): the current user attempting to create the order
@@ -70,7 +71,10 @@ async def create_order_auth_user(
         An order object
     """
 
-    new_order = await repository_orders.create_order_auth_user(order_data, current_user.id, db)
+    new_order = await repository_orders.create_order_auth_user(order_info, current_user.id, db)
+
+    if isinstance(new_order, JSONResponse):
+        return new_order
 
     nova_poshta = (
         await repository_nova_poshta.get_nova_poshta_by_id(new_order.selected_nova_poshta_id, db)
@@ -93,7 +97,7 @@ async def create_order_auth_user(
                 f"{new_order.selected_nova_poshta.city}, "
                 f"{new_order.selected_nova_poshta.address_warehouse}"
             )
-            delivery_type = "Нова Пошта (відділення)"
+            delivery_type = "Нова Пошта (відділення/поштомат)"
     elif ukr_poshta:
         delivery_address = (
             f"{new_order.selected_ukr_poshta.post_code}, "
@@ -107,18 +111,22 @@ async def create_order_auth_user(
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
+    phone_number_customer = (
+        order_info.phone_number_current_user if order_info.phone_number_current_user else current_user.phone_number
+    )
+
     if new_order.is_another_recipient:
         recipient_name = new_order.full_name_another_recipient
         recipient_phone = new_order.phone_number_another_recipient
     else:
         recipient_name = f"{current_user.first_name} {current_user.last_name}"
-        recipient_phone = current_user.phone_number
+        recipient_phone = phone_number_customer
 
     order_data = {
         "order_id": new_order.id,
         "total_price": new_order.price_order,
         "customer": f"{current_user.first_name} {current_user.last_name}",
-        "phone_number_customer": current_user.phone_number,
+        "phone_number_customer": phone_number_customer,
         "email_customer": current_user.email,
         "full_name_another_recipient": recipient_name,
         "phone_number_another_recipient": recipient_phone,

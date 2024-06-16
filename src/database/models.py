@@ -64,7 +64,8 @@ class PaymentsTypes(enum.Enum):
     Payment types.
     """
     cash_on_delivery_np: str = 'cash_on_delivery_np'
-    liqpay: str = 'liqpay'
+    wayforpay: str = 'wayforpay'
+    requisite: str = 'requisite'
 
 
 class ProductStatus(enum.Enum):
@@ -249,7 +250,7 @@ class Order(Base, UpdateFromDictMixin):
     basket_id = Column(Integer, ForeignKey('baskets.id'))
     basket = relationship("Basket", back_populates="order")
     price_order = Column(Float, unique=False, nullable=True)
-    payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.liqpay)
+    payment_type = Column('payment_type', Enum(PaymentsTypes), default=PaymentsTypes.wayforpay)
     created_at = Column('created_at', DateTime, default=func.now())
     confirmation_manager = Column(Boolean, default=False)
     confirmation_pay = Column(Boolean, default=False)
