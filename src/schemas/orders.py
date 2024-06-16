@@ -31,6 +31,7 @@ class OrderedProductResponse(BaseModel):
 
 
 class OrderModel(BaseModel):
+    phone_number_current_user: Optional[str] = ""
     selected_nova_poshta_id: Optional[int] = Field(default_factory=lambda: None)
     selected_ukr_poshta_id: Optional[int] = Field(default_factory=lambda: None)
     payment_type: PaymentsTypes

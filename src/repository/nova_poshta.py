@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from src.conf.config import settings
 from src.database.models import NovaPoshta, post_novaposhta_association, Post, User
 from src.services.exception_detail import ExDetail as Ex
+from src.services.nova_poshta import extract_warehouse_number, NUMBER_REGEX
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,9 @@ async def get_postomats(db: Session, settle_ref: str, search_term: str = None) -
         area_name = item.get("SettlementAreaDescription", "")
         region_name = item.get("SettlementRegionsDescription", "")
 
-        if search_term and search_term.lower() not in address_warehouse.lower():
+        postomat_number = extract_warehouse_number(address=address_warehouse, regex=NUMBER_REGEX)
+
+        if search_term and search_term not in postomat_number:
             continue
 
         if "поштомат" in address_warehouse.lower():
@@ -124,7 +127,9 @@ async def get_branches(db: Session, settle_ref: str, search_term: str = None) ->
         area_name = item.get("SettlementAreaDescription", "")
         region_name = item.get("SettlementRegionsDescription", "")
 
-        if search_term and search_term.lower() not in address_warehouse.lower():
+        branch_number = extract_warehouse_number(address=address_warehouse, regex=NUMBER_REGEX)
+
+        if search_term and search_term not in branch_number:
             continue
 
         if "поштомат" not in address_warehouse.lower():
