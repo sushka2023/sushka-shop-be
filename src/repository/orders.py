@@ -23,6 +23,7 @@ from src.schemas.orders import (
     OrdersCurrentUserWithTotalCountResponse,
     OrderResponse,
 )
+from src.schemas.posts import PostNovaPoshtaOffice
 
 from src.services.orders import (
     delete_basket_items_by_basket_id,
@@ -34,6 +35,7 @@ from src.repository import prices as repository_prices
 from src.repository import products as repository_products
 from src.repository import nova_poshta as repository_nova_poshta
 from src.repository import ukr_poshta as repository_ukr_poshta
+from src.repository import posts as repository_posts
 from src.services.validation import validate_phone_number
 from src.services.exception_detail import ExDetail as Ex
 
@@ -104,17 +106,60 @@ async def get_auth_user_with_basket_and_items(user_id: int, db: Session) -> User
 
 async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Session):
     """Create an order and clean the user’s shopping cart after creating an order"""
+    try:
+        if order_data.phone_number_current_user:
+            validate_phone_number(order_data.phone_number_current_user)
+        if order_data.phone_number_another_recipient:
+            validate_phone_number(order_data.phone_number_another_recipient)
+    except ValueError as ve:
+        logger.error(f"Validation error: {str(ve)}")
+        return JSONResponse(content={"error": str(ve)}, status_code=422)
 
     user = await get_auth_user_with_basket_and_items(user_id, db)
 
     if not user.basket:
         user.basket = Basket()
 
-    if not user.phone_number:
+    if not user.phone_number and not order_data.phone_number_current_user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You need to add a phone number in your account!"
+            detail="You need to add a phone number in your account or provide one in the order!"
         )
+
+    nova_poshta = None
+    ukr_poshta = None
+    selected_nova_poshta = None
+    selected_ukr_poshta = None
+
+    if order_data.selected_nova_poshta_id:
+        nova_poshta = await repository_nova_poshta.get_nova_poshta_by_id(order_data.selected_nova_poshta_id, db)
+        if not nova_poshta:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nova Poshta not found")
+        if nova_poshta.is_delivery:
+            selected_nova_poshta = await repository_nova_poshta.get_nova_poshta_address_delivery(
+                nova_poshta.id, user.id, db
+            )
+        else:
+            selected_nova_poshta = await repository_nova_poshta.get_nova_poshta_warehouse(nova_poshta.id, user.id, db)
+        if not selected_nova_poshta:
+            nova_poshta_in = PostNovaPoshtaOffice(
+                post_id=user.posts.id, nova_poshta_id=order_data.selected_nova_poshta_id
+            )
+            await repository_posts.add_nova_poshta_warehouse_to_post_for_current_user(db, nova_poshta_in, user_id)
+            selected_nova_poshta = await repository_nova_poshta.get_nova_poshta_by_id(
+                order_data.selected_nova_poshta_id, db
+            )
+
+    if order_data.selected_ukr_poshta_id:
+        ukr_poshta = await repository_ukr_poshta.get_ukr_poshta_by_id(order_data.selected_ukr_poshta_id, db)
+        if not ukr_poshta:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ukr Poshta not found")
+        selected_ukr_poshta = await repository_ukr_poshta.get_ukr_poshta_address_delivery(ukr_poshta.id, user.id, db)
+        if not selected_ukr_poshta:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ukr Poshta address not found")
+
+    if not nova_poshta and not ukr_poshta:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No valid delivery method selected")
 
     total_cost = await calculate_basket_total_cost(user.basket)
 
@@ -136,38 +181,6 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Your shopping cart is still empty. Order cannot be without products"
         )
-
-    try:
-        validate_phone_number(order_data.phone_number_another_recipient)
-    except ValueError as ve:
-        logger.error(f"Validation error: {str(ve)}")
-        return JSONResponse(content={"error": str(ve)}, status_code=422)
-
-    nova_poshta = (
-        await repository_nova_poshta.get_nova_poshta_by_id(order_data.selected_nova_poshta_id, db)
-    )
-    ukr_poshta = (
-        await repository_ukr_poshta.get_ukr_poshta_by_id(order_data.selected_ukr_poshta_id, db)
-    )
-
-    selected_nova_poshta = None
-    selected_ukr_poshta = None
-
-    if nova_poshta:
-        if nova_poshta.is_delivery:
-            selected_nova_poshta = (
-                await repository_nova_poshta.get_nova_poshta_address_delivery(nova_poshta.id, user.id, db)
-            )
-        else:
-            selected_nova_poshta = (
-                await repository_nova_poshta.get_nova_poshta_warehouse(nova_poshta.id, user.id, db)
-            )
-    elif ukr_poshta:
-        selected_ukr_poshta = (
-            await repository_ukr_poshta.get_ukr_poshta_address_delivery(ukr_poshta.id, user.id, db)
-        )
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=Ex.HTTP_404_NOT_FOUND)
 
     order = Order(
         user_id=user.id,
@@ -196,11 +209,21 @@ async def create_order_auth_user(order_data: OrderModel, user_id: int, db: Sessi
 
     order.is_authenticated = True
 
-    db.add(order)
-    db.commit()
-    db.refresh(order)
+    try:
+        db.add(order)
+        db.commit()
+        db.refresh(order)
 
-    await delete_basket_items_by_basket_id(user.basket.id, db)
+        if order_data.phone_number_current_user:
+            user.phone_number = order_data.phone_number_current_user
+            db.commit()
+
+        await delete_basket_items_by_basket_id(user.basket.id, db)
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to create order: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create order")
 
     return order
 
