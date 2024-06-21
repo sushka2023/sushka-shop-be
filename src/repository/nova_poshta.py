@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import httpx
 import logging
@@ -49,10 +50,30 @@ async def get_warehouse_by_ref_and_address_warehouse(
     address_warehouse: str, settle_ref: str, db: Session
 ) -> NovaPoshta:
     warehouse = db.query(NovaPoshta).filter_by(
-        settlement_ref=settle_ref, address_warehouse=address_warehouse
+        settlement_ref=settle_ref, address_warehouse=address_warehouse, is_active=True
     ).first()
 
     return warehouse
+
+
+async def get_warehouse_by_ref_and_number(
+    settle_ref: str, category: str, db: Session, number: str = None,
+) -> Optional[NovaPoshta]:
+    query = db.query(NovaPoshta).filter(
+        NovaPoshta.settlement_ref == settle_ref,
+        NovaPoshta.category_warehouse == category,
+        NovaPoshta.is_active == True,
+    )
+    if number:
+        warehouses = query.all()
+        for warehouse in warehouses:
+            branch_number = extract_warehouse_number(warehouse.address_warehouse, NUMBER_REGEX)
+            if branch_number == number:
+                return warehouse
+    else:
+        return query.first()
+
+    return None
 
 
 async def get_warehouses_specific_city(settle_ref: str) -> list:
@@ -81,6 +102,13 @@ async def get_warehouses_specific_city(settle_ref: str) -> list:
 
 
 async def get_postomats(db: Session, settle_ref: str, search_term: str = None) -> list:
+    if search_term:
+        existing_postomat = await get_warehouse_by_ref_and_number(
+            db=db, settle_ref=settle_ref, category="Поштомат", number=search_term
+        )
+        if existing_postomat:
+            return [{"id": existing_postomat.id, "address_warehouse": existing_postomat.address_warehouse}]
+
     warehouse_data = await get_warehouses_specific_city(settle_ref=settle_ref)
 
     postomats = []
@@ -118,6 +146,13 @@ async def get_postomats(db: Session, settle_ref: str, search_term: str = None) -
 
 
 async def get_branches(db: Session, settle_ref: str, search_term: str = None) -> list:
+    if search_term:
+        existing_branch = await get_warehouse_by_ref_and_number(
+            db=db, settle_ref=settle_ref, category="Відділення", number=search_term
+        )
+        if existing_branch:
+            return [{"id": existing_branch.id, "address_warehouse": existing_branch.address_warehouse}]
+
     warehouse_data = await get_warehouses_specific_city(settle_ref=settle_ref)
 
     branches = []
@@ -189,7 +224,7 @@ async def update_warehouses_data(db: Session) -> None:
         warehouses_from_api = []
         for item in warehouse_data:
             address_warehouse = item.get("Description", "")
-            city_name = item.get("SettlementDescription", "").split(" (")[0]
+            city_name = item.get("SettlementDescription", "")
             area_name = item.get("SettlementAreaDescription", "")
             region_name = item.get("SettlementRegionsDescription", "")
             if "поштомат" in address_warehouse.lower():
@@ -208,21 +243,30 @@ async def update_warehouses_data(db: Session) -> None:
                 }
             )
 
+        warehouse_dict_db = {}
         for warehouse_db in warehouses_in_database:
-            if not any(
-                    warehouse_db.address_warehouse == warehouse_api["address_warehouse"] and
-                    warehouse_db.settlement_ref == warehouse_api["settlement_ref"]
-                    for warehouse_api in warehouses_from_api
-            ):
-                db.delete(warehouse_db)
-                logger.info(f"Removed the warehouse from database: {warehouse_db}")
+            db_number = extract_warehouse_number(warehouse_db.address_warehouse, NUMBER_REGEX)
+            if db_number:
+                warehouse_dict_db[db_number] = warehouse_db
 
+        api_numbers = set()
         for warehouse_api in warehouses_from_api:
-            if not any(
-                    warehouse_db.address_warehouse == warehouse_api["address_warehouse"] and
-                    warehouse_db.settlement_ref == warehouse_api["settlement_ref"]
-                    for warehouse_db in warehouses_in_database
-            ):
+            api_number = extract_warehouse_number(warehouse_api["address_warehouse"], NUMBER_REGEX)
+            if not api_number:
+                continue
+
+            api_numbers.add(api_number)
+
+            matched_warehouse_db = warehouse_dict_db.get(api_number)
+
+            if matched_warehouse_db:
+                # Update the address if it has changed
+                if matched_warehouse_db.address_warehouse != warehouse_api["address_warehouse"]:
+                    matched_warehouse_db.address_warehouse = warehouse_api["address_warehouse"]
+                    logger.info(f"Updated address for warehouse: {matched_warehouse_db}")
+                    db.add(matched_warehouse_db)
+            else:
+                # Add a new warehouse if not found in the database
                 new_warehouse = await create_nova_poshta_warehouse(
                     city=warehouse_api["city"],
                     area=warehouse_api["area"],
@@ -234,7 +278,15 @@ async def update_warehouses_data(db: Session) -> None:
                 )
                 logger.info(f"Added a new warehouse into database: {new_warehouse}")
 
+        # Mark warehouses not found in the API response as inactive
+        for warehouse_db in warehouses_in_database:
+            db_number = extract_warehouse_number(warehouse_db.address_warehouse, NUMBER_REGEX)
+            if db_number and db_number not in api_numbers:
+                warehouse_db.is_active = False
+                logger.info(f"Marked the warehouse as inactive: {warehouse_db}")
+
         await asyncio.sleep(2)
+
     db.commit()
 
 
